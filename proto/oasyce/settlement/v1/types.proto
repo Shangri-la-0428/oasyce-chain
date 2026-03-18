@@ -1,0 +1,84 @@
+syntax = "proto3";
+package oasyce.settlement.v1;
+
+option go_package = "github.com/oasyce/chain/x/settlement/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// EscrowStatus enumerates the possible states of an escrow.
+enum EscrowStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // ESCROW_STATUS_UNSPECIFIED is the default value.
+  ESCROW_STATUS_UNSPECIFIED = 0;
+  // ESCROW_STATUS_LOCKED means funds are locked in escrow.
+  ESCROW_STATUS_LOCKED = 1;
+  // ESCROW_STATUS_RELEASED means funds have been released to the provider.
+  ESCROW_STATUS_RELEASED = 2;
+  // ESCROW_STATUS_REFUNDED means funds have been refunded to the consumer.
+  ESCROW_STATUS_REFUNDED = 3;
+  // ESCROW_STATUS_EXPIRED means the escrow has expired.
+  ESCROW_STATUS_EXPIRED = 4;
+}
+
+// Escrow represents a locked fund escrow for a capability invocation or data purchase.
+message Escrow {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // id is the unique identifier of the escrow.
+  string id = 1;
+
+  // creator is the address that created the escrow (consumer).
+  string creator = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // provider is the address that will receive funds upon release.
+  string provider = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // amount is the escrowed coin amount.
+  cosmos.base.v1beta1.Coin amount = 4 [(gogoproto.nullable) = false];
+
+  // status is the current state of the escrow.
+  EscrowStatus status = 5;
+
+  // created_at is the timestamp when the escrow was created.
+  google.protobuf.Timestamp created_at = 6
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+
+  // expires_at is the timestamp when the escrow expires.
+  google.protobuf.Timestamp expires_at = 7
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+}
+
+// BondingCurveState holds the bonding curve parameters for an asset.
+message BondingCurveState {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // asset_id is the unique identifier of the asset.
+  string asset_id = 1;
+
+  // total_shares is the total number of shares outstanding.
+  string total_shares = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // reserve is the total reserve backing the bonding curve.
+  string reserve = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // price_factors are coefficients for the bonding curve pricing function.
+  repeated string price_factors = 4 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+}

@@ -1,0 +1,10 @@
+build/
+vendor/
+*.exe
+*.test
+*.prof
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store

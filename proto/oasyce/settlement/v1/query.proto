@@ -1,0 +1,68 @@
+syntax = "proto3";
+package oasyce.settlement.v1;
+
+option go_package = "github.com/oasyce/chain/x/settlement/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/settlement/v1/types.proto";
+
+// Query defines the settlement module's gRPC query service.
+service Query {
+  // Escrow queries an escrow by ID.
+  rpc Escrow(QueryEscrowRequest) returns (QueryEscrowResponse) {
+    option (google.api.http).get = "/oasyce/settlement/v1/escrow/{escrow_id}";
+  }
+
+  // EscrowsByCreator queries all escrows created by a given address.
+  rpc EscrowsByCreator(QueryEscrowsByCreatorRequest)
+      returns (QueryEscrowsByCreatorResponse) {
+    option (google.api.http).get =
+        "/oasyce/settlement/v1/escrows/{creator}";
+  }
+
+  // BondingCurvePrice queries the current bonding curve price for an asset.
+  rpc BondingCurvePrice(QueryBondingCurvePriceRequest)
+      returns (QueryBondingCurvePriceResponse) {
+    option (google.api.http).get =
+        "/oasyce/settlement/v1/bonding_curve/{asset_id}";
+  }
+}
+
+// QueryEscrowRequest is the request type for the Query/Escrow RPC method.
+message QueryEscrowRequest {
+  string escrow_id = 1;
+}
+
+// QueryEscrowResponse is the response type for the Query/Escrow RPC method.
+message QueryEscrowResponse {
+  Escrow escrow = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryEscrowsByCreatorRequest is the request type for the Query/EscrowsByCreator RPC.
+message QueryEscrowsByCreatorRequest {
+  string creator = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryEscrowsByCreatorResponse is the response type for the Query/EscrowsByCreator RPC.
+message QueryEscrowsByCreatorResponse {
+  repeated Escrow escrows = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBondingCurvePriceRequest is the request type for the Query/BondingCurvePrice RPC.
+message QueryBondingCurvePriceRequest {
+  string asset_id = 1;
+}
+
+// QueryBondingCurvePriceResponse is the response type for the Query/BondingCurvePrice RPC.
+message QueryBondingCurvePriceResponse {
+  // current_price is the current price per share on the bonding curve.
+  cosmos.base.v1beta1.Coin current_price = 1 [(gogoproto.nullable) = false];
+
+  // state is the full bonding curve state.
+  BondingCurveState state = 2 [(gogoproto.nullable) = false];
+}

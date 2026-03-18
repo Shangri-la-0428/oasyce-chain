@@ -1,0 +1,33 @@
+syntax = "proto3";
+package oasyce.reputation.v1;
+
+option go_package = "github.com/oasyce/chain/x/reputation/types";
+
+import "gogoproto/gogo.proto";
+import "oasyce/reputation/v1/types.proto";
+
+// GenesisState defines the reputation module's genesis state.
+message GenesisState {
+  // reputation_scores is the list of all reputation scores at genesis.
+  repeated ReputationScore reputation_scores = 1 [(gogoproto.nullable) = false];
+
+  // feedbacks is the list of all feedbacks at genesis.
+  repeated Feedback feedbacks = 2 [(gogoproto.nullable) = false];
+
+  // params defines the module parameters at genesis.
+  Params params = 3 [(gogoproto.nullable) = false];
+}
+
+// Params defines the parameters for the reputation module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // min_rating is the minimum allowed rating value.
+  uint32 min_rating = 1;
+
+  // max_rating is the maximum allowed rating value (default 500 = 5.0).
+  uint32 max_rating = 2;
+
+  // feedback_cooldown_seconds is the minimum time between feedbacks from the same address.
+  uint64 feedback_cooldown_seconds = 3;
+}

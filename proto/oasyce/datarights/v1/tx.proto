@@ -1,0 +1,132 @@
+syntax = "proto3";
+package oasyce.datarights.v1;
+
+option go_package = "github.com/oasyce/chain/x/datarights/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "oasyce/datarights/v1/types.proto";
+
+// Msg defines the datarights module's gRPC message service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterDataAsset registers a new data asset on-chain.
+  rpc RegisterDataAsset(MsgRegisterDataAsset)
+      returns (MsgRegisterDataAssetResponse);
+
+  // BuyShares purchases shares of a data asset via bonding curve.
+  rpc BuyShares(MsgBuyShares) returns (MsgBuySharesResponse);
+
+  // FileDispute files a dispute against a data asset.
+  rpc FileDispute(MsgFileDispute) returns (MsgFileDisputeResponse);
+
+  // ResolveDispute resolves an open dispute (arbitrator only).
+  rpc ResolveDispute(MsgResolveDispute) returns (MsgResolveDisputeResponse);
+}
+
+// MsgRegisterDataAsset registers a new data asset on-chain.
+message MsgRegisterDataAsset {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgRegisterDataAsset";
+
+  // creator is the address of the data asset owner.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // name is the human-readable name of the data asset.
+  string name = 2;
+
+  // description is a detailed description of the data asset.
+  string description = 3;
+
+  // content_hash is the hash of the data asset content.
+  string content_hash = 4;
+
+  // rights_type is the rights classification.
+  RightsType rights_type = 5;
+
+  // tags are searchable labels for the data asset.
+  repeated string tags = 6;
+
+  // co_creators is the list of co-creators and their share allocations.
+  repeated CoCreator co_creators = 7 [(gogoproto.nullable) = false];
+}
+
+// MsgRegisterDataAssetResponse is the response for MsgRegisterDataAsset.
+message MsgRegisterDataAssetResponse {
+  // asset_id is the unique identifier of the registered data asset.
+  string asset_id = 1;
+}
+
+// MsgBuyShares purchases shares of a data asset via bonding curve.
+message MsgBuyShares {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgBuyShares";
+
+  // creator is the address of the buyer.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset_id is the ID of the data asset to buy shares of.
+  string asset_id = 2;
+
+  // amount is the coin amount to spend on shares.
+  cosmos.base.v1beta1.Coin amount = 3 [(gogoproto.nullable) = false];
+}
+
+// MsgBuySharesResponse is the response for MsgBuyShares.
+message MsgBuySharesResponse {
+  // shares_purchased is the number of shares acquired.
+  string shares_purchased = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgFileDispute files a dispute against a data asset.
+message MsgFileDispute {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgFileDispute";
+
+  // creator is the address of the plaintiff.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset_id is the ID of the data asset being disputed.
+  string asset_id = 2;
+
+  // reason is a description of the dispute reason.
+  string reason = 3;
+
+  // evidence is the raw evidence data.
+  bytes evidence = 4;
+}
+
+// MsgFileDisputeResponse is the response for MsgFileDispute.
+message MsgFileDisputeResponse {
+  // dispute_id is the unique identifier of the created dispute.
+  string dispute_id = 1;
+}
+
+// MsgResolveDispute resolves an open dispute.
+message MsgResolveDispute {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgResolveDispute";
+
+  // creator is the address of the arbitrator resolving the dispute.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // dispute_id is the ID of the dispute to resolve.
+  string dispute_id = 2;
+
+  // remedy is the chosen dispute remedy.
+  DisputeRemedy remedy = 3;
+
+  // details contains additional resolution details.
+  bytes details = 4;
+}
+
+// MsgResolveDisputeResponse is the response for MsgResolveDispute.
+message MsgResolveDisputeResponse {}

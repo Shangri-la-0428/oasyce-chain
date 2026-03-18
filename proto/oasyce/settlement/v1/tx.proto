@@ -1,0 +1,79 @@
+syntax = "proto3";
+package oasyce.settlement.v1;
+
+option go_package = "github.com/oasyce/chain/x/settlement/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+
+// Msg defines the settlement module's gRPC message service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // CreateEscrow locks funds for a capability invocation or data purchase.
+  rpc CreateEscrow(MsgCreateEscrow) returns (MsgCreateEscrowResponse);
+
+  // ReleaseEscrow releases escrowed funds to the provider after successful delivery.
+  rpc ReleaseEscrow(MsgReleaseEscrow) returns (MsgReleaseEscrowResponse);
+
+  // RefundEscrow refunds escrowed funds to the consumer on failure.
+  rpc RefundEscrow(MsgRefundEscrow) returns (MsgRefundEscrowResponse);
+}
+
+// MsgCreateEscrow locks funds for a capability invocation or data purchase.
+message MsgCreateEscrow {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/settlement/MsgCreateEscrow";
+
+  // creator is the address of the account creating the escrow.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // capability_id is the ID of the capability or asset to escrow funds for.
+  // Use this for capability invocations; for data purchases use asset_id.
+  string capability_id = 2;
+
+  // asset_id is the ID of the data asset to escrow funds for.
+  string asset_id = 3;
+
+  // amount is the coin amount to lock in escrow.
+  cosmos.base.v1beta1.Coin amount = 4 [(gogoproto.nullable) = false];
+}
+
+// MsgCreateEscrowResponse is the response type for MsgCreateEscrow.
+message MsgCreateEscrowResponse {
+  // escrow_id is the unique identifier of the created escrow.
+  string escrow_id = 1;
+}
+
+// MsgReleaseEscrow releases escrowed funds to the provider.
+message MsgReleaseEscrow {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/settlement/MsgReleaseEscrow";
+
+  // creator is the address authorized to release the escrow.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // escrow_id is the unique identifier of the escrow to release.
+  string escrow_id = 2;
+}
+
+// MsgReleaseEscrowResponse is the response type for MsgReleaseEscrow.
+message MsgReleaseEscrowResponse {}
+
+// MsgRefundEscrow refunds escrowed funds to the consumer.
+message MsgRefundEscrow {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/settlement/MsgRefundEscrow";
+
+  // creator is the address authorized to refund the escrow.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // escrow_id is the unique identifier of the escrow to refund.
+  string escrow_id = 2;
+}
+
+// MsgRefundEscrowResponse is the response type for MsgRefundEscrow.
+message MsgRefundEscrowResponse {}

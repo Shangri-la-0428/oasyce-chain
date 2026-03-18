@@ -1,0 +1,88 @@
+syntax = "proto3";
+package oasyce.capability.v1;
+
+option go_package = "github.com/oasyce/chain/x/capability/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/capability/v1/types.proto";
+
+// Query defines the capability module's gRPC query service.
+service Query {
+  // Capability queries a capability by ID.
+  rpc Capability(QueryCapabilityRequest) returns (QueryCapabilityResponse) {
+    option (google.api.http).get =
+        "/oasyce/capability/v1/capability/{capability_id}";
+  }
+
+  // Capabilities queries all capabilities with optional tag filter.
+  rpc Capabilities(QueryCapabilitiesRequest)
+      returns (QueryCapabilitiesResponse) {
+    option (google.api.http).get = "/oasyce/capability/v1/capabilities";
+  }
+
+  // CapabilitiesByProvider queries capabilities registered by a provider.
+  rpc CapabilitiesByProvider(QueryCapabilitiesByProviderRequest)
+      returns (QueryCapabilitiesByProviderResponse) {
+    option (google.api.http).get =
+        "/oasyce/capability/v1/capabilities/provider/{provider}";
+  }
+
+  // Earnings queries the total earnings for a provider.
+  rpc Earnings(QueryEarningsRequest) returns (QueryEarningsResponse) {
+    option (google.api.http).get =
+        "/oasyce/capability/v1/earnings/{provider}";
+  }
+}
+
+// QueryCapabilityRequest is the request type for the Query/Capability RPC.
+message QueryCapabilityRequest {
+  string capability_id = 1;
+}
+
+// QueryCapabilityResponse is the response type for the Query/Capability RPC.
+message QueryCapabilityResponse {
+  Capability capability = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryCapabilitiesRequest is the request type for the Query/Capabilities RPC.
+message QueryCapabilitiesRequest {
+  // tag filters capabilities by tag. Empty returns all.
+  string tag = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryCapabilitiesResponse is the response type for the Query/Capabilities RPC.
+message QueryCapabilitiesResponse {
+  repeated Capability capabilities = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryCapabilitiesByProviderRequest is the request type for Query/CapabilitiesByProvider.
+message QueryCapabilitiesByProviderRequest {
+  string provider = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryCapabilitiesByProviderResponse is the response type for Query/CapabilitiesByProvider.
+message QueryCapabilitiesByProviderResponse {
+  repeated Capability capabilities = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryEarningsRequest is the request type for the Query/Earnings RPC.
+message QueryEarningsRequest {
+  string provider = 1;
+}
+
+// QueryEarningsResponse is the response type for the Query/Earnings RPC.
+message QueryEarningsResponse {
+  // total_earned is the total amount earned across all capabilities.
+  repeated cosmos.base.v1beta1.Coin total_earned = 1
+      [(gogoproto.nullable) = false];
+
+  // total_calls is the total number of successful invocations.
+  uint64 total_calls = 2;
+}

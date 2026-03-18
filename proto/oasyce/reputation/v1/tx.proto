@@ -1,0 +1,68 @@
+syntax = "proto3";
+package oasyce.reputation.v1;
+
+option go_package = "github.com/oasyce/chain/x/reputation/types";
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+// Msg defines the reputation module's gRPC message service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // SubmitFeedback submits a rating for a completed invocation.
+  rpc SubmitFeedback(MsgSubmitFeedback) returns (MsgSubmitFeedbackResponse);
+
+  // ReportMisbehavior reports bad behavior by a participant.
+  rpc ReportMisbehavior(MsgReportMisbehavior)
+      returns (MsgReportMisbehaviorResponse);
+}
+
+// MsgSubmitFeedback submits a rating for a completed invocation.
+message MsgSubmitFeedback {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/reputation/MsgSubmitFeedback";
+
+  // creator is the address of the account submitting the feedback.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // invocation_id is the ID of the invocation being rated.
+  string invocation_id = 2;
+
+  // rating is the score in range 0-500 (representing 0.0-5.0).
+  uint32 rating = 3;
+
+  // comment is an optional text comment.
+  string comment = 4;
+}
+
+// MsgSubmitFeedbackResponse is the response for MsgSubmitFeedback.
+message MsgSubmitFeedbackResponse {
+  // feedback_id is the unique identifier of the created feedback.
+  string feedback_id = 1;
+}
+
+// MsgReportMisbehavior reports bad behavior by a participant.
+message MsgReportMisbehavior {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/reputation/MsgReportMisbehavior";
+
+  // creator is the address of the reporter.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // target is the address of the misbehaving account.
+  string target = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // evidence_type describes the type of misbehavior evidence.
+  string evidence_type = 3;
+
+  // evidence is the raw evidence data.
+  bytes evidence = 4;
+}
+
+// MsgReportMisbehaviorResponse is the response for MsgReportMisbehavior.
+message MsgReportMisbehaviorResponse {
+  // report_id is the unique identifier of the created report.
+  string report_id = 1;
+}

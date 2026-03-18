@@ -1,0 +1,60 @@
+syntax = "proto3";
+package oasyce.reputation.v1;
+
+option go_package = "github.com/oasyce/chain/x/reputation/types";
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/reputation/v1/types.proto";
+
+// Query defines the reputation module's gRPC query service.
+service Query {
+  // Reputation queries the reputation score of an address.
+  rpc Reputation(QueryReputationRequest) returns (QueryReputationResponse) {
+    option (google.api.http).get =
+        "/oasyce/reputation/v1/reputation/{address}";
+  }
+
+  // Feedback queries the feedback for a given invocation.
+  rpc Feedback(QueryFeedbackRequest) returns (QueryFeedbackResponse) {
+    option (google.api.http).get =
+        "/oasyce/reputation/v1/feedback/{invocation_id}";
+  }
+
+  // Leaderboard queries the top-rated providers.
+  rpc Leaderboard(QueryLeaderboardRequest) returns (QueryLeaderboardResponse) {
+    option (google.api.http).get = "/oasyce/reputation/v1/leaderboard";
+  }
+}
+
+// QueryReputationRequest is the request type for the Query/Reputation RPC.
+message QueryReputationRequest {
+  string address = 1;
+}
+
+// QueryReputationResponse is the response type for the Query/Reputation RPC.
+message QueryReputationResponse {
+  ReputationScore reputation = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryFeedbackRequest is the request type for the Query/Feedback RPC.
+message QueryFeedbackRequest {
+  string invocation_id = 1;
+}
+
+// QueryFeedbackResponse is the response type for the Query/Feedback RPC.
+message QueryFeedbackResponse {
+  repeated Feedback feedbacks = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryLeaderboardRequest is the request type for the Query/Leaderboard RPC.
+message QueryLeaderboardRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryLeaderboardResponse is the response type for the Query/Leaderboard RPC.
+message QueryLeaderboardResponse {
+  repeated ReputationScore scores = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

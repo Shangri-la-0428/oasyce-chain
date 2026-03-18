@@ -1,0 +1,30 @@
+syntax = "proto3";
+package oasyce.capability.v1;
+
+option go_package = "github.com/oasyce/chain/x/capability/types";
+
+import "gogoproto/gogo.proto";
+import "oasyce/capability/v1/types.proto";
+
+// GenesisState defines the capability module's genesis state.
+message GenesisState {
+  // capabilities is the list of all registered capabilities at genesis.
+  repeated Capability capabilities = 1 [(gogoproto.nullable) = false];
+
+  // invocations is the list of all invocations at genesis.
+  repeated Invocation invocations = 2 [(gogoproto.nullable) = false];
+
+  // params defines the module parameters at genesis.
+  Params params = 3 [(gogoproto.nullable) = false];
+}
+
+// Params defines the parameters for the capability module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // min_price_per_call is the minimum allowed price for a capability.
+  string min_price_denom = 1;
+
+  // max_rate_limit is the maximum allowed rate limit per block.
+  uint64 max_rate_limit = 2;
+}

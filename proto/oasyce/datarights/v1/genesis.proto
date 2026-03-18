@@ -1,0 +1,41 @@
+syntax = "proto3";
+package oasyce.datarights.v1;
+
+option go_package = "github.com/oasyce/chain/x/datarights/types";
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "oasyce/datarights/v1/types.proto";
+
+// GenesisState defines the datarights module's genesis state.
+message GenesisState {
+  // data_assets is the list of all data assets at genesis.
+  repeated DataAsset data_assets = 1 [(gogoproto.nullable) = false];
+
+  // shareholders is the list of all share holdings at genesis.
+  repeated ShareHolder shareholders = 2 [(gogoproto.nullable) = false];
+
+  // disputes is the list of all disputes at genesis.
+  repeated Dispute disputes = 3 [(gogoproto.nullable) = false];
+
+  // params defines the module parameters at genesis.
+  Params params = 4 [(gogoproto.nullable) = false];
+}
+
+// Params defines the parameters for the datarights module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // max_co_creators is the maximum number of co-creators per data asset.
+  uint32 max_co_creators = 1;
+
+  // dispute_deposit_denom is the denomination required for dispute deposits.
+  string dispute_deposit_denom = 2;
+
+  // dispute_deposit_amount is the minimum deposit amount for filing a dispute.
+  string dispute_deposit_amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

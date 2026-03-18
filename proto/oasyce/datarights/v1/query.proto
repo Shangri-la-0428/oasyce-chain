@@ -1,0 +1,103 @@
+syntax = "proto3";
+package oasyce.datarights.v1;
+
+option go_package = "github.com/oasyce/chain/x/datarights/types";
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/datarights/v1/types.proto";
+
+// Query defines the datarights module's gRPC query service.
+service Query {
+  // DataAsset queries a data asset by ID.
+  rpc DataAsset(QueryDataAssetRequest) returns (QueryDataAssetResponse) {
+    option (google.api.http).get =
+        "/oasyce/datarights/v1/data_asset/{asset_id}";
+  }
+
+  // DataAssets queries all data assets with optional filters.
+  rpc DataAssets(QueryDataAssetsRequest) returns (QueryDataAssetsResponse) {
+    option (google.api.http).get = "/oasyce/datarights/v1/data_assets";
+  }
+
+  // Shares queries the shareholders of a data asset.
+  rpc Shares(QuerySharesRequest) returns (QuerySharesResponse) {
+    option (google.api.http).get =
+        "/oasyce/datarights/v1/shares/{asset_id}";
+  }
+
+  // Dispute queries a dispute by ID.
+  rpc Dispute(QueryDisputeRequest) returns (QueryDisputeResponse) {
+    option (google.api.http).get =
+        "/oasyce/datarights/v1/dispute/{dispute_id}";
+  }
+
+  // Disputes queries all disputes with optional asset filter.
+  rpc Disputes(QueryDisputesRequest) returns (QueryDisputesResponse) {
+    option (google.api.http).get = "/oasyce/datarights/v1/disputes";
+  }
+}
+
+// QueryDataAssetRequest is the request type for the Query/DataAsset RPC.
+message QueryDataAssetRequest {
+  string asset_id = 1;
+}
+
+// QueryDataAssetResponse is the response type for the Query/DataAsset RPC.
+message QueryDataAssetResponse {
+  DataAsset data_asset = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryDataAssetsRequest is the request type for the Query/DataAssets RPC.
+message QueryDataAssetsRequest {
+  // tag filters data assets by tag. Empty returns all.
+  string tag = 1;
+
+  // owner filters data assets by owner address. Empty returns all.
+  string owner = 2;
+
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+// QueryDataAssetsResponse is the response type for the Query/DataAssets RPC.
+message QueryDataAssetsResponse {
+  repeated DataAsset data_assets = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QuerySharesRequest is the request type for the Query/Shares RPC.
+message QuerySharesRequest {
+  string asset_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QuerySharesResponse is the response type for the Query/Shares RPC.
+message QuerySharesResponse {
+  repeated ShareHolder shareholders = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryDisputeRequest is the request type for the Query/Dispute RPC.
+message QueryDisputeRequest {
+  string dispute_id = 1;
+}
+
+// QueryDisputeResponse is the response type for the Query/Dispute RPC.
+message QueryDisputeResponse {
+  Dispute dispute = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryDisputesRequest is the request type for the Query/Disputes RPC.
+message QueryDisputesRequest {
+  // asset_id filters disputes by asset. Empty returns all.
+  string asset_id = 1;
+
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryDisputesResponse is the response type for the Query/Disputes RPC.
+message QueryDisputesResponse {
+  repeated Dispute disputes = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

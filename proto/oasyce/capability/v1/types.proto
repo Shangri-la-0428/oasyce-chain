@@ -1,0 +1,110 @@
+syntax = "proto3";
+package oasyce.capability.v1;
+
+option go_package = "github.com/oasyce/chain/x/capability/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// InvocationStatus enumerates the possible states of an invocation.
+enum InvocationStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // INVOCATION_STATUS_UNSPECIFIED is the default value.
+  INVOCATION_STATUS_UNSPECIFIED = 0;
+  // INVOCATION_STATUS_PENDING means the invocation is in progress.
+  INVOCATION_STATUS_PENDING = 1;
+  // INVOCATION_STATUS_SUCCESS means the invocation completed successfully.
+  INVOCATION_STATUS_SUCCESS = 2;
+  // INVOCATION_STATUS_FAILED means the invocation failed.
+  INVOCATION_STATUS_FAILED = 3;
+}
+
+// Capability represents a registered AI capability endpoint.
+message Capability {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // id is the unique identifier of the capability.
+  string id = 1;
+
+  // provider is the address of the capability provider.
+  string provider = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // name is the human-readable name of the capability.
+  string name = 3;
+
+  // description is a detailed description of the capability.
+  string description = 4;
+
+  // endpoint_url is the encrypted endpoint URL for the capability.
+  string endpoint_url = 5;
+
+  // price_per_call is the price charged per invocation.
+  cosmos.base.v1beta1.Coin price_per_call = 6 [(gogoproto.nullable) = false];
+
+  // tags are searchable labels for the capability.
+  repeated string tags = 7;
+
+  // rate_limit is the maximum number of calls allowed per block.
+  uint64 rate_limit = 8;
+
+  // total_calls is the total number of invocations of this capability.
+  uint64 total_calls = 9;
+
+  // total_earned is the total amount earned by this capability.
+  string total_earned = 10 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // avg_latency_ms is the average invocation latency in milliseconds.
+  uint64 avg_latency_ms = 11;
+
+  // success_rate is the success rate in basis points (0-10000 = 0%-100%).
+  uint32 success_rate = 12;
+
+  // is_active indicates whether the capability is currently available.
+  bool is_active = 13;
+
+  // created_at is the timestamp when the capability was registered.
+  google.protobuf.Timestamp created_at = 14
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+}
+
+// Invocation represents a single invocation of a capability.
+message Invocation {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // id is the unique identifier of the invocation.
+  string id = 1;
+
+  // capability_id is the ID of the invoked capability.
+  string capability_id = 2;
+
+  // consumer is the address of the invoker.
+  string consumer = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // provider is the address of the capability provider.
+  string provider = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // input_hash is the hash of the invocation input.
+  string input_hash = 5;
+
+  // output_hash is the hash of the invocation output.
+  string output_hash = 6;
+
+  // status is the current status of the invocation.
+  InvocationStatus status = 7;
+
+  // amount is the cost of the invocation.
+  cosmos.base.v1beta1.Coin amount = 8 [(gogoproto.nullable) = false];
+
+  // timestamp is the time the invocation was created.
+  google.protobuf.Timestamp timestamp = 9
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+}

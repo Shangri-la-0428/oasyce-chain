@@ -1,0 +1,130 @@
+syntax = "proto3";
+package oasyce.capability.v1;
+
+option go_package = "github.com/oasyce/chain/x/capability/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+
+// Msg defines the capability module's gRPC message service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterCapability registers a new AI capability endpoint.
+  rpc RegisterCapability(MsgRegisterCapability)
+      returns (MsgRegisterCapabilityResponse);
+
+  // InvokeCapability invokes a capability, creating an escrow and settling payment.
+  rpc InvokeCapability(MsgInvokeCapability)
+      returns (MsgInvokeCapabilityResponse);
+
+  // UpdateCapability updates a capability's endpoint, price, or rate limit.
+  rpc UpdateCapability(MsgUpdateCapability)
+      returns (MsgUpdateCapabilityResponse);
+
+  // DeactivateCapability takes a capability offline.
+  rpc DeactivateCapability(MsgDeactivateCapability)
+      returns (MsgDeactivateCapabilityResponse);
+}
+
+// MsgRegisterCapability registers a new AI capability endpoint.
+message MsgRegisterCapability {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgRegisterCapability";
+
+  // creator is the address of the capability provider.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // name is the human-readable name for the capability.
+  string name = 2;
+
+  // description is a detailed description of the capability.
+  string description = 3;
+
+  // endpoint_url is the URL where the capability can be reached.
+  string endpoint_url = 4;
+
+  // price_per_call is the price charged per invocation.
+  cosmos.base.v1beta1.Coin price_per_call = 5 [(gogoproto.nullable) = false];
+
+  // tags are searchable labels for the capability.
+  repeated string tags = 6;
+
+  // rate_limit is the maximum number of calls allowed per block.
+  uint64 rate_limit = 7;
+}
+
+// MsgRegisterCapabilityResponse is the response for MsgRegisterCapability.
+message MsgRegisterCapabilityResponse {
+  // capability_id is the unique identifier assigned to the new capability.
+  string capability_id = 1;
+}
+
+// MsgInvokeCapability invokes a registered capability.
+message MsgInvokeCapability {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgInvokeCapability";
+
+  // creator is the address of the consumer invoking the capability.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // capability_id is the ID of the capability to invoke.
+  string capability_id = 2;
+
+  // input is the raw input data for the invocation.
+  bytes input = 3;
+}
+
+// MsgInvokeCapabilityResponse is the response for MsgInvokeCapability.
+message MsgInvokeCapabilityResponse {
+  // invocation_id is the unique identifier of the created invocation.
+  string invocation_id = 1;
+
+  // escrow_id is the ID of the escrow created for the invocation.
+  string escrow_id = 2;
+}
+
+// MsgUpdateCapability updates a capability's mutable fields.
+message MsgUpdateCapability {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgUpdateCapability";
+
+  // creator is the address of the capability provider.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // capability_id is the ID of the capability to update.
+  string capability_id = 2;
+
+  // endpoint_url is the new endpoint URL (empty to keep existing).
+  string endpoint_url = 3;
+
+  // price_per_call is the new price per call (nil to keep existing).
+  cosmos.base.v1beta1.Coin price_per_call = 4;
+
+  // rate_limit is the new rate limit (0 to keep existing).
+  uint64 rate_limit = 5;
+
+  // description is the new description (empty to keep existing).
+  string description = 6;
+}
+
+// MsgUpdateCapabilityResponse is the response for MsgUpdateCapability.
+message MsgUpdateCapabilityResponse {}
+
+// MsgDeactivateCapability takes a capability offline.
+message MsgDeactivateCapability {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgDeactivateCapability";
+
+  // creator is the address of the capability provider.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // capability_id is the ID of the capability to deactivate.
+  string capability_id = 2;
+}
+
+// MsgDeactivateCapabilityResponse is the response for MsgDeactivateCapability.
+message MsgDeactivateCapabilityResponse {}

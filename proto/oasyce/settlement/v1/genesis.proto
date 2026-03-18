@@ -1,0 +1,27 @@
+syntax = "proto3";
+package oasyce.settlement.v1;
+
+option go_package = "github.com/oasyce/chain/x/settlement/types";
+
+import "gogoproto/gogo.proto";
+import "oasyce/settlement/v1/types.proto";
+
+// GenesisState defines the settlement module's genesis state.
+message GenesisState {
+  // escrows is the list of all escrows at genesis.
+  repeated Escrow escrows = 1 [(gogoproto.nullable) = false];
+
+  // bonding_curve_states is the list of all bonding curve states at genesis.
+  repeated BondingCurveState bonding_curve_states = 2 [(gogoproto.nullable) = false];
+
+  // params defines the module parameters at genesis.
+  Params params = 3 [(gogoproto.nullable) = false];
+}
+
+// Params defines the parameters for the settlement module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // escrow_timeout is the default escrow expiration duration in seconds.
+  uint64 escrow_timeout_seconds = 1;
+}

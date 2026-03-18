@@ -1,0 +1,61 @@
+syntax = "proto3";
+package oasyce.reputation.v1;
+
+option go_package = "github.com/oasyce/chain/x/reputation/types";
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// ReputationScore tracks the aggregated reputation of an address.
+message ReputationScore {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // address is the account address this reputation belongs to.
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // total_score is the cumulative reputation score (scaled by 100 for precision).
+  uint64 total_score = 2;
+
+  // total_feedbacks is the total number of feedbacks received.
+  uint64 total_feedbacks = 3;
+
+  // verified_feedbacks is the number of feedbacks from verified invocations.
+  uint64 verified_feedbacks = 4;
+
+  // last_updated is the timestamp of the most recent score update.
+  google.protobuf.Timestamp last_updated = 5
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+}
+
+// Feedback represents a rating submitted for a completed invocation.
+message Feedback {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // id is the unique identifier of the feedback.
+  string id = 1;
+
+  // invocation_id is the ID of the invocation being rated.
+  string invocation_id = 2;
+
+  // from is the address of the feedback submitter.
+  string from = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // to is the address of the entity being rated.
+  string to = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // rating is the score in range 0-500 (representing 0.0-5.0).
+  uint32 rating = 5;
+
+  // comment is an optional text comment.
+  string comment = 6;
+
+  // verified indicates whether the feedback is from a verified invocation participant.
+  bool verified = 7;
+
+  // timestamp is the time the feedback was submitted.
+  google.protobuf.Timestamp timestamp = 8
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+}
