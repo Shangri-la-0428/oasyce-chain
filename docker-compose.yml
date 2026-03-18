@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  oasyce-node0:
+    image: oasyce/chain:latest
+    container_name: oasyce-node0
+    ports:
+      - "26656:26656"
+      - "26657:26657"
+      - "1317:1317"
+      - "9090:9090"
+    volumes:
+      - node0-data:/root/.oasyced
+    networks:
+      - oasyce-testnet
+
+  oasyce-node1:
+    image: oasyce/chain:latest
+    container_name: oasyce-node1
+    ports:
+      - "26666:26656"
+      - "26667:26657"
+      - "1318:1317"
+      - "9091:9090"
+    volumes:
+      - node1-data:/root/.oasyced
+    networks:
+      - oasyce-testnet
+
+  oasyce-node2:
+    image: oasyce/chain:latest
+    container_name: oasyce-node2
+    ports:
+      - "26676:26656"
+      - "26677:26657"
+      - "1319:1317"
+      - "9092:9090"
+    volumes:
+      - node2-data:/root/.oasyced
+    networks:
+      - oasyce-testnet
+
+  oasyce-node3:
+    image: oasyce/chain:latest
+    container_name: oasyce-node3
+    ports:
+      - "26686:26656"
+      - "26687:26657"
+      - "1320:1317"
+      - "9093:9090"
+    volumes:
+      - node3-data:/root/.oasyced
+    networks:
+      - oasyce-testnet
+
+volumes:
+  node0-data:
+  node1-data:
+  node2-data:
+  node3-data:
+
+networks:
+  oasyce-testnet:
+    driver: bridge

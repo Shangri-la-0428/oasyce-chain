@@ -9,7 +9,7 @@ LDFLAGS := -X github.com/cosmos/cosmos-sdk/version.Name=oasyce \
            -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
            -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
 
-.PHONY: all build install test lint clean proto-gen
+.PHONY: all build install test lint clean proto-gen docker-build docker-testnet
 
 all: build
 
@@ -36,6 +36,14 @@ clean:
 proto-gen:
 	@echo "Generating protobuf files..."
 	@scripts/protocgen.sh
+
+docker-build:
+	@echo "Building Docker image..."
+	@docker build -t oasyce/chain:latest .
+
+docker-testnet:
+	@echo "Starting local testnet with docker-compose..."
+	@docker-compose up -d
 
 tidy:
 	@echo "Tidying go modules..."

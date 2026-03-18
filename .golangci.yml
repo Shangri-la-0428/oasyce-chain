@@ -1,0 +1,33 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  disable:
+    - interfacer
+    - golint
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  govet:
+    shadow: true
+  staticcheck:
+    checks:
+      - all
+
+issues:
+  exclude-rules:
+    # Ignore test files for some linters
+    - path: _test\.go
+      linters:
+        - errcheck
+  max-issues-per-linter: 0
+  max-same-issues: 0

@@ -126,6 +126,10 @@ func init() {
 	}
 	DefaultNodeHome = filepath.Join(userHomeDir, ".oasyced")
 
+	// Set the default bond denom so that all module DefaultGenesis calls
+	// (staking, mint, gov, crisis) produce "uoas" instead of "stake".
+	sdk.DefaultBondDenom = oasyceparams.BondDenom
+
 	// Set address prefixes.
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(oasyceparams.AccountAddressPrefix, oasyceparams.AccountPubKeyPrefix)

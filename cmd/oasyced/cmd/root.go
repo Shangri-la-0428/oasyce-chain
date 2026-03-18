@@ -20,7 +20,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	// genutil CLI is no longer directly imported; we use OasyceInitCmd instead.
 	"github.com/spf13/cobra"
 
 	"github.com/oasyce/chain/app"
@@ -85,7 +85,7 @@ func initAppConfig() (string, interface{}) {
 
 func initRootCmd(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(
-		cli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		OasyceInitCmd(),
 		debug.Cmd(),
 		keys.Commands(),
 	)
