@@ -14,13 +14,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	// genutil CLI is no longer directly imported; we use OasyceInitCmd instead.
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
 
 	"github.com/oasyce/chain/app"
@@ -73,7 +76,7 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
-	initRootCmd(rootCmd)
+	initRootCmd(rootCmd, txConfig)
 	return rootCmd
 }
 
@@ -83,9 +86,26 @@ func initAppConfig() (string, interface{}) {
 	return serverconfig.DefaultConfigTemplate, srvCfg
 }
 
-func initRootCmd(rootCmd *cobra.Command) {
+func initRootCmd(rootCmd *cobra.Command, txCfg client.TxConfig) {
+	addrCodec := addresscodec.NewBech32Codec("oasyce")
+	valCodec := addresscodec.NewBech32Codec("oasycevaloper")
+
+	genesisCmd := &cobra.Command{
+		Use:                        "genesis",
+		Short:                      "Application's genesis-related subcommands",
+		DisableFlagParsing:         false,
+		SuggestionsMinimumDistance: 2,
+	}
+	genesisCmd.AddCommand(
+		genutilcli.AddGenesisAccountCmd(app.DefaultNodeHome, addrCodec),
+		genutilcli.GenTxCmd(app.ModuleBasics, txCfg, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, valCodec),
+		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, genutiltypes.DefaultMessageValidator, valCodec),
+		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
+	)
+
 	rootCmd.AddCommand(
 		OasyceInitCmd(),
+		genesisCmd,
 		debug.Cmd(),
 		keys.Commands(),
 	)

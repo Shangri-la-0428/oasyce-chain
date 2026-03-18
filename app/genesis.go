@@ -68,13 +68,20 @@ func patchGovGenesis(cdc codec.JSONCodec, genesis map[string]json.RawMessage) {
 
 	// min_deposit: 1000 OAS = 1000 * 10^8 uoas = 100_000_000_000
 	gs.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(oasyceparams.BondDenom, math.NewInt(100_000_000_000)))
+	// expedited_min_deposit must be > min_deposit
+	gs.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(oasyceparams.BondDenom, math.NewInt(500_000_000_000)))
 	// Voting period: 7 days
 	votingPeriod := 7 * 24 * time.Hour
 	gs.Params.VotingPeriod = &votingPeriod
+	// Expedited voting: 1 day
+	expeditedVotingPeriod := 24 * time.Hour
+	gs.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
 	// Quorum: 0.4 (40%)
 	gs.Params.Quorum = "0.400000000000000000"
 	// Threshold: 0.667
 	gs.Params.Threshold = "0.667000000000000000"
+	// Expedited threshold must be > regular threshold
+	gs.Params.ExpeditedThreshold = "0.750000000000000000"
 
 	genesis["gov"] = cdc.MustMarshalJSON(&gs)
 }
