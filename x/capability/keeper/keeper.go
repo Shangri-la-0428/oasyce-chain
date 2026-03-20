@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 
 	"cosmossdk.io/math"
@@ -48,17 +47,21 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		return types.DefaultParams()
 	}
 	var params types.Params
-	if err := json.Unmarshal(bz, &params); err != nil {
+	if err := k.cdc.Unmarshal(bz, &params); err != nil {
 		return types.DefaultParams()
 	}
 	return params
 }
 
 // SetParams stores the module parameters.
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	store := ctx.KVStore(k.storeKey)
-	bz, _ := json.Marshal(params)
+	bz, err := k.cdc.Marshal(&params)
+	if err != nil {
+		return err
+	}
 	store.Set(types.ParamsKey, bz)
+	return nil
 }
 
 // --- Counter helpers ---
@@ -89,12 +92,16 @@ func (k Keeper) nextInvocationID(ctx sdk.Context) string {
 
 // --- Capability CRUD ---
 
-func (k Keeper) setCapability(ctx sdk.Context, cap types.Capability) {
+func (k Keeper) setCapability(ctx sdk.Context, cap types.Capability) error {
 	store := ctx.KVStore(k.storeKey)
-	bz, _ := json.Marshal(cap)
-	store.Set(types.CapabilityKey(cap.ID), bz)
+	bz, err := k.cdc.Marshal(&cap)
+	if err != nil {
+		return err
+	}
+	store.Set(types.CapabilityKey(cap.Id), bz)
 	// Secondary index: provider -> capability
-	store.Set(types.CapByProviderCapKey(cap.Provider, cap.ID), []byte(cap.ID))
+	store.Set(types.CapByProviderCapKey(cap.Provider, cap.Id), []byte(cap.Id))
+	return nil
 }
 
 // GetCapability returns a capability by ID.
@@ -105,7 +112,7 @@ func (k Keeper) GetCapability(ctx sdk.Context, id string) (types.Capability, err
 		return types.Capability{}, types.ErrCapabilityNotFound.Wrapf("id: %s", id)
 	}
 	var cap types.Capability
-	if err := json.Unmarshal(bz, &cap); err != nil {
+	if err := k.cdc.Unmarshal(bz, &cap); err != nil {
 		return types.Capability{}, err
 	}
 	return cap, nil
@@ -120,7 +127,7 @@ func (k Keeper) ListCapabilities(ctx sdk.Context, tag string) []types.Capability
 	var caps []types.Capability
 	for ; iter.Valid(); iter.Next() {
 		var cap types.Capability
-		if err := json.Unmarshal(iter.Value(), &cap); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &cap); err != nil {
 			continue
 		}
 		if tag != "" {
@@ -179,11 +186,11 @@ func (k Keeper) RegisterCapability(ctx sdk.Context, msg *types.MsgRegisterCapabi
 
 	id := k.nextCapabilityID(ctx)
 	cap := types.Capability{
-		ID:           id,
+		Id:           id,
 		Provider:     msg.Creator,
 		Name:         msg.Name,
 		Description:  msg.Description,
-		EndpointURL:  msg.EndpointURL,
+		EndpointUrl:  msg.EndpointUrl,
 		PricePerCall: msg.PricePerCall,
 		Tags:         msg.Tags,
 		RateLimit:    msg.RateLimit,
@@ -192,9 +199,11 @@ func (k Keeper) RegisterCapability(ctx sdk.Context, msg *types.MsgRegisterCapabi
 		AvgLatencyMs: 0,
 		SuccessRate:  10000, // 100% initially
 		IsActive:     true,
-		CreatedAt:    ctx.BlockTime().Unix(),
+		CreatedAt:    ctx.BlockTime(),
 	}
-	k.setCapability(ctx, cap)
+	if err := k.setCapability(ctx, cap); err != nil {
+		return "", err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"capability_registered",
@@ -208,13 +217,13 @@ func (k Keeper) RegisterCapability(ctx sdk.Context, msg *types.MsgRegisterCapabi
 
 // InvokeCapability creates an escrow and records a pending invocation.
 func (k Keeper) InvokeCapability(ctx sdk.Context, msg *types.MsgInvokeCapability) (invocationID, escrowID string, err error) {
-	cap, err := k.GetCapability(ctx, msg.CapabilityID)
+	cap, err := k.GetCapability(ctx, msg.CapabilityId)
 	if err != nil {
 		return "", "", err
 	}
 
 	if !cap.IsActive {
-		return "", "", types.ErrInactive.Wrapf("capability %s is inactive", cap.ID)
+		return "", "", types.ErrInactive.Wrapf("capability %s is inactive", cap.Id)
 	}
 
 	// Compute input hash for the invocation record.
@@ -237,23 +246,25 @@ func (k Keeper) InvokeCapability(ctx sdk.Context, msg *types.MsgInvokeCapability
 
 	invocationID = k.nextInvocationID(ctx)
 	inv := types.Invocation{
-		ID:           invocationID,
-		CapabilityID: cap.ID,
+		Id:           invocationID,
+		CapabilityId: cap.Id,
 		Consumer:     msg.Creator,
 		Provider:     cap.Provider,
 		InputHash:    inputHash,
 		OutputHash:   "",
 		Status:       types.StatusPending,
 		Amount:       cap.PricePerCall,
-		EscrowID:     escrowID,
-		Timestamp:    ctx.BlockTime().Unix(),
+		EscrowId:     escrowID,
+		Timestamp:    ctx.BlockTime(),
 	}
-	k.setInvocation(ctx, inv)
+	if err := k.setInvocation(ctx, inv); err != nil {
+		return "", "", err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"capability_invoked",
 		sdk.NewAttribute("invocation_id", invocationID),
-		sdk.NewAttribute("capability_id", cap.ID),
+		sdk.NewAttribute("capability_id", cap.Id),
 		sdk.NewAttribute("consumer", msg.Creator),
 		sdk.NewAttribute("escrow_id", escrowID),
 	))
@@ -276,18 +287,20 @@ func (k Keeper) CompleteInvocation(ctx sdk.Context, invocationID, outputHash, ca
 	}
 
 	// Release escrow to pay the provider.
-	if inv.Amount.IsPositive() && inv.EscrowID != "" {
-		if err := k.settlementKeeper.ReleaseEscrow(ctx, inv.EscrowID, caller); err != nil {
+	if inv.Amount.IsPositive() && inv.EscrowId != "" {
+		if err := k.settlementKeeper.ReleaseEscrow(ctx, inv.EscrowId, caller); err != nil {
 			return err
 		}
 	}
 
 	inv.Status = types.StatusSuccess
 	inv.OutputHash = outputHash
-	k.setInvocation(ctx, inv)
+	if err := k.setInvocation(ctx, inv); err != nil {
+		return err
+	}
 
 	// Update capability stats.
-	cap, err := k.GetCapability(ctx, inv.CapabilityID)
+	cap, err := k.GetCapability(ctx, inv.CapabilityId)
 	if err == nil {
 		cap.TotalCalls++
 		cap.TotalEarned = cap.TotalEarned.Add(inv.Amount.Amount)
@@ -296,15 +309,15 @@ func (k Keeper) CompleteInvocation(ctx sdk.Context, invocationID, outputHash, ca
 		if cap.TotalCalls == 1 {
 			cap.SuccessRate = 10000
 		} else {
-			cap.SuccessRate = (cap.SuccessRate*(cap.TotalCalls-1) + 10000) / cap.TotalCalls
+			cap.SuccessRate = (cap.SuccessRate*(uint32(cap.TotalCalls)-1) + 10000) / uint32(cap.TotalCalls)
 		}
-		k.setCapability(ctx, cap)
+		_ = k.setCapability(ctx, cap)
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"invocation_completed",
 		sdk.NewAttribute("invocation_id", invocationID),
-		sdk.NewAttribute("capability_id", inv.CapabilityID),
+		sdk.NewAttribute("capability_id", inv.CapabilityId),
 		sdk.NewAttribute("output_hash", outputHash),
 	))
 
@@ -326,32 +339,34 @@ func (k Keeper) FailInvocation(ctx sdk.Context, invocationID, caller string) err
 	}
 
 	// Refund escrow to consumer.
-	if inv.Amount.IsPositive() && inv.EscrowID != "" {
-		if err := k.settlementKeeper.RefundEscrow(ctx, inv.EscrowID, caller); err != nil {
+	if inv.Amount.IsPositive() && inv.EscrowId != "" {
+		if err := k.settlementKeeper.RefundEscrow(ctx, inv.EscrowId, caller); err != nil {
 			return err
 		}
 	}
 
 	inv.Status = types.StatusFailed
-	k.setInvocation(ctx, inv)
+	if err := k.setInvocation(ctx, inv); err != nil {
+		return err
+	}
 
 	// Update capability stats (record failure).
-	cap, err := k.GetCapability(ctx, inv.CapabilityID)
+	cap, err := k.GetCapability(ctx, inv.CapabilityId)
 	if err == nil {
 		cap.TotalCalls++
 		// successRate = (oldRate * (totalCalls-1) + 0) / totalCalls
 		if cap.TotalCalls == 1 {
 			cap.SuccessRate = 0
 		} else {
-			cap.SuccessRate = (cap.SuccessRate * (cap.TotalCalls - 1)) / cap.TotalCalls
+			cap.SuccessRate = (cap.SuccessRate * (uint32(cap.TotalCalls) - 1)) / uint32(cap.TotalCalls)
 		}
-		k.setCapability(ctx, cap)
+		_ = k.setCapability(ctx, cap)
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"invocation_failed",
 		sdk.NewAttribute("invocation_id", invocationID),
-		sdk.NewAttribute("capability_id", inv.CapabilityID),
+		sdk.NewAttribute("capability_id", inv.CapabilityId),
 	))
 
 	return nil
@@ -359,7 +374,7 @@ func (k Keeper) FailInvocation(ctx sdk.Context, invocationID, caller string) err
 
 // UpdateCapability updates mutable fields of a capability. Only the owner can update.
 func (k Keeper) UpdateCapability(ctx sdk.Context, msg *types.MsgUpdateCapability) error {
-	cap, err := k.GetCapability(ctx, msg.CapabilityID)
+	cap, err := k.GetCapability(ctx, msg.CapabilityId)
 	if err != nil {
 		return err
 	}
@@ -367,8 +382,8 @@ func (k Keeper) UpdateCapability(ctx sdk.Context, msg *types.MsgUpdateCapability
 		return types.ErrUnauthorized.Wrap("only the provider can update the capability")
 	}
 
-	if msg.EndpointURL != "" {
-		cap.EndpointURL = msg.EndpointURL
+	if msg.EndpointUrl != "" {
+		cap.EndpointUrl = msg.EndpointUrl
 	}
 	if msg.PricePerCall != nil && msg.PricePerCall.IsValid() {
 		cap.PricePerCall = *msg.PricePerCall
@@ -384,11 +399,13 @@ func (k Keeper) UpdateCapability(ctx sdk.Context, msg *types.MsgUpdateCapability
 		cap.Description = msg.Description
 	}
 
-	k.setCapability(ctx, cap)
+	if err := k.setCapability(ctx, cap); err != nil {
+		return err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"capability_updated",
-		sdk.NewAttribute("capability_id", msg.CapabilityID),
+		sdk.NewAttribute("capability_id", msg.CapabilityId),
 		sdk.NewAttribute("provider", msg.Creator),
 	))
 
@@ -397,7 +414,7 @@ func (k Keeper) UpdateCapability(ctx sdk.Context, msg *types.MsgUpdateCapability
 
 // DeactivateCapability marks a capability as inactive. Only the owner can deactivate.
 func (k Keeper) DeactivateCapability(ctx sdk.Context, msg *types.MsgDeactivateCapability) error {
-	cap, err := k.GetCapability(ctx, msg.CapabilityID)
+	cap, err := k.GetCapability(ctx, msg.CapabilityId)
 	if err != nil {
 		return err
 	}
@@ -406,11 +423,13 @@ func (k Keeper) DeactivateCapability(ctx sdk.Context, msg *types.MsgDeactivateCa
 	}
 
 	cap.IsActive = false
-	k.setCapability(ctx, cap)
+	if err := k.setCapability(ctx, cap); err != nil {
+		return err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"capability_deactivated",
-		sdk.NewAttribute("capability_id", msg.CapabilityID),
+		sdk.NewAttribute("capability_id", msg.CapabilityId),
 		sdk.NewAttribute("provider", msg.Creator),
 	))
 
@@ -419,10 +438,14 @@ func (k Keeper) DeactivateCapability(ctx sdk.Context, msg *types.MsgDeactivateCa
 
 // --- Invocation helpers ---
 
-func (k Keeper) setInvocation(ctx sdk.Context, inv types.Invocation) {
+func (k Keeper) setInvocation(ctx sdk.Context, inv types.Invocation) error {
 	store := ctx.KVStore(k.storeKey)
-	bz, _ := json.Marshal(inv)
-	store.Set(types.InvocationKey(inv.ID), bz)
+	bz, err := k.cdc.Marshal(&inv)
+	if err != nil {
+		return err
+	}
+	store.Set(types.InvocationKey(inv.Id), bz)
+	return nil
 }
 
 // GetInvocation returns an invocation by ID.
@@ -433,7 +456,7 @@ func (k Keeper) GetInvocation(ctx sdk.Context, id string) (types.Invocation, err
 		return types.Invocation{}, types.ErrInvocationNotFound.Wrapf("id: %s", id)
 	}
 	var inv types.Invocation
-	if err := json.Unmarshal(bz, &inv); err != nil {
+	if err := k.cdc.Unmarshal(bz, &inv); err != nil {
 		return types.Invocation{}, err
 	}
 	return inv, nil
@@ -443,12 +466,12 @@ func (k Keeper) GetInvocation(ctx sdk.Context, id string) (types.Invocation, err
 
 // InitGenesis initializes the module from genesis state.
 func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
-	k.SetParams(ctx, gs.Params)
+	_ = k.SetParams(ctx, gs.Params)
 	for _, cap := range gs.Capabilities {
-		k.setCapability(ctx, cap)
+		_ = k.setCapability(ctx, cap)
 	}
 	for _, inv := range gs.Invocations {
-		k.setInvocation(ctx, inv)
+		_ = k.setInvocation(ctx, inv)
 	}
 }
 
@@ -463,7 +486,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	var invocations []types.Invocation
 	for ; iter.Valid(); iter.Next() {
 		var inv types.Invocation
-		if err := json.Unmarshal(iter.Value(), &inv); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &inv); err != nil {
 			continue
 		}
 		invocations = append(invocations, inv)

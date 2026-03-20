@@ -6,47 +6,66 @@ import (
 	"github.com/oasyce/chain/x/datarights/types"
 )
 
-// MsgServer implements the datarights message service.
-type MsgServer struct {
+var _ types.MsgServer = msgServer{}
+
+// msgServer implements the datarights MsgServer interface.
+type msgServer struct {
 	Keeper
 }
 
 // NewMsgServer returns an implementation of the datarights MsgServer.
-func NewMsgServer(keeper Keeper) MsgServer {
-	return MsgServer{Keeper: keeper}
+func NewMsgServer(keeper Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper}
 }
 
 // RegisterDataAsset handles MsgRegisterDataAsset.
-func (m MsgServer) RegisterDataAsset(ctx context.Context, msg *types.MsgRegisterDataAsset) (*types.MsgRegisterDataAssetResponse, error) {
+func (m msgServer) RegisterDataAsset(ctx context.Context, msg *types.MsgRegisterDataAsset) (*types.MsgRegisterDataAssetResponse, error) {
 	assetID, err := m.Keeper.RegisterDataAsset(ctx, *msg)
 	if err != nil {
 		return nil, err
 	}
-	return &types.MsgRegisterDataAssetResponse{AssetID: assetID}, nil
+	return &types.MsgRegisterDataAssetResponse{AssetId: assetID}, nil
 }
 
 // BuyShares handles MsgBuyShares.
-func (m MsgServer) BuyShares(ctx context.Context, msg *types.MsgBuyShares) (*types.MsgBuySharesResponse, error) {
+func (m msgServer) BuyShares(ctx context.Context, msg *types.MsgBuyShares) (*types.MsgBuySharesResponse, error) {
 	sharesMinted, err := m.Keeper.BuyShares(ctx, *msg)
 	if err != nil {
 		return nil, err
 	}
-	return &types.MsgBuySharesResponse{SharesPurchased: sharesMinted.String()}, nil
+	return &types.MsgBuySharesResponse{SharesPurchased: sharesMinted}, nil
 }
 
 // FileDispute handles MsgFileDispute.
-func (m MsgServer) FileDispute(ctx context.Context, msg *types.MsgFileDispute) (*types.MsgFileDisputeResponse, error) {
+func (m msgServer) FileDispute(ctx context.Context, msg *types.MsgFileDispute) (*types.MsgFileDisputeResponse, error) {
 	disputeID, err := m.Keeper.FileDispute(ctx, *msg)
 	if err != nil {
 		return nil, err
 	}
-	return &types.MsgFileDisputeResponse{DisputeID: disputeID}, nil
+	return &types.MsgFileDisputeResponse{DisputeId: disputeID}, nil
 }
 
 // ResolveDispute handles MsgResolveDispute.
-func (m MsgServer) ResolveDispute(ctx context.Context, msg *types.MsgResolveDispute) (*types.MsgResolveDisputeResponse, error) {
+func (m msgServer) ResolveDispute(ctx context.Context, msg *types.MsgResolveDispute) (*types.MsgResolveDisputeResponse, error) {
 	if err := m.Keeper.ResolveDispute(ctx, *msg); err != nil {
 		return nil, err
 	}
 	return &types.MsgResolveDisputeResponse{}, nil
+}
+
+// DelistAsset handles MsgDelistAsset.
+func (m msgServer) DelistAsset(ctx context.Context, msg *types.MsgDelistAsset) (*types.MsgDelistAssetResponse, error) {
+	if err := m.Keeper.DelistAsset(ctx, *msg); err != nil {
+		return nil, err
+	}
+	return &types.MsgDelistAssetResponse{}, nil
+}
+
+// SellShares handles MsgSellShares.
+func (m msgServer) SellShares(ctx context.Context, msg *types.MsgSellShares) (*types.MsgSellSharesResponse, error) {
+	payout, err := m.Keeper.SellShares(ctx, *msg)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgSellSharesResponse{Payout: payout}, nil
 }

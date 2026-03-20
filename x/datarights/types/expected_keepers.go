@@ -20,5 +20,5 @@ type BankKeeper interface {
 // SettlementKeeper defines the expected settlement module keeper interface.
 type SettlementKeeper interface {
 	GetBondingCurveState(ctx sdk.Context, assetID string) (settlementtypes.BondingCurveState, bool)
-	BuyShares(ctx context.Context, assetID string, buyer string, paymentAmount math.Int) (math.Int, error)
+	BuyShares(ctx sdk.Context, assetID string, buyer string, paymentAmount math.Int) (math.Int, error)
 }

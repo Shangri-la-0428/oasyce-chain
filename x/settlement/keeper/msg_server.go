@@ -1,55 +1,56 @@
 package keeper
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/oasyce/chain/x/settlement/types"
 )
 
-// MsgServer implements the settlement message service.
-type MsgServer struct {
+var _ types.MsgServer = msgServer{}
+
+// msgServer implements the settlement MsgServer interface.
+type msgServer struct {
 	Keeper
 }
 
 // NewMsgServer returns an implementation of the settlement MsgServer interface.
-func NewMsgServer(keeper Keeper) MsgServer {
-	return MsgServer{Keeper: keeper}
+func NewMsgServer(keeper Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper}
 }
 
 // CreateEscrow handles MsgCreateEscrow.
-func (m MsgServer) CreateEscrow(ctx sdk.Context, msg *types.MsgCreateEscrow) (*MsgCreateEscrowResponse, error) {
-	escrowID, err := m.Keeper.CreateEscrow(ctx, msg.Creator, msg.Provider, msg.Amount, 0)
+func (m msgServer) CreateEscrow(goCtx context.Context, msg *types.MsgCreateEscrow) (*types.MsgCreateEscrowResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// The proto MsgCreateEscrow does not carry a provider field.
+	// The provider is determined by the capability/asset being purchased.
+	// For now, pass the creator as a placeholder; real provider resolution
+	// happens in the capability module via the keeper interface.
+	escrowID, err := m.Keeper.CreateEscrow(ctx, msg.Creator, msg.Creator, msg.Amount, 0)
 	if err != nil {
 		return nil, err
 	}
-	return &MsgCreateEscrowResponse{EscrowID: escrowID}, nil
+	return &types.MsgCreateEscrowResponse{EscrowId: escrowID}, nil
 }
 
 // ReleaseEscrow handles MsgReleaseEscrow.
-func (m MsgServer) ReleaseEscrow(ctx sdk.Context, msg *types.MsgReleaseEscrow) (*MsgReleaseEscrowResponse, error) {
-	if err := m.Keeper.ReleaseEscrow(ctx, msg.EscrowID, msg.Creator); err != nil {
+func (m msgServer) ReleaseEscrow(goCtx context.Context, msg *types.MsgReleaseEscrow) (*types.MsgReleaseEscrowResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := m.Keeper.ReleaseEscrow(ctx, msg.EscrowId, msg.Creator); err != nil {
 		return nil, err
 	}
-	return &MsgReleaseEscrowResponse{}, nil
+	return &types.MsgReleaseEscrowResponse{}, nil
 }
 
 // RefundEscrow handles MsgRefundEscrow.
-func (m MsgServer) RefundEscrow(ctx sdk.Context, msg *types.MsgRefundEscrow) (*MsgRefundEscrowResponse, error) {
-	if err := m.Keeper.RefundEscrow(ctx, msg.EscrowID, msg.Creator); err != nil {
+func (m msgServer) RefundEscrow(goCtx context.Context, msg *types.MsgRefundEscrow) (*types.MsgRefundEscrowResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := m.Keeper.RefundEscrow(ctx, msg.EscrowId, msg.Creator); err != nil {
 		return nil, err
 	}
-	return &MsgRefundEscrowResponse{}, nil
+	return &types.MsgRefundEscrowResponse{}, nil
 }
-
-// Response types (plain Go, replacing protobuf-generated types).
-
-// MsgCreateEscrowResponse is the response for CreateEscrow.
-type MsgCreateEscrowResponse struct {
-	EscrowID string `json:"escrow_id"`
-}
-
-// MsgReleaseEscrowResponse is the response for ReleaseEscrow.
-type MsgReleaseEscrowResponse struct{}
-
-// MsgRefundEscrowResponse is the response for RefundEscrow.
-type MsgRefundEscrowResponse struct{}

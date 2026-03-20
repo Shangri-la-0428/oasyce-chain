@@ -12,35 +12,62 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	txsigning "cosmossdk.io/x/tx/signing"
+	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
 	"github.com/oasyce/chain/app"
+	capabilitycli "github.com/oasyce/chain/x/capability/cli"
+	datarightscli "github.com/oasyce/chain/x/datarights/cli"
+	reputationcli "github.com/oasyce/chain/x/reputation/cli"
+	settlementcli "github.com/oasyce/chain/x/settlement/cli"
 )
 
 // NewRootCmd creates the root command for the oasyced daemon.
 func NewRootCmd() *cobra.Command {
 	// Address prefixes are already set in app.init().
 
-	// Create the encoding config.
-	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	// Create the encoding config with proper address codecs.
+	addrCodec := addresscodec.NewBech32Codec("oasyce")
+	valAddrCodec := addresscodec.NewBech32Codec("oasycevaloper")
+	consAddrCodec := addresscodec.NewBech32Codec("oasycevalcons")
+
+	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
+		ProtoFiles: proto.HybridResolver,
+		SigningOptions: txsigning.Options{
+			AddressCodec:          addrCodec,
+			ValidatorAddressCodec: valAddrCodec,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 	appCodec := codec.NewProtoCodec(interfaceRegistry)
 	legacyAmino := codec.NewLegacyAmino()
 	txConfig := authtx.NewTxConfig(appCodec, authtx.DefaultSignModes)
 
-	// Register module interfaces.
-	authtypes.RegisterInterfaces(interfaceRegistry)
+	// Register all module interfaces (crypto keys, staking msgs, etc.).
+	app.ModuleBasics.RegisterInterfaces(interfaceRegistry)
+	cryptocodec.RegisterInterfaces(interfaceRegistry)
+
+	_ = consAddrCodec // available for future use
 
 	initClientCtx := client.Context{}.
 		WithCodec(appCodec).
@@ -103,9 +130,58 @@ func initRootCmd(rootCmd *cobra.Command, txCfg client.TxConfig) {
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 	)
 
+	// Query commands
+	queryCmd := &cobra.Command{
+		Use:                        "query",
+		Aliases:                    []string{"q"},
+		Short:                      "Querying subcommands",
+		DisableFlagParsing:         false,
+		SuggestionsMinimumDistance: 2,
+	}
+	queryCmd.AddCommand(
+		rpc.QueryEventForTxCmd(),
+		rpc.ValidatorCommand(),
+		server.QueryBlockCmd(),
+		authcmd.QueryTxsByEventsCmd(),
+		authcmd.QueryTxCmd(),
+	)
+	app.ModuleBasics.AddQueryCommands(queryCmd)
+	queryCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+
+	// Tx commands
+	txCmd := &cobra.Command{
+		Use:                        "tx",
+		Short:                      "Transactions subcommands",
+		DisableFlagParsing:         false,
+		SuggestionsMinimumDistance: 2,
+	}
+	txCmd.AddCommand(
+		authcmd.GetSignCommand(),
+		authcmd.GetSignBatchCommand(),
+		authcmd.GetMultiSignCommand(),
+		authcmd.GetMultiSignBatchCmd(),
+		authcmd.GetValidateSignaturesCommand(),
+		authcmd.GetBroadcastCommand(),
+		authcmd.GetEncodeCommand(),
+		authcmd.GetDecodeCommand(),
+	)
+	// Note: ModuleBasics.AddTxCommands panics because distr/staking modules
+	// need AddressCodec which isn't set in BasicManager. Add custom module
+	// tx commands individually.
+	txCmd.AddCommand(
+		bankcli.NewSendTxCmd(addrCodec),
+		datarightscli.GetTxCmd(),
+		settlementcli.GetTxCmd(),
+		capabilitycli.GetTxCmd(),
+		reputationcli.GetTxCmd(),
+	)
+	txCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+
 	rootCmd.AddCommand(
 		OasyceInitCmd(),
 		genesisCmd,
+		queryCmd,
+		txCmd,
 		debug.Cmd(),
 		keys.Commands(),
 	)
@@ -114,12 +190,14 @@ func initRootCmd(rootCmd *cobra.Command, txCfg client.TxConfig) {
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+	baseappOptions := server.DefaultBaseappOptions(appOpts)
 	return app.NewOasyceApp(
 		logger,
 		db,
 		traceStore,
 		true,
 		appOpts,
+		baseappOptions...,
 	)
 }
 

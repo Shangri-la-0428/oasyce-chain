@@ -167,4 +167,8 @@ message Dispute {
   // resolved_at is the timestamp when the dispute was resolved.
   google.protobuf.Timestamp resolved_at = 9
       [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+
+  // requested_remedy is the remedy requested by the plaintiff when filing.
+  // The jury votes on whether to apply this remedy.
+  DisputeRemedy requested_remedy = 10;
 }

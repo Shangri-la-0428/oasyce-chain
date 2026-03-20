@@ -76,7 +76,7 @@ func TestSubmitFeedbackAndScoreUpdate(t *testing.T) {
 
 	// Register a mock invocation.
 	mockCap.invocations["INV_001"] = captypes.Invocation{
-		ID:       "INV_001",
+		Id:       "INV_001",
 		Consumer: consumer,
 		Provider: provider,
 	}
@@ -104,7 +104,7 @@ func TestSubmitFeedbackAndScoreUpdate(t *testing.T) {
 
 	// Score should be approximately 400 (since single feedback, no decay, verified).
 	// The normalized rating is 400/500 = 0.8, then scaled back to 400.
-	scoreFloat := score.TotalScore.MustFloat64()
+	scoreFloat := float64(score.TotalScore)
 	if scoreFloat < 399.0 || scoreFloat > 401.0 {
 		t.Fatalf("expected score ~400, got %f", scoreFloat)
 	}
@@ -116,12 +116,12 @@ func TestVerifiedVsUnverifiedWeighting(t *testing.T) {
 
 	// Create two invocations with different consumers.
 	mockCap.invocations["INV_001"] = captypes.Invocation{
-		ID:       "INV_001",
+		Id:       "INV_001",
 		Consumer: consumer,
 		Provider: provider,
 	}
 	mockCap.invocations["INV_002"] = captypes.Invocation{
-		ID:       "INV_002",
+		Id:       "INV_002",
 		Consumer: provider2, // provider2 is the consumer here
 		Provider: provider,
 	}
@@ -136,7 +136,7 @@ func TestVerifiedVsUnverifiedWeighting(t *testing.T) {
 	// We need an unverified feedback: someone who is NOT the consumer.
 	// Let's create INV_003 where consumer is someone else, and provider2 submits unverified feedback.
 	mockCap.invocations["INV_003"] = captypes.Invocation{
-		ID:       "INV_003",
+		Id:       "INV_003",
 		Consumer: "cosmos1other00000000000000000000000000000000000",
 		Provider: provider,
 	}
@@ -157,7 +157,7 @@ func TestVerifiedVsUnverifiedWeighting(t *testing.T) {
 	// Unverified: weight=0.1, score=0/500=0.0
 	// Weighted avg = (1.0*1.0 + 0.1*0.0) / (1.0 + 0.1) = 1.0 / 1.1 ~= 0.9091
 	// Scaled: 0.9091 * 500 ~= 454.5
-	scoreFloat := score.TotalScore.MustFloat64()
+	scoreFloat := float64(score.TotalScore)
 	if scoreFloat < 450.0 || scoreFloat > 460.0 {
 		t.Fatalf("expected score ~454.5 (verified heavily outweighs unverified), got %f", scoreFloat)
 	}
@@ -175,7 +175,7 @@ func TestDuplicatePrevention(t *testing.T) {
 	k, ctx, mockCap := setupKeeper(t)
 
 	mockCap.invocations["INV_001"] = captypes.Invocation{
-		ID:       "INV_001",
+		Id:       "INV_001",
 		Consumer: consumer,
 		Provider: provider,
 	}
@@ -198,12 +198,12 @@ func TestTimeDecay(t *testing.T) {
 	k, ctx, mockCap := setupKeeper(t)
 
 	mockCap.invocations["INV_001"] = captypes.Invocation{
-		ID:       "INV_001",
+		Id:       "INV_001",
 		Consumer: consumer,
 		Provider: provider,
 	}
 	mockCap.invocations["INV_002"] = captypes.Invocation{
-		ID:       "INV_002",
+		Id:       "INV_002",
 		Consumer: provider2,
 		Provider: provider,
 	}
@@ -234,7 +234,7 @@ func TestTimeDecay(t *testing.T) {
 	// New: weight=1.0*1.0=1.0, score=1.0
 	// Weighted avg = (0.125*0.0 + 1.0*1.0) / (0.125 + 1.0) = 1.0 / 1.125 ~= 0.8889
 	// Scaled: 0.8889 * 500 ~= 444.4
-	scoreFloat := score.TotalScore.MustFloat64()
+	scoreFloat := float64(score.TotalScore)
 	if scoreFloat < 440.0 || scoreFloat > 450.0 {
 		t.Fatalf("expected score ~444 (old bad feedback decayed), got %f", scoreFloat)
 	}
@@ -245,7 +245,7 @@ func TestSelfFeedbackPrevention(t *testing.T) {
 	k, ctx, mockCap := setupKeeper(t)
 
 	mockCap.invocations["INV_001"] = captypes.Invocation{
-		ID:       "INV_001",
+		Id:       "INV_001",
 		Consumer: provider,  // provider is also the consumer
 		Provider: provider,
 	}
@@ -261,12 +261,12 @@ func TestCooldown(t *testing.T) {
 	k, ctx, mockCap := setupKeeper(t)
 
 	mockCap.invocations["INV_001"] = captypes.Invocation{
-		ID:       "INV_001",
+		Id:       "INV_001",
 		Consumer: consumer,
 		Provider: provider,
 	}
 	mockCap.invocations["INV_002"] = captypes.Invocation{
-		ID:       "INV_002",
+		Id:       "INV_002",
 		Consumer: consumer,
 		Provider: provider,
 	}
@@ -296,7 +296,7 @@ func TestInvalidRating(t *testing.T) {
 	k, ctx, mockCap := setupKeeper(t)
 
 	mockCap.invocations["INV_001"] = captypes.Invocation{
-		ID:       "INV_001",
+		Id:       "INV_001",
 		Consumer: consumer,
 		Provider: provider,
 	}

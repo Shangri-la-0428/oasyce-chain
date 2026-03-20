@@ -3,6 +3,7 @@ package oasyce.reputation.v1;
 
 option go_package = "github.com/oasyce/chain/x/reputation/types";
 
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "oasyce/reputation/v1/types.proto";
 
@@ -16,6 +17,9 @@ message GenesisState {
 
   // params defines the module parameters at genesis.
   Params params = 3 [(gogoproto.nullable) = false];
+
+  // reports is the list of all misbehavior reports at genesis.
+  repeated MisbehaviorReport reports = 4 [(gogoproto.nullable) = false];
 }
 
 // Params defines the parameters for the reputation module.
@@ -30,4 +34,18 @@ message Params {
 
   // feedback_cooldown_seconds is the minimum time between feedbacks from the same address.
   uint64 feedback_cooldown_seconds = 3;
+
+  // verified_weight is the weight multiplier for verified feedbacks.
+  string verified_weight = 4 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // unverified_weight is the weight multiplier for unverified feedbacks.
+  string unverified_weight = 5 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 }

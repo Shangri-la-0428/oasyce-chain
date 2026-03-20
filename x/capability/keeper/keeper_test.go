@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -23,11 +24,11 @@ import (
 
 type mockBankKeeper struct{}
 
-func (m mockBankKeeper) SendCoins(_ sdk.Context, _, _ sdk.AccAddress, _ sdk.Coins) error {
+func (m mockBankKeeper) SendCoins(_ context.Context, _, _ sdk.AccAddress, _ sdk.Coins) error {
 	return nil
 }
 
-func (m mockBankKeeper) SpendableCoins(_ sdk.Context, _ sdk.AccAddress) sdk.Coins {
+func (m mockBankKeeper) SpendableCoins(_ context.Context, _ sdk.AccAddress) sdk.Coins {
 	return sdk.NewCoins(sdk.NewCoin("uoas", math.NewInt(10000000000)))
 }
 
@@ -83,7 +84,9 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context, *mockSettlementKeepe
 	settlement := newMockSettlementKeeper()
 
 	k := keeper.NewKeeper(storeKey, cdc, bank, settlement)
-	k.SetParams(ctx, types.DefaultParams())
+	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
+		t.Fatal(err)
+	}
 
 	return k, ctx, settlement
 }
@@ -95,7 +98,7 @@ func TestRegisterAndGetCapability(t *testing.T) {
 		Creator:      "oasyce1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tp3",
 		Name:         "Translation API",
 		Description:  "Translate text between languages",
-		EndpointURL:  "https://api.example.com/translate",
+		EndpointUrl:  "https://api.example.com/translate",
 		PricePerCall: sdk.NewInt64Coin("uoas", 50000000),
 		Tags:         []string{"nlp", "translation"},
 		RateLimit:    60,
@@ -136,7 +139,7 @@ func TestInvokeAndCompleteFlow(t *testing.T) {
 		Creator:      provider,
 		Name:         "Test API",
 		Description:  "A test capability",
-		EndpointURL:  "https://api.test.com",
+		EndpointUrl:  "https://api.test.com",
 		PricePerCall: sdk.NewInt64Coin("uoas", 100000),
 		Tags:         []string{"test"},
 		RateLimit:    100,
@@ -149,7 +152,7 @@ func TestInvokeAndCompleteFlow(t *testing.T) {
 	// Invoke capability.
 	invokeMsg := &types.MsgInvokeCapability{
 		Creator:      consumer,
-		CapabilityID: capID,
+		CapabilityId: capID,
 		Input:        []byte(`{"query": "hello"}`),
 	}
 	invID, escrowID, err := k.InvokeCapability(ctx, invokeMsg)
@@ -214,7 +217,7 @@ func TestInvokeAndFailRefundFlow(t *testing.T) {
 		Creator:      provider,
 		Name:         "Fail API",
 		Description:  "Will fail",
-		EndpointURL:  "https://api.fail.com",
+		EndpointUrl:  "https://api.fail.com",
 		PricePerCall: sdk.NewInt64Coin("uoas", 200000),
 		Tags:         []string{"test"},
 		RateLimit:    10,
@@ -227,7 +230,7 @@ func TestInvokeAndFailRefundFlow(t *testing.T) {
 	// Invoke.
 	invokeMsg := &types.MsgInvokeCapability{
 		Creator:      consumer,
-		CapabilityID: capID,
+		CapabilityId: capID,
 		Input:        []byte(`{"data": "test"}`),
 	}
 	invID, escrowID, err := k.InvokeCapability(ctx, invokeMsg)
@@ -271,7 +274,7 @@ func TestDeactivateCapability(t *testing.T) {
 		Creator:      provider,
 		Name:         "Deactivate Me",
 		Description:  "Will be deactivated",
-		EndpointURL:  "https://api.deactivate.com",
+		EndpointUrl:  "https://api.deactivate.com",
 		PricePerCall: sdk.NewInt64Coin("uoas", 100),
 		Tags:         []string{"temp"},
 		RateLimit:    10,
@@ -284,7 +287,7 @@ func TestDeactivateCapability(t *testing.T) {
 	// Deactivate.
 	deactivateMsg := &types.MsgDeactivateCapability{
 		Creator:      provider,
-		CapabilityID: capID,
+		CapabilityId: capID,
 	}
 	err = k.DeactivateCapability(ctx, deactivateMsg)
 	if err != nil {
@@ -299,7 +302,7 @@ func TestDeactivateCapability(t *testing.T) {
 	// Try to invoke deactivated capability.
 	invokeMsg := &types.MsgInvokeCapability{
 		Creator:      "oasyce1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5abcde",
-		CapabilityID: capID,
+		CapabilityId: capID,
 		Input:        []byte(`{}`),
 	}
 	_, _, err = k.InvokeCapability(ctx, invokeMsg)
@@ -318,7 +321,7 @@ func TestDeactivateUnauthorized(t *testing.T) {
 		Creator:      provider,
 		Name:         "Auth Test",
 		Description:  "Test auth",
-		EndpointURL:  "https://api.auth.com",
+		EndpointUrl:  "https://api.auth.com",
 		PricePerCall: sdk.NewInt64Coin("uoas", 100),
 		Tags:         []string{},
 		RateLimit:    10,
@@ -328,7 +331,7 @@ func TestDeactivateUnauthorized(t *testing.T) {
 	// Try to deactivate as non-owner.
 	deactivateMsg := &types.MsgDeactivateCapability{
 		Creator:      other,
-		CapabilityID: capID,
+		CapabilityId: capID,
 	}
 	err := k.DeactivateCapability(ctx, deactivateMsg)
 	if err == nil {
@@ -346,7 +349,7 @@ func TestListByProvider(t *testing.T) {
 			Creator:      provider,
 			Name:         "API " + string(rune('A'+i)),
 			Description:  "desc",
-			EndpointURL:  "https://api.test.com",
+			EndpointUrl:  "https://api.test.com",
 			PricePerCall: sdk.NewInt64Coin("uoas", 100),
 			Tags:         []string{"test"},
 			RateLimit:    10,
@@ -368,13 +371,15 @@ func TestRateLimitExceeded(t *testing.T) {
 	// Set max rate limit to 50.
 	params := types.DefaultParams()
 	params.MaxRateLimit = 50
-	k.SetParams(ctx, params)
+	if err := k.SetParams(ctx, params); err != nil {
+		t.Fatal(err)
+	}
 
 	msg := &types.MsgRegisterCapability{
 		Creator:      "oasyce1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tp3",
 		Name:         "Rate Test",
 		Description:  "Test rate limit",
-		EndpointURL:  "https://api.rate.com",
+		EndpointUrl:  "https://api.rate.com",
 		PricePerCall: sdk.NewInt64Coin("uoas", 100),
 		Tags:         []string{},
 		RateLimit:    100, // Exceeds max of 50

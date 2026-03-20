@@ -2,11 +2,9 @@ package keeper
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"math"
 
-	cosmosmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -52,7 +50,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		return types.DefaultParams()
 	}
 	var params types.Params
-	if err := json.Unmarshal(bz, &params); err != nil {
+	if err := k.cdc.Unmarshal(bz, &params); err != nil {
 		return types.DefaultParams()
 	}
 	return params
@@ -60,7 +58,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // SetParams sets the reputation module parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	bz, err := json.Marshal(params)
+	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
@@ -81,7 +79,7 @@ func (k Keeper) GetFeedback(ctx sdk.Context, feedbackID string) (types.Feedback,
 		return types.Feedback{}, false
 	}
 	var fb types.Feedback
-	if err := json.Unmarshal(bz, &fb); err != nil {
+	if err := k.cdc.Unmarshal(bz, &fb); err != nil {
 		return types.Feedback{}, false
 	}
 	return fb, true
@@ -89,20 +87,20 @@ func (k Keeper) GetFeedback(ctx sdk.Context, feedbackID string) (types.Feedback,
 
 // SetFeedback persists a feedback to the store.
 func (k Keeper) SetFeedback(ctx sdk.Context, fb types.Feedback) error {
-	bz, err := json.Marshal(fb)
+	bz, err := k.cdc.Marshal(&fb)
 	if err != nil {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.FeedbackKey(fb.ID), bz)
+	store.Set(types.FeedbackKey(fb.Id), bz)
 	return nil
 }
 
 // setFeedbackIndex creates secondary index entries for a feedback.
 func (k Keeper) setFeedbackIndex(ctx sdk.Context, fb types.Feedback) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.FeedbackByToKey(fb.To, fb.ID), []byte(fb.ID))
-	store.Set(types.FeedbackByInvKey(fb.InvocationID, fb.From), []byte(fb.ID))
+	store.Set(types.FeedbackByToKey(fb.To, fb.Id), []byte(fb.Id))
+	store.Set(types.FeedbackByInvKey(fb.InvocationId, fb.From), []byte(fb.Id))
 }
 
 // hasFeedbackForInvocation checks if a feedback from a specific address already exists for an invocation.
@@ -178,7 +176,7 @@ func (k Keeper) GetReputation(ctx sdk.Context, address string) (types.Reputation
 		return types.ReputationScore{}, false
 	}
 	var score types.ReputationScore
-	if err := json.Unmarshal(bz, &score); err != nil {
+	if err := k.cdc.Unmarshal(bz, &score); err != nil {
 		return types.ReputationScore{}, false
 	}
 	return score, true
@@ -186,7 +184,7 @@ func (k Keeper) GetReputation(ctx sdk.Context, address string) (types.Reputation
 
 // SetReputation persists a reputation score to the store.
 func (k Keeper) SetReputation(ctx sdk.Context, score types.ReputationScore) error {
-	bz, err := json.Marshal(score)
+	bz, err := k.cdc.Marshal(&score)
 	if err != nil {
 		return err
 	}
@@ -216,12 +214,12 @@ func (k Keeper) generateReportID(ctx sdk.Context) string {
 
 // SetReport persists a misbehavior report to the store.
 func (k Keeper) SetReport(ctx sdk.Context, report types.MisbehaviorReport) error {
-	bz, err := json.Marshal(report)
+	bz, err := k.cdc.Marshal(&report)
 	if err != nil {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.ReportKey(report.ID), bz)
+	store.Set(types.ReportKey(report.Id), bz)
 	return nil
 }
 
@@ -272,14 +270,14 @@ func (k Keeper) SubmitFeedback(ctx sdk.Context, creator, invocationID string, ra
 	// Generate feedback ID and create the feedback.
 	feedbackID := k.generateFeedbackID(ctx)
 	fb := types.Feedback{
-		ID:           feedbackID,
-		InvocationID: invocationID,
+		Id:           feedbackID,
+		InvocationId: invocationID,
 		From:         creator,
 		To:           target,
 		Rating:       rating,
 		Comment:      comment,
 		Verified:     verified,
-		Timestamp:    now,
+		Timestamp:    ctx.BlockTime(),
 	}
 
 	if err := k.SetFeedback(ctx, fb); err != nil {
@@ -320,27 +318,28 @@ func (k Keeper) UpdateScore(ctx sdk.Context, address string) error {
 	params := k.GetParams(ctx)
 	feedbacks := k.GetFeedbacksByTarget(ctx, address)
 
+	now := ctx.BlockTime()
+
 	if len(feedbacks) == 0 {
-		// No feedbacks: remove score or set to zero.
 		score := types.ReputationScore{
 			Address:           address,
-			TotalScore:        cosmosmath.LegacyZeroDec(),
+			TotalScore:        0,
 			TotalFeedbacks:    0,
 			VerifiedFeedbacks: 0,
-			LastUpdated:       ctx.BlockTime().Unix(),
+			LastUpdated:       now,
 		}
 		return k.SetReputation(ctx, score)
 	}
 
-	now := ctx.BlockTime().Unix()
 	ln2 := 0.693147180559945
+	nowUnix := now.Unix()
 
 	var weightedSum float64
 	var totalWeight float64
 	var verifiedCount uint64
 
 	for _, fb := range feedbacks {
-		ageDays := float64(now-fb.Timestamp) / 86400.0
+		ageDays := float64(nowUnix-fb.Timestamp.Unix()) / 86400.0
 		if ageDays < 0 {
 			ageDays = 0
 		}
@@ -365,12 +364,12 @@ func (k Keeper) UpdateScore(ctx sdk.Context, address string) error {
 		finalScore = weightedSum / totalWeight
 	}
 
-	// Scale to 0-500 range for storage consistency.
-	scaledScore := finalScore * 500.0
+	// Scale to 0-500 range and store as uint64.
+	scaledScore := uint64(math.Round(finalScore * 500.0))
 
 	score := types.ReputationScore{
 		Address:           address,
-		TotalScore:        cosmosmath.LegacyMustNewDecFromStr(fmt.Sprintf("%.6f", scaledScore)),
+		TotalScore:        scaledScore,
 		TotalFeedbacks:    uint64(len(feedbacks)),
 		VerifiedFeedbacks: verifiedCount,
 		LastUpdated:       now,
@@ -391,7 +390,7 @@ func (k Keeper) ReportMisbehavior(ctx sdk.Context, creator, target, evidenceType
 
 	reportID := k.generateReportID(ctx)
 	report := types.MisbehaviorReport{
-		ID:           reportID,
+		Id:           reportID,
 		Creator:      creator,
 		Target:       target,
 		EvidenceType: evidenceType,
@@ -423,7 +422,7 @@ func (k Keeper) IterateAllScores(ctx sdk.Context, cb func(score types.Reputation
 
 	for ; iter.Valid(); iter.Next() {
 		var score types.ReputationScore
-		if err := json.Unmarshal(iter.Value(), &score); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &score); err != nil {
 			continue
 		}
 		if cb(score) {
@@ -440,10 +439,27 @@ func (k Keeper) IterateAllFeedbacks(ctx sdk.Context, cb func(fb types.Feedback) 
 
 	for ; iter.Valid(); iter.Next() {
 		var fb types.Feedback
-		if err := json.Unmarshal(iter.Value(), &fb); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &fb); err != nil {
 			continue
 		}
 		if cb(fb) {
+			break
+		}
+	}
+}
+
+// IterateAllReports iterates over all misbehavior reports and calls the callback.
+func (k Keeper) IterateAllReports(ctx sdk.Context, cb func(report types.MisbehaviorReport) bool) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.ReportKeyPrefix)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var report types.MisbehaviorReport
+		if err := k.cdc.Unmarshal(iter.Value(), &report); err != nil {
+			continue
+		}
+		if cb(report) {
 			break
 		}
 	}

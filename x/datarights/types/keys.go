@@ -24,7 +24,13 @@ var (
 	DisputeCounterKey        = []byte{0x06}
 	AssetByOwnerPrefix       = []byte{0x07}
 	ShareHolderByAssetPrefix = []byte{0x08}
+	AssetReservePrefix       = []byte{0x09}
 )
+
+// AssetReserveKey returns the store key for the bonding curve reserve of an asset.
+func AssetReserveKey(assetID string) []byte {
+	return append(AssetReservePrefix, []byte(assetID)...)
+}
 
 // DataAssetKey returns the store key for a specific data asset by ID.
 func DataAssetKey(assetID string) []byte {

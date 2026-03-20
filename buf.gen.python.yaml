@@ -1,0 +1,6 @@
+version: v2
+plugins:
+  - remote: buf.build/community/nipunn1313-betterproto
+    out: ../Oasyce_Claw_Plugin_Engine/oasyce/proto
+    opt:
+      - pyproject.toml

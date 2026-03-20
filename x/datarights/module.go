@@ -1,11 +1,13 @@
 package datarights
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	"github.com/oasyce/chain/x/datarights/cli"
 	"github.com/oasyce/chain/x/datarights/keeper"
 	"github.com/oasyce/chain/x/datarights/types"
 )
@@ -27,7 +30,9 @@ var (
 // ---------------------------------------------------------------------------
 
 // AppModuleBasic defines the basic application module for datarights.
-type AppModuleBasic struct{}
+type AppModuleBasic struct{
+	cdc codec.Codec
+}
 
 // Name returns the module name.
 func (AppModuleBasic) Name() string { return types.ModuleName }
@@ -38,28 +43,37 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 }
 
 // RegisterInterfaces registers the module's interface types.
-func (AppModuleBasic) RegisterInterfaces(_ codectypes.InterfaceRegistry) {
-	// Will register proper protobuf interfaces once codegen is ready.
+func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
 // DefaultGenesis returns the module's default genesis state as raw JSON.
-func (AppModuleBasic) DefaultGenesis(_ codec.JSONCodec) json.RawMessage {
+func (b AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	gs := types.DefaultGenesisState()
-	bz, _ := json.Marshal(gs)
-	return bz
+	return cdc.MustMarshalJSON(gs)
 }
 
 // ValidateGenesis validates the module's genesis state as raw JSON.
-func (AppModuleBasic) ValidateGenesis(_ codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
+func (b AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var gs types.GenesisState
-	if err := json.Unmarshal(bz, &gs); err != nil {
+	if err := cdc.UnmarshalJSON(bz, &gs); err != nil {
 		return fmt.Errorf("failed to unmarshal datarights genesis state: %w", err)
 	}
 	return types.ValidateGenesis(gs)
 }
 
 // RegisterGRPCGatewayRoutes registers the module's gRPC gateway routes.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(_ client.Context, _ *runtime.ServeMux) {}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+		panic(err)
+	}
+}
+
+// GetTxCmd returns the root tx command for the datarights module.
+func (AppModuleBasic) GetTxCmd() *cobra.Command { return cli.GetTxCmd() }
+
+// GetQueryCmd returns the root query command for the datarights module.
+func (AppModuleBasic) GetQueryCmd() *cobra.Command { return cli.GetQueryCmd() }
 
 // ---------------------------------------------------------------------------
 // AppModule
@@ -72,9 +86,9 @@ type AppModule struct {
 }
 
 // NewAppModule creates a new datarights AppModule.
-func NewAppModule(k keeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Codec, k keeper.Keeper) AppModule {
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{},
+		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         k,
 	}
 }
@@ -87,18 +101,14 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // RegisterServices registers module gRPC services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	// Once protobuf codegen is available, register MsgServer and QueryServer here:
-	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
-	// types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServer(am.keeper))
-	_ = cfg
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServer(am.keeper))
 }
 
 // InitGenesis initializes the module's state from genesis.
-func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var gs types.GenesisState
-	if err := json.Unmarshal(data, &gs); err != nil {
-		panic(fmt.Sprintf("failed to unmarshal datarights genesis: %v", err))
-	}
+	cdc.MustUnmarshalJSON(data, &gs)
 
 	// Set params.
 	if err := am.keeper.SetParams(ctx, gs.Params); err != nil {
@@ -108,21 +118,21 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.Ra
 	// Restore data assets.
 	for _, asset := range gs.DataAssets {
 		if err := am.keeper.SetAsset(ctx, asset); err != nil {
-			panic(fmt.Sprintf("failed to set data asset %s: %v", asset.ID, err))
+			panic(fmt.Sprintf("failed to set data asset %s: %v", asset.Id, err))
 		}
 	}
 
 	// Restore shareholders.
-	for _, sh := range gs.ShareHolders {
+	for _, sh := range gs.Shareholders {
 		if err := am.keeper.SetShareHolder(ctx, sh); err != nil {
-			panic(fmt.Sprintf("failed to set shareholder %s/%s: %v", sh.AssetID, sh.Address, err))
+			panic(fmt.Sprintf("failed to set shareholder %s/%s: %v", sh.AssetId, sh.Address, err))
 		}
 	}
 
 	// Restore disputes.
 	for _, dispute := range gs.Disputes {
 		if err := am.keeper.SetDispute(ctx, dispute); err != nil {
-			panic(fmt.Sprintf("failed to set dispute %s: %v", dispute.ID, err))
+			panic(fmt.Sprintf("failed to set dispute %s: %v", dispute.Id, err))
 		}
 	}
 
@@ -130,22 +140,42 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.Ra
 }
 
 // ExportGenesis exports the module's current state as genesis.
-func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMessage {
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	var assets []types.DataAsset
 	am.keeper.IterateAllAssets(ctx, func(a types.DataAsset) bool {
 		assets = append(assets, a)
 		return false
 	})
+	if assets == nil {
+		assets = []types.DataAsset{}
+	}
+
+	var shareholders []types.ShareHolder
+	am.keeper.IterateAllShareHolders(ctx, func(sh types.ShareHolder) bool {
+		shareholders = append(shareholders, sh)
+		return false
+	})
+	if shareholders == nil {
+		shareholders = []types.ShareHolder{}
+	}
+
+	var disputes []types.Dispute
+	am.keeper.IterateAllDisputes(ctx, func(d types.Dispute) bool {
+		disputes = append(disputes, d)
+		return false
+	})
+	if disputes == nil {
+		disputes = []types.Dispute{}
+	}
 
 	gs := types.GenesisState{
 		DataAssets:   assets,
-		ShareHolders: []types.ShareHolder{},
-		Disputes:     []types.Dispute{},
+		Shareholders: shareholders,
+		Disputes:     disputes,
 		Params:       am.keeper.GetParams(ctx),
 	}
 
-	bz, _ := json.Marshal(gs)
-	return bz
+	return cdc.MustMarshalJSON(&gs)
 }
 
 // ConsensusVersion returns the module's consensus version.

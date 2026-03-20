@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -8,51 +9,60 @@ import (
 	"github.com/oasyce/chain/x/reputation/types"
 )
 
-// QueryServer implements the reputation module's query service.
-type QueryServer struct {
-	keeper Keeper
+var _ types.QueryServer = queryServer{}
+
+// queryServer implements the reputation QueryServer interface.
+type queryServer struct {
+	Keeper
 }
 
-// NewQueryServer returns a new QueryServer instance.
-func NewQueryServer(k Keeper) QueryServer {
-	return QueryServer{keeper: k}
+// NewQueryServer returns an implementation of the reputation QueryServer.
+func NewQueryServer(keeper Keeper) types.QueryServer {
+	return &queryServer{Keeper: keeper}
 }
 
-// QueryReputation returns the reputation score for a given address.
-func (qs QueryServer) QueryReputation(ctx sdk.Context, address string) (*types.ReputationScore, error) {
-	score, found := qs.keeper.GetReputation(ctx, address)
+// Reputation returns the reputation score for a given address.
+func (q queryServer) Reputation(goCtx context.Context, req *types.QueryReputationRequest) (*types.QueryReputationResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	score, found := q.Keeper.GetReputation(ctx, req.Address)
 	if !found {
-		return nil, types.ErrInvalidAddress.Wrapf("no reputation found for %s", address)
+		return nil, types.ErrInvalidAddress.Wrapf("no reputation found for %s", req.Address)
 	}
-	return &score, nil
+	return &types.QueryReputationResponse{Reputation: score}, nil
 }
 
-// QueryFeedback returns all feedbacks for a given target address.
-func (qs QueryServer) QueryFeedback(ctx sdk.Context, target string) ([]types.Feedback, error) {
-	feedbacks := qs.keeper.GetFeedbacksByTarget(ctx, target)
-	return feedbacks, nil
+// Feedback returns all feedbacks for a given invocation.
+func (q queryServer) Feedback(goCtx context.Context, req *types.QueryFeedbackRequest) (*types.QueryFeedbackResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	feedbacks := q.Keeper.GetFeedbacksByTarget(ctx, req.InvocationId)
+	return &types.QueryFeedbackResponse{Feedbacks: feedbacks}, nil
 }
 
-// QueryLeaderboard returns the top N reputation scores.
-func (qs QueryServer) QueryLeaderboard(ctx sdk.Context, limit uint64) ([]types.ReputationScore, error) {
-	if limit == 0 {
-		limit = 100
-	}
+// Leaderboard returns the top reputation scores.
+func (q queryServer) Leaderboard(goCtx context.Context, req *types.QueryLeaderboardRequest) (*types.QueryLeaderboardResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var allScores []types.ReputationScore
-	qs.keeper.IterateAllScores(ctx, func(score types.ReputationScore) bool {
+	q.Keeper.IterateAllScores(ctx, func(score types.ReputationScore) bool {
 		allScores = append(allScores, score)
 		return false
 	})
 
 	// Sort by TotalScore descending.
 	sort.Slice(allScores, func(i, j int) bool {
-		return allScores[i].TotalScore.GT(allScores[j].TotalScore)
+		return allScores[i].TotalScore > allScores[j].TotalScore
 	})
 
+	// Apply pagination limit if set via the page request, otherwise default to 100.
+	limit := uint64(100)
+	if req.Pagination != nil && req.Pagination.Limit > 0 {
+		limit = req.Pagination.Limit
+	}
 	if uint64(len(allScores)) > limit {
 		allScores = allScores[:limit]
 	}
 
-	return allScores, nil
+	return &types.QueryLeaderboardResponse{Scores: allScores}, nil
 }

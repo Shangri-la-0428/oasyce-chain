@@ -1,10 +1,9 @@
 package keeper
 
 import (
-	"crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -51,7 +50,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		return types.DefaultParams()
 	}
 	var params types.Params
-	if err := json.Unmarshal(bz, &params); err != nil {
+	if err := k.cdc.Unmarshal(bz, &params); err != nil {
 		return types.DefaultParams()
 	}
 	return params
@@ -59,7 +58,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // SetParams sets the settlement module parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	bz, err := json.Marshal(params)
+	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
@@ -80,7 +79,7 @@ func (k Keeper) GetEscrow(ctx sdk.Context, escrowID string) (types.Escrow, bool)
 		return types.Escrow{}, false
 	}
 	var escrow types.Escrow
-	if err := json.Unmarshal(bz, &escrow); err != nil {
+	if err := k.cdc.Unmarshal(bz, &escrow); err != nil {
 		return types.Escrow{}, false
 	}
 	return escrow, true
@@ -88,12 +87,12 @@ func (k Keeper) GetEscrow(ctx sdk.Context, escrowID string) (types.Escrow, bool)
 
 // SetEscrow persists an escrow to the store.
 func (k Keeper) SetEscrow(ctx sdk.Context, escrow types.Escrow) error {
-	bz, err := json.Marshal(escrow)
+	bz, err := k.cdc.Marshal(&escrow)
 	if err != nil {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.EscrowKey(escrow.ID), bz)
+	store.Set(types.EscrowKey(escrow.Id), bz)
 	return nil
 }
 
@@ -101,6 +100,12 @@ func (k Keeper) SetEscrow(ctx sdk.Context, escrow types.Escrow) error {
 func (k Keeper) setEscrowIndex(ctx sdk.Context, creator, escrowID string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.EscrowByCreatorKey(creator, escrowID), []byte(escrowID))
+}
+
+// deleteEscrowIndex removes a secondary index entry for creator -> escrow.
+func (k Keeper) deleteEscrowIndex(ctx sdk.Context, creator, escrowID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.EscrowByCreatorKey(creator, escrowID))
 }
 
 // GetEscrowsByCreator returns all escrows created by a given address.
@@ -121,7 +126,8 @@ func (k Keeper) GetEscrowsByCreator(ctx sdk.Context, creator string) []types.Esc
 	return escrows
 }
 
-// generateEscrowID creates a unique escrow ID.
+// generateEscrowID creates a unique deterministic escrow ID.
+// Uses counter + block hash for determinism across validators.
 func (k Keeper) generateEscrowID(ctx sdk.Context) string {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.EscrowCounterKey)
@@ -134,9 +140,9 @@ func (k Keeper) generateEscrowID(ctx sdk.Context) string {
 	binary.BigEndian.PutUint64(newBz, counter)
 	store.Set(types.EscrowCounterKey, newBz)
 
-	randBytes := make([]byte, 8)
-	_, _ = rand.Read(randBytes)
-	return fmt.Sprintf("ESC_%s%s", hex.EncodeToString(newBz), hex.EncodeToString(randBytes))
+	// Deterministic: hash counter + block header for uniqueness.
+	h := sha256.Sum256(append(newBz, ctx.HeaderHash()...))
+	return fmt.Sprintf("ESC_%s", hex.EncodeToString(h[:8]))
 }
 
 // ---------------------------------------------------------------------------
@@ -178,11 +184,11 @@ func (k Keeper) CreateEscrow(ctx sdk.Context, creator, provider string, amount s
 	escrowID := k.generateEscrowID(ctx)
 
 	escrow := types.Escrow{
-		ID:        escrowID,
+		Id:        escrowID,
 		Creator:   creator,
 		Provider:  provider,
 		Amount:    amount,
-		Status:    types.EscrowStatusLocked,
+		Status:    types.ESCROW_STATUS_LOCKED,
 		CreatedAt: now,
 		ExpiresAt: expiresAt,
 	}
@@ -213,7 +219,7 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 	if !found {
 		return types.ErrEscrowNotFound.Wrapf("escrow %s not found", escrowID)
 	}
-	if escrow.Status != types.EscrowStatusLocked {
+	if escrow.Status != types.ESCROW_STATUS_LOCKED {
 		return types.ErrInvalidStatus.Wrapf("escrow %s is %s, not LOCKED", escrowID, escrow.Status)
 	}
 
@@ -227,16 +233,18 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 		return types.ErrInvalidAddress.Wrapf("invalid provider: %s", err)
 	}
 
-	// Calculate fee split per spec: protocol_fee = amount * 500 / 10000 (5%).
+	// Calculate fee split per spec:
+	//   protocol_fee = 5% (to fee_collector)
+	//   burn         = 2% (permanently destroyed)
+	//   provider     = 93% (remaining)
 	totalAmount := escrow.Amount.Amount
-	protocolFee := totalAmount.Mul(math.NewInt(500)).Quo(math.NewInt(10000))
-	providerAmount := totalAmount.Sub(protocolFee)
-
-	providerCoin := sdk.NewCoin(escrow.Amount.Denom, providerAmount)
-	protocolCoin := sdk.NewCoin(escrow.Amount.Denom, protocolFee)
+	protocolFee := totalAmount.Mul(math.NewInt(500)).Quo(math.NewInt(10000))   // 5%
+	burnAmount := totalAmount.Mul(math.NewInt(200)).Quo(math.NewInt(10000))    // 2%
+	providerAmount := totalAmount.Sub(protocolFee).Sub(burnAmount)             // 93%
 
 	// Send provider share from module to provider.
 	if providerAmount.IsPositive() {
+		providerCoin := sdk.NewCoin(escrow.Amount.Denom, providerAmount)
 		if err := k.bankKeeper.SendCoinsFromModuleToAccount(
 			ctx, types.ModuleName, providerAddr, sdk.NewCoins(providerCoin),
 		); err != nil {
@@ -246,6 +254,7 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 
 	// Send protocol fee to fee collector (protocol treasury).
 	if protocolFee.IsPositive() {
+		protocolCoin := sdk.NewCoin(escrow.Amount.Denom, protocolFee)
 		if err := k.bankKeeper.SendCoinsFromModuleToModule(
 			ctx, types.ModuleName, "fee_collector", sdk.NewCoins(protocolCoin),
 		); err != nil {
@@ -253,16 +262,28 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 		}
 	}
 
-	escrow.Status = types.EscrowStatusReleased
+	// Burn 2% — permanently removed from supply.
+	if burnAmount.IsPositive() {
+		burnCoin := sdk.NewCoin(escrow.Amount.Denom, burnAmount)
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(burnCoin)); err != nil {
+			return fmt.Errorf("failed to burn tokens: %w", err)
+		}
+	}
+
+	escrow.Status = types.ESCROW_STATUS_RELEASED
 	if err := k.SetEscrow(ctx, escrow); err != nil {
 		return err
 	}
 
+	// Delete secondary index since the escrow is terminal.
+	k.deleteEscrowIndex(ctx, escrow.Creator, escrow.Id)
+
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"escrow_released",
 		sdk.NewAttribute("escrow_id", escrowID),
-		sdk.NewAttribute("provider_amount", providerCoin.String()),
-		sdk.NewAttribute("protocol_fee", protocolCoin.String()),
+		sdk.NewAttribute("provider_amount", sdk.NewCoin(escrow.Amount.Denom, providerAmount).String()),
+		sdk.NewAttribute("protocol_fee", sdk.NewCoin(escrow.Amount.Denom, protocolFee).String()),
+		sdk.NewAttribute("burn_amount", sdk.NewCoin(escrow.Amount.Denom, burnAmount).String()),
 	))
 
 	return nil
@@ -277,7 +298,7 @@ func (k Keeper) RefundEscrow(ctx sdk.Context, escrowID string, refunder string) 
 	if !found {
 		return types.ErrEscrowNotFound.Wrapf("escrow %s not found", escrowID)
 	}
-	if escrow.Status != types.EscrowStatusLocked {
+	if escrow.Status != types.ESCROW_STATUS_LOCKED {
 		return types.ErrInvalidStatus.Wrapf("escrow %s is %s, not LOCKED", escrowID, escrow.Status)
 	}
 
@@ -297,10 +318,13 @@ func (k Keeper) RefundEscrow(ctx sdk.Context, escrowID string, refunder string) 
 		return fmt.Errorf("failed to refund: %w", err)
 	}
 
-	escrow.Status = types.EscrowStatusRefunded
+	escrow.Status = types.ESCROW_STATUS_REFUNDED
 	if err := k.SetEscrow(ctx, escrow); err != nil {
 		return err
 	}
+
+	// Delete secondary index since the escrow is terminal.
+	k.deleteEscrowIndex(ctx, escrow.Creator, escrow.Id)
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"escrow_refunded",
@@ -313,7 +337,7 @@ func (k Keeper) RefundEscrow(ctx sdk.Context, escrowID string, refunder string) 
 }
 
 // ExpireStaleEscrows iterates all escrows and auto-refunds those that have expired.
-// This is intended to be called from EndBlock.
+// This is intended to be called from EndBlock. Errors are collected and returned.
 func (k Keeper) ExpireStaleEscrows(ctx sdk.Context) error {
 	now := ctx.BlockTime()
 	store := ctx.KVStore(k.storeKey)
@@ -321,12 +345,15 @@ func (k Keeper) ExpireStaleEscrows(ctx sdk.Context) error {
 	iter := storetypes.KVStorePrefixIterator(store, types.EscrowKeyPrefix)
 	defer iter.Close()
 
+	var errs []error
+
 	for ; iter.Valid(); iter.Next() {
 		var escrow types.Escrow
-		if err := json.Unmarshal(iter.Value(), &escrow); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &escrow); err != nil {
+			errs = append(errs, fmt.Errorf("failed to unmarshal escrow: %w", err))
 			continue
 		}
-		if escrow.Status != types.EscrowStatusLocked {
+		if escrow.Status != types.ESCROW_STATUS_LOCKED {
 			continue
 		}
 		if now.Before(escrow.ExpiresAt) {
@@ -336,27 +363,36 @@ func (k Keeper) ExpireStaleEscrows(ctx sdk.Context) error {
 		// Escrow has expired -- refund the creator.
 		creatorAddr, err := sdk.AccAddressFromBech32(escrow.Creator)
 		if err != nil {
+			errs = append(errs, fmt.Errorf("invalid creator address for escrow %s: %w", escrow.Id, err))
 			continue
 		}
 		coins := sdk.NewCoins(escrow.Amount)
 		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, creatorAddr, coins); err != nil {
-			// Log and continue; do not halt the chain.
+			errs = append(errs, fmt.Errorf("failed to refund expired escrow %s: %w", escrow.Id, err))
 			continue
 		}
 
-		escrow.Status = types.EscrowStatusExpired
-		bz, err := json.Marshal(escrow)
+		escrow.Status = types.ESCROW_STATUS_EXPIRED
+		bz, err := k.cdc.Marshal(&escrow)
 		if err != nil {
+			errs = append(errs, fmt.Errorf("failed to marshal escrow %s: %w", escrow.Id, err))
 			continue
 		}
-		store.Set(types.EscrowKey(escrow.ID), bz)
+		store.Set(types.EscrowKey(escrow.Id), bz)
+
+		// Delete secondary index since the escrow is terminal.
+		k.deleteEscrowIndex(ctx, escrow.Creator, escrow.Id)
 
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			"escrow_expired",
-			sdk.NewAttribute("escrow_id", escrow.ID),
+			sdk.NewAttribute("escrow_id", escrow.Id),
 			sdk.NewAttribute("creator", escrow.Creator),
 			sdk.NewAttribute("amount", escrow.Amount.String()),
 		))
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("encountered %d errors during escrow expiry: %v", len(errs), errs)
 	}
 
 	return nil
@@ -371,7 +407,7 @@ func (k Keeper) IterateAllEscrows(ctx sdk.Context, cb func(escrow types.Escrow) 
 
 	for ; iter.Valid(); iter.Next() {
 		var escrow types.Escrow
-		if err := json.Unmarshal(iter.Value(), &escrow); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &escrow); err != nil {
 			continue
 		}
 		if cb(escrow) {

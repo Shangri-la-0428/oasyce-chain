@@ -1,66 +1,58 @@
 package keeper
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/oasyce/chain/x/settlement/types"
 )
 
-// QueryServer implements the settlement query service.
-type QueryServer struct {
+var _ types.QueryServer = queryServer{}
+
+// queryServer implements the settlement QueryServer interface.
+type queryServer struct {
 	Keeper
 }
 
 // NewQueryServer returns an implementation of the settlement QueryServer.
-func NewQueryServer(keeper Keeper) QueryServer {
-	return QueryServer{Keeper: keeper}
+func NewQueryServer(keeper Keeper) types.QueryServer {
+	return &queryServer{Keeper: keeper}
 }
 
-// QueryEscrow returns a single escrow by ID.
-func (q QueryServer) QueryEscrow(ctx sdk.Context, escrowID string) (*QueryEscrowResponse, error) {
-	escrow, found := q.Keeper.GetEscrow(ctx, escrowID)
+// Escrow returns a single escrow by ID.
+func (q queryServer) Escrow(goCtx context.Context, req *types.QueryEscrowRequest) (*types.QueryEscrowResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	escrow, found := q.Keeper.GetEscrow(ctx, req.EscrowId)
 	if !found {
-		return nil, types.ErrEscrowNotFound.Wrapf("escrow %s not found", escrowID)
+		return nil, types.ErrEscrowNotFound.Wrapf("escrow %s not found", req.EscrowId)
 	}
-	return &QueryEscrowResponse{Escrow: escrow}, nil
+	return &types.QueryEscrowResponse{Escrow: escrow}, nil
 }
 
-// QueryEscrowsByCreator returns all escrows created by an address.
-func (q QueryServer) QueryEscrowsByCreator(ctx sdk.Context, creator string) (*QueryEscrowsByCreatorResponse, error) {
-	escrows := q.Keeper.GetEscrowsByCreator(ctx, creator)
-	return &QueryEscrowsByCreatorResponse{Escrows: escrows}, nil
+// EscrowsByCreator returns all escrows created by an address.
+func (q queryServer) EscrowsByCreator(goCtx context.Context, req *types.QueryEscrowsByCreatorRequest) (*types.QueryEscrowsByCreatorResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	escrows := q.Keeper.GetEscrowsByCreator(ctx, req.Creator)
+	return &types.QueryEscrowsByCreatorResponse{Escrows: escrows}, nil
 }
 
-// QueryBondingCurvePrice returns the current bonding curve price for an asset.
-func (q QueryServer) QueryBondingCurvePrice(ctx sdk.Context, assetID string) (*QueryBondingCurvePriceResponse, error) {
-	price, err := q.Keeper.GetPrice(ctx, assetID)
+// BondingCurvePrice returns the current bonding curve price for an asset.
+func (q queryServer) BondingCurvePrice(goCtx context.Context, req *types.QueryBondingCurvePriceRequest) (*types.QueryBondingCurvePriceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	price, err := q.Keeper.GetPrice(ctx, req.AssetId)
 	if err != nil {
 		return nil, err
 	}
-	state, found := q.Keeper.GetBondingCurveState(ctx, assetID)
+	state, found := q.Keeper.GetBondingCurveState(ctx, req.AssetId)
 	if !found {
-		return nil, types.ErrBondingCurveNotFound.Wrapf("asset %s", assetID)
+		return nil, types.ErrBondingCurveNotFound.Wrapf("asset %s", req.AssetId)
 	}
-	return &QueryBondingCurvePriceResponse{
+	return &types.QueryBondingCurvePriceResponse{
 		CurrentPrice: sdk.NewCoin("uoas", price),
 		State:        state,
 	}, nil
-}
-
-// Response types for queries.
-
-// QueryEscrowResponse is the response for QueryEscrow.
-type QueryEscrowResponse struct {
-	Escrow types.Escrow `json:"escrow"`
-}
-
-// QueryEscrowsByCreatorResponse is the response for QueryEscrowsByCreator.
-type QueryEscrowsByCreatorResponse struct {
-	Escrows []types.Escrow `json:"escrows"`
-}
-
-// QueryBondingCurvePriceResponse is the response for QueryBondingCurvePrice.
-type QueryBondingCurvePriceResponse struct {
-	CurrentPrice sdk.Coin                `json:"current_price"`
-	State        types.BondingCurveState `json:"state"`
 }

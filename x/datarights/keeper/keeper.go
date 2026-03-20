@@ -2,12 +2,12 @@ package keeper
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/oasyce/chain/x/datarights/types"
+	settlementtypes "github.com/oasyce/chain/x/settlement/types"
 )
 
 // Keeper manages the datarights module's state.
@@ -60,7 +61,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 		return types.DefaultParams()
 	}
 	var params types.Params
-	if err := json.Unmarshal(bz, &params); err != nil {
+	if err := k.cdc.Unmarshal(bz, &params); err != nil {
 		return types.DefaultParams()
 	}
 	return params
@@ -68,7 +69,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // SetParams sets the datarights module parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	bz, err := json.Marshal(params)
+	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
@@ -89,7 +90,7 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) (types.DataAsset, bool
 		return types.DataAsset{}, false
 	}
 	var asset types.DataAsset
-	if err := json.Unmarshal(bz, &asset); err != nil {
+	if err := k.cdc.Unmarshal(bz, &asset); err != nil {
 		return types.DataAsset{}, false
 	}
 	return asset, true
@@ -97,12 +98,12 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) (types.DataAsset, bool
 
 // SetAsset persists a data asset to the store.
 func (k Keeper) SetAsset(ctx sdk.Context, asset types.DataAsset) error {
-	bz, err := json.Marshal(asset)
+	bz, err := k.cdc.Marshal(&asset)
 	if err != nil {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.DataAssetKey(asset.ID), bz)
+	store.Set(types.DataAssetKey(asset.Id), bz)
 	return nil
 }
 
@@ -121,7 +122,7 @@ func (k Keeper) ListAssets(ctx sdk.Context) []types.DataAsset {
 	var assets []types.DataAsset
 	for ; iter.Valid(); iter.Next() {
 		var asset types.DataAsset
-		if err := json.Unmarshal(iter.Value(), &asset); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &asset); err != nil {
 			continue
 		}
 		assets = append(assets, asset)
@@ -177,7 +178,7 @@ func (k Keeper) GetShareHolder(ctx sdk.Context, assetID, address string) (types.
 		return types.ShareHolder{}, false
 	}
 	var sh types.ShareHolder
-	if err := json.Unmarshal(bz, &sh); err != nil {
+	if err := k.cdc.Unmarshal(bz, &sh); err != nil {
 		return types.ShareHolder{}, false
 	}
 	return sh, true
@@ -185,14 +186,14 @@ func (k Keeper) GetShareHolder(ctx sdk.Context, assetID, address string) (types.
 
 // SetShareHolder persists a shareholder record.
 func (k Keeper) SetShareHolder(ctx sdk.Context, sh types.ShareHolder) error {
-	bz, err := json.Marshal(sh)
+	bz, err := k.cdc.Marshal(&sh)
 	if err != nil {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.ShareHolderKey(sh.AssetID, sh.Address), bz)
+	store.Set(types.ShareHolderKey(sh.AssetId, sh.Address), bz)
 	// Secondary index.
-	store.Set(types.ShareHolderByAssetKey(sh.AssetID, sh.Address), []byte(sh.Address))
+	store.Set(types.ShareHolderByAssetKey(sh.AssetId, sh.Address), []byte(sh.Address))
 	return nil
 }
 
@@ -214,6 +215,24 @@ func (k Keeper) GetShareHolders(ctx sdk.Context, assetID string) []types.ShareHo
 	return holders
 }
 
+// IterateAllShareHolders iterates over all shareholder records and calls the callback.
+// Returning true from the callback stops iteration.
+func (k Keeper) IterateAllShareHolders(ctx sdk.Context, cb func(sh types.ShareHolder) bool) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.ShareHolderKeyPrefix)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var sh types.ShareHolder
+		if err := k.cdc.Unmarshal(iter.Value(), &sh); err != nil {
+			continue
+		}
+		if cb(sh) {
+			break
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Dispute CRUD
 // ---------------------------------------------------------------------------
@@ -226,7 +245,7 @@ func (k Keeper) GetDispute(ctx sdk.Context, disputeID string) (types.Dispute, bo
 		return types.Dispute{}, false
 	}
 	var dispute types.Dispute
-	if err := json.Unmarshal(bz, &dispute); err != nil {
+	if err := k.cdc.Unmarshal(bz, &dispute); err != nil {
 		return types.Dispute{}, false
 	}
 	return dispute, true
@@ -234,16 +253,35 @@ func (k Keeper) GetDispute(ctx sdk.Context, disputeID string) (types.Dispute, bo
 
 // SetDispute persists a dispute to the store.
 func (k Keeper) SetDispute(ctx sdk.Context, dispute types.Dispute) error {
-	bz, err := json.Marshal(dispute)
+	bz, err := k.cdc.Marshal(&dispute)
 	if err != nil {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.DisputeKey(dispute.ID), bz)
+	store.Set(types.DisputeKey(dispute.Id), bz)
 	return nil
 }
 
-// generateDisputeID creates a unique dispute ID.
+// IterateAllDisputes iterates over all disputes and calls the callback.
+// Returning true from the callback stops iteration.
+func (k Keeper) IterateAllDisputes(ctx sdk.Context, cb func(d types.Dispute) bool) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.DisputeKeyPrefix)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var d types.Dispute
+		if err := k.cdc.Unmarshal(iter.Value(), &d); err != nil {
+			continue
+		}
+		if cb(d) {
+			break
+		}
+	}
+}
+
+// generateDisputeID creates a unique deterministic dispute ID.
+// Uses counter + block hash for determinism across validators.
 func (k Keeper) generateDisputeID(ctx sdk.Context) string {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.DisputeCounterKey)
@@ -256,9 +294,56 @@ func (k Keeper) generateDisputeID(ctx sdk.Context) string {
 	binary.BigEndian.PutUint64(newBz, counter)
 	store.Set(types.DisputeCounterKey, newBz)
 
-	randBytes := make([]byte, 8)
-	_, _ = rand.Read(randBytes)
-	return fmt.Sprintf("DSP_%s%s", hex.EncodeToString(newBz), hex.EncodeToString(randBytes))
+	// Deterministic: hash counter + block header for uniqueness.
+	h := sha256.Sum256(append(newBz, ctx.HeaderHash()...))
+	return fmt.Sprintf("DSP_%s", hex.EncodeToString(h[:8]))
+}
+
+// ---------------------------------------------------------------------------
+// Asset Reserve (bonding curve backing)
+// ---------------------------------------------------------------------------
+
+// GetAssetReserve retrieves the bonding curve reserve for a data asset.
+func (k Keeper) GetAssetReserve(ctx sdk.Context, assetID string) math.Int {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.AssetReserveKey(assetID))
+	if bz == nil {
+		return math.ZeroInt()
+	}
+	var reserve math.Int
+	if err := reserve.Unmarshal(bz); err != nil {
+		return math.ZeroInt()
+	}
+	return reserve
+}
+
+// SetAssetReserve stores the bonding curve reserve for a data asset.
+func (k Keeper) SetAssetReserve(ctx sdk.Context, assetID string, reserve math.Int) error {
+	bz, err := reserve.Marshal()
+	if err != nil {
+		return err
+	}
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.AssetReserveKey(assetID), bz)
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Content Hash Verification (Phase 7)
+// ---------------------------------------------------------------------------
+
+// VerifyContentHash verifies that the provided content matches the stored
+// content hash for the given asset.
+func (k Keeper) VerifyContentHash(ctx sdk.Context, assetID string, content []byte) error {
+	asset, found := k.GetAsset(ctx, assetID)
+	if !found {
+		return types.ErrAssetNotFound
+	}
+	hash := sha256.Sum256(content)
+	if hex.EncodeToString(hash[:]) != asset.ContentHash {
+		return types.ErrContentHashMismatch
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------------
@@ -274,7 +359,7 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 	}
 
 	// Validate rights type.
-	if msg.RightsType < types.RightsOriginal || msg.RightsType > types.RightsCollection {
+	if msg.RightsType < types.RIGHTS_TYPE_ORIGINAL || msg.RightsType > types.RIGHTS_TYPE_COLLECTION {
 		return "", types.ErrInvalidRightsType.Wrapf("invalid rights_type: %d", msg.RightsType)
 	}
 
@@ -296,7 +381,7 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 	fingerprint := hex.EncodeToString(h[:16])
 
 	asset := types.DataAsset{
-		ID:          assetID,
+		Id:          assetID,
 		Owner:       msg.Creator,
 		Name:        msg.Name,
 		Description: msg.Description,
@@ -306,7 +391,7 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 		Tags:        msg.Tags,
 		CoCreators:  msg.CoCreators,
 		TotalShares: math.ZeroInt(),
-		CreatedAt:   sdkCtx.BlockTime().Unix(),
+		CreatedAt:   sdkCtx.BlockTime(),
 		IsActive:    true,
 	}
 
@@ -326,8 +411,10 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 	return assetID, nil
 }
 
-// BuyShares purchases shares of a data asset via the bonding curve with
-// diminishing returns based on total shares outstanding (per spec section 13).
+// BuyShares purchases shares of a data asset via the Bancor bonding curve.
+// Formula: tokens = supply × (sqrt(1 + payment/reserve) − 1)
+// Bootstrap: tokens = payment / INITIAL_PRICE when reserve is zero.
+// A rights type multiplier is applied to the minted tokens.
 func (k Keeper) BuyShares(ctx context.Context, msg types.MsgBuyShares) (math.Int, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -336,12 +423,12 @@ func (k Keeper) BuyShares(ctx context.Context, msg types.MsgBuyShares) (math.Int
 		return math.Int{}, types.ErrInvalidAddress.Wrapf("invalid buyer: %s", err)
 	}
 
-	asset, found := k.GetAsset(sdkCtx, msg.AssetID)
+	asset, found := k.GetAsset(sdkCtx, msg.AssetId)
 	if !found {
-		return math.Int{}, types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetID)
+		return math.Int{}, types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
 	}
 	if !asset.IsActive {
-		return math.Int{}, types.ErrAssetDelisted.Wrapf("asset %s is delisted", msg.AssetID)
+		return math.Int{}, types.ErrAssetDelisted.Wrapf("asset %s is delisted", msg.AssetId)
 	}
 
 	paymentAmount := msg.Amount.Amount
@@ -349,16 +436,42 @@ func (k Keeper) BuyShares(ctx context.Context, msg types.MsgBuyShares) (math.Int
 		return math.Int{}, types.ErrInsufficientFunds.Wrap("payment must be positive")
 	}
 
-	// Calculate diminishing returns based on total shares outstanding.
-	rateBps := shareRateBps(asset.TotalShares)
+	// Get current bonding curve state.
+	supply := asset.TotalShares
+	reserve := k.GetAssetReserve(sdkCtx, msg.AssetId)
+
+	// Bancor calculation.
+	supplyDec := math.LegacyNewDecFromInt(supply)
+	reserveDec := math.LegacyNewDecFromInt(reserve)
+	paymentDec := math.LegacyNewDecFromInt(paymentAmount)
+
+	var baseTokensDec math.LegacyDec
+	if reserveDec.IsZero() || supplyDec.IsZero() {
+		// Bootstrap: tokens = payment / INITIAL_PRICE
+		baseTokensDec = paymentDec.Quo(settlementtypes.InitialPrice)
+	} else {
+		// ratio = 1 + payment/reserve
+		ratio := math.LegacyOneDec().Add(paymentDec.Quo(reserveDec))
+		sqrtRatio, sqrtErr := ratio.ApproxSqrt()
+		if sqrtErr != nil {
+			return math.Int{}, fmt.Errorf("bancor sqrt failed: %w", sqrtErr)
+		}
+		// tokens = supply × (sqrtRatio − 1)
+		baseTokensDec = supplyDec.Mul(sqrtRatio.Sub(math.LegacyOneDec()))
+	}
 
 	// Apply rights type multiplier.
-	multiplier := asset.RightsType.Multiplier()
-	baseShares := paymentAmount.Mul(rateBps).Quo(math.NewInt(10000))
-	sharesMinted := multiplier.MulInt(baseShares).TruncateInt()
+	multiplier := types.RightsTypeMultiplier(asset.RightsType)
+	sharesMinted := multiplier.Mul(baseTokensDec).TruncateInt()
 
 	if sharesMinted.IsZero() {
 		return math.Int{}, types.ErrInsufficientFunds.Wrap("payment too small to mint shares")
+	}
+
+	// Front-running protection: reject if minted shares below caller's minimum.
+	if msg.MinSharesOut != nil && !msg.MinSharesOut.IsZero() && sharesMinted.LT(*msg.MinSharesOut) {
+		return math.Int{}, types.ErrSlippageExceeded.Wrapf(
+			"slippage: would mint %s shares, minimum requested %s", sharesMinted, msg.MinSharesOut)
 	}
 
 	// Transfer payment from buyer to module.
@@ -373,51 +486,210 @@ func (k Keeper) BuyShares(ctx context.Context, msg types.MsgBuyShares) (math.Int
 		return math.Int{}, err
 	}
 
+	// Update reserve.
+	newReserve := reserve.Add(paymentAmount)
+	if err := k.SetAssetReserve(sdkCtx, msg.AssetId, newReserve); err != nil {
+		return math.Int{}, err
+	}
+
 	// Update or create shareholder record.
-	sh, found := k.GetShareHolder(sdkCtx, msg.AssetID, msg.Creator)
+	sh, found := k.GetShareHolder(sdkCtx, msg.AssetId, msg.Creator)
 	if !found {
 		sh = types.ShareHolder{
 			Address:     msg.Creator,
-			AssetID:     msg.AssetID,
+			AssetId:     msg.AssetId,
 			Shares:      math.ZeroInt(),
-			PurchasedAt: sdkCtx.BlockTime().Unix(),
+			PurchasedAt: sdkCtx.BlockTime(),
 		}
 	}
 	sh.Shares = sh.Shares.Add(sharesMinted)
-	sh.PurchasedAt = sdkCtx.BlockTime().Unix()
+	sh.PurchasedAt = sdkCtx.BlockTime()
 	if err := k.SetShareHolder(sdkCtx, sh); err != nil {
 		return math.Int{}, err
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		"shares_bought",
-		sdk.NewAttribute("asset_id", msg.AssetID),
+		sdk.NewAttribute("asset_id", msg.AssetId),
 		sdk.NewAttribute("buyer", msg.Creator),
 		sdk.NewAttribute("payment", msg.Amount.String()),
 		sdk.NewAttribute("shares_minted", sharesMinted.String()),
+		sdk.NewAttribute("new_supply", asset.TotalShares.String()),
+		sdk.NewAttribute("new_reserve", newReserve.String()),
 	))
 
 	return sharesMinted, nil
 }
 
-// shareRateBps returns the diminishing share rate in basis points based on
-// total shares outstanding. Per spec section 13:
-//
-//	First 1000 shares:  100% = 10000 bps
-//	1001-5000:           80% =  8000 bps
-//	5001-10000:          60% =  6000 bps
-//	10001+:              40% =  4000 bps
-func shareRateBps(totalShares math.Int) math.Int {
-	switch {
-	case totalShares.LT(math.NewInt(1000)):
-		return math.NewInt(10000)
-	case totalShares.LT(math.NewInt(5000)):
-		return math.NewInt(8000)
-	case totalShares.LT(math.NewInt(10000)):
-		return math.NewInt(6000)
-	default:
-		return math.NewInt(4000)
+// SellShares sells tokens back to the bonding curve using the inverse Bancor formula.
+// Formula: payout = reserve × (1 − (1 − tokens/supply)²)
+// Capped at 95% of reserve (RESERVE_SOLVENCY_CAP).
+// Protocol fee (5%) is deducted from the gross payout.
+func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.Int, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	sellerAddr, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return math.Int{}, types.ErrInvalidAddress.Wrapf("invalid seller: %s", err)
 	}
+
+	asset, found := k.GetAsset(sdkCtx, msg.AssetId)
+	if !found {
+		return math.Int{}, types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
+	}
+
+	tokensToSell := msg.Shares
+	if tokensToSell.IsZero() || tokensToSell.IsNegative() {
+		return math.Int{}, types.ErrInsufficientFunds.Wrap("shares must be positive")
+	}
+
+	// Verify seller has enough shares.
+	sh, found := k.GetShareHolder(sdkCtx, msg.AssetId, msg.Creator)
+	if !found || sh.Shares.LT(tokensToSell) {
+		return math.Int{}, types.ErrInsufficientFunds.Wrap("insufficient shares to sell")
+	}
+
+	supply := asset.TotalShares
+	reserve := k.GetAssetReserve(sdkCtx, msg.AssetId)
+
+	if supply.IsZero() || reserve.IsZero() {
+		return math.Int{}, types.ErrInsufficientFunds.Wrap("pool has no liquidity")
+	}
+
+	// Inverse Bancor: payout = reserve × (1 − (1 − tokens/supply)^(1/CW))
+	// CW=0.5 → 1/CW=2, so (1 − tokens/supply)²
+	supplyDec := math.LegacyNewDecFromInt(supply)
+	reserveDec := math.LegacyNewDecFromInt(reserve)
+	tokensDec := math.LegacyNewDecFromInt(tokensToSell)
+	solvencyCap := settlementtypes.ReserveSolvencyCap
+	maxPayout := reserveDec.Mul(solvencyCap)
+
+	var grossPayout math.LegacyDec
+	if tokensDec.GTE(supplyDec) {
+		grossPayout = maxPayout
+	} else {
+		ratio := math.LegacyOneDec().Sub(tokensDec.Quo(supplyDec))
+		ratioSquared := ratio.Mul(ratio)
+		grossPayout = reserveDec.Mul(math.LegacyOneDec().Sub(ratioSquared))
+		if grossPayout.GT(maxPayout) {
+			grossPayout = maxPayout
+		}
+	}
+
+	// Deduct protocol fee (5%).
+	protocolFeeDec := grossPayout.Mul(settlementtypes.DefaultParams().ProtocolFeeRate)
+	netPayout := grossPayout.Sub(protocolFeeDec)
+
+	feeAmount := protocolFeeDec.TruncateInt()
+	// Guard against fee truncation to 0 on small sells — minimum 1 uoas fee.
+	if feeAmount.IsZero() && grossPayout.IsPositive() {
+		feeAmount = math.OneInt()
+	}
+	netPayout = grossPayout.Sub(math.LegacyNewDecFromInt(feeAmount))
+	payoutAmount := netPayout.TruncateInt()
+
+	if payoutAmount.IsZero() {
+		return math.Int{}, types.ErrInsufficientFunds.Wrap("sell amount too small")
+	}
+
+	// Front-running protection: reject if payout below caller's minimum.
+	if msg.MinPayoutOut != nil && !msg.MinPayoutOut.IsZero() && payoutAmount.LT(*msg.MinPayoutOut) {
+		return math.Int{}, types.ErrSlippageExceeded.Wrapf(
+			"slippage: would pay out %s, minimum requested %s", payoutAmount, msg.MinPayoutOut)
+	}
+
+	// Send payout from module to seller.
+	if payoutAmount.IsPositive() {
+		payoutCoin := sdk.NewCoin("uoas", payoutAmount)
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sellerAddr, sdk.NewCoins(payoutCoin)); err != nil {
+			return math.Int{}, fmt.Errorf("failed to send payout: %w", err)
+		}
+	}
+
+	// Send protocol fee to fee_collector.
+	if feeAmount.IsPositive() {
+		feeCoin := sdk.NewCoin("uoas", feeAmount)
+		if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, "fee_collector", sdk.NewCoins(feeCoin)); err != nil {
+			return math.Int{}, fmt.Errorf("failed to send protocol fee: %w", err)
+		}
+	}
+
+	// Update asset total shares.
+	asset.TotalShares = asset.TotalShares.Sub(tokensToSell)
+	if err := k.SetAsset(sdkCtx, asset); err != nil {
+		return math.Int{}, err
+	}
+
+	// Update reserve.
+	reserveReduction := payoutAmount.Add(feeAmount)
+	newReserve := reserve.Sub(reserveReduction)
+	if newReserve.IsNegative() {
+		newReserve = math.ZeroInt()
+	}
+	if err := k.SetAssetReserve(sdkCtx, msg.AssetId, newReserve); err != nil {
+		return math.Int{}, err
+	}
+
+	// Update shareholder record.
+	sh.Shares = sh.Shares.Sub(tokensToSell)
+	if sh.Shares.IsZero() {
+		// Remove shareholder record entirely.
+		store := sdkCtx.KVStore(k.storeKey)
+		store.Delete(types.ShareHolderKey(msg.AssetId, msg.Creator))
+		store.Delete(types.ShareHolderByAssetKey(msg.AssetId, msg.Creator))
+	} else {
+		if err := k.SetShareHolder(sdkCtx, sh); err != nil {
+			return math.Int{}, err
+		}
+	}
+
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		"shares_sold",
+		sdk.NewAttribute("asset_id", msg.AssetId),
+		sdk.NewAttribute("seller", msg.Creator),
+		sdk.NewAttribute("shares_sold", tokensToSell.String()),
+		sdk.NewAttribute("payout", payoutAmount.String()),
+		sdk.NewAttribute("protocol_fee", feeAmount.String()),
+		sdk.NewAttribute("new_supply", asset.TotalShares.String()),
+		sdk.NewAttribute("new_reserve", newReserve.String()),
+	))
+
+	return payoutAmount, nil
+}
+
+// DelistAsset allows an asset owner to voluntarily delist their own asset.
+// The asset remains in the store (immutable history) but IsActive is set to false,
+// preventing further share purchases.
+func (k Keeper) DelistAsset(ctx context.Context, msg types.MsgDelistAsset) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return types.ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+
+	asset, found := k.GetAsset(sdkCtx, msg.AssetId)
+	if !found {
+		return types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
+	}
+	if asset.Owner != msg.Creator {
+		return types.ErrUnauthorized.Wrapf("only the owner can delist an asset")
+	}
+	if !asset.IsActive {
+		return types.ErrAssetDelisted.Wrapf("asset %s is already delisted", msg.AssetId)
+	}
+
+	asset.IsActive = false
+	if err := k.SetAsset(sdkCtx, asset); err != nil {
+		return err
+	}
+
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		"asset_delisted",
+		sdk.NewAttribute("asset_id", msg.AssetId),
+		sdk.NewAttribute("owner", msg.Creator),
+	))
+
+	return nil
 }
 
 // FileDispute creates a new dispute against a data asset.
@@ -429,12 +701,12 @@ func (k Keeper) FileDispute(ctx context.Context, msg types.MsgFileDispute) (stri
 		return "", types.ErrInvalidAddress.Wrapf("invalid plaintiff: %s", err)
 	}
 
-	asset, found := k.GetAsset(sdkCtx, msg.AssetID)
+	asset, found := k.GetAsset(sdkCtx, msg.AssetId)
 	if !found {
-		return "", types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetID)
+		return "", types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
 	}
 	if !asset.IsActive {
-		return "", types.ErrAssetDelisted.Wrapf("asset %s is already delisted", msg.AssetID)
+		return "", types.ErrAssetDelisted.Wrapf("asset %s is already delisted", msg.AssetId)
 	}
 
 	// Require dispute deposit.
@@ -452,16 +724,23 @@ func (k Keeper) FileDispute(ctx context.Context, msg types.MsgFileDispute) (stri
 	}
 
 	disputeID := k.generateDisputeID(sdkCtx)
+	// Default to delist if no remedy specified.
+	requestedRemedy := msg.RequestedRemedy
+	if requestedRemedy == types.DISPUTE_REMEDY_UNSPECIFIED {
+		requestedRemedy = types.DISPUTE_REMEDY_DELIST
+	}
+
 	dispute := types.Dispute{
-		ID:           disputeID,
-		AssetID:      msg.AssetID,
-		Plaintiff:    msg.Creator,
-		Reason:       msg.Reason,
-		EvidenceHash: evidenceHash,
-		Status:       types.StatusOpen,
-		Remedy:       types.RemedyNone,
-		Arbitrator:   "",
-		ResolvedAt:   0,
+		Id:              disputeID,
+		AssetId:         msg.AssetId,
+		Plaintiff:       msg.Creator,
+		Reason:          msg.Reason,
+		EvidenceHash:    evidenceHash,
+		Status:          types.DISPUTE_STATUS_OPEN,
+		Remedy:          types.DISPUTE_REMEDY_UNSPECIFIED,
+		Arbitrator:      "",
+		ResolvedAt:      time.Time{},
+		RequestedRemedy: requestedRemedy,
 	}
 
 	if err := k.SetDispute(sdkCtx, dispute); err != nil {
@@ -471,7 +750,7 @@ func (k Keeper) FileDispute(ctx context.Context, msg types.MsgFileDispute) (stri
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		"dispute_filed",
 		sdk.NewAttribute("dispute_id", disputeID),
-		sdk.NewAttribute("asset_id", msg.AssetID),
+		sdk.NewAttribute("asset_id", msg.AssetId),
 		sdk.NewAttribute("plaintiff", msg.Creator),
 		sdk.NewAttribute("reason", msg.Reason),
 	))
@@ -488,27 +767,27 @@ func (k Keeper) ResolveDispute(ctx context.Context, msg types.MsgResolveDispute)
 		return types.ErrNotArbitrator.Wrapf("caller %s is not the arbitrator %s", msg.Creator, k.authority)
 	}
 
-	dispute, found := k.GetDispute(sdkCtx, msg.DisputeID)
+	dispute, found := k.GetDispute(sdkCtx, msg.DisputeId)
 	if !found {
-		return types.ErrDisputeNotFound.Wrapf("dispute %s not found", msg.DisputeID)
+		return types.ErrDisputeNotFound.Wrapf("dispute %s not found", msg.DisputeId)
 	}
-	if dispute.Status != types.StatusOpen {
-		return types.ErrDisputeNotOpen.Wrapf("dispute %s is %s, not OPEN", msg.DisputeID, dispute.Status)
+	if dispute.Status != types.DISPUTE_STATUS_OPEN {
+		return types.ErrDisputeNotOpen.Wrapf("dispute %s is %s, not OPEN", msg.DisputeId, dispute.Status)
 	}
 
 	// Execute remedy.
 	switch msg.Remedy {
-	case types.RemedyDelist:
-		asset, found := k.GetAsset(sdkCtx, dispute.AssetID)
+	case types.DISPUTE_REMEDY_DELIST:
+		asset, found := k.GetAsset(sdkCtx, dispute.AssetId)
 		if !found {
-			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetID)
+			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetId)
 		}
 		asset.IsActive = false
 		if err := k.SetAsset(sdkCtx, asset); err != nil {
 			return err
 		}
 
-	case types.RemedyTransfer:
+	case types.DISPUTE_REMEDY_TRANSFER:
 		// Details should contain the new owner address.
 		if len(msg.Details) == 0 {
 			return types.ErrInvalidParams.Wrap("transfer remedy requires new_owner in details")
@@ -517,35 +796,35 @@ func (k Keeper) ResolveDispute(ctx context.Context, msg types.MsgResolveDispute)
 		if _, err := sdk.AccAddressFromBech32(newOwner); err != nil {
 			return types.ErrInvalidAddress.Wrapf("invalid new owner: %s", err)
 		}
-		asset, found := k.GetAsset(sdkCtx, dispute.AssetID)
+		asset, found := k.GetAsset(sdkCtx, dispute.AssetId)
 		if !found {
-			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetID)
+			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetId)
 		}
 		asset.Owner = newOwner
 		if err := k.SetAsset(sdkCtx, asset); err != nil {
 			return err
 		}
-		k.setAssetOwnerIndex(sdkCtx, newOwner, asset.ID)
+		k.setAssetOwnerIndex(sdkCtx, newOwner, asset.Id)
 
-	case types.RemedyRightsCorrection:
+	case types.DISPUTE_REMEDY_RIGHTS_CORRECTION:
 		// Details should contain the new rights type as a single byte.
 		if len(msg.Details) == 0 {
 			return types.ErrInvalidParams.Wrap("rights_correction remedy requires new rights_type in details")
 		}
 		newRightsType := types.RightsType(msg.Details[0])
-		if newRightsType < types.RightsOriginal || newRightsType > types.RightsCollection {
+		if newRightsType < types.RIGHTS_TYPE_ORIGINAL || newRightsType > types.RIGHTS_TYPE_COLLECTION {
 			return types.ErrInvalidRightsType.Wrapf("invalid new rights_type: %d", newRightsType)
 		}
-		asset, found := k.GetAsset(sdkCtx, dispute.AssetID)
+		asset, found := k.GetAsset(sdkCtx, dispute.AssetId)
 		if !found {
-			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetID)
+			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetId)
 		}
 		asset.RightsType = newRightsType
 		if err := k.SetAsset(sdkCtx, asset); err != nil {
 			return err
 		}
 
-	case types.RemedyShareAdjustment:
+	case types.DISPUTE_REMEDY_SHARE_ADJUSTMENT:
 		// Details contain JSON-encoded co-creator adjustments.
 		if len(msg.Details) == 0 {
 			return types.ErrInvalidParams.Wrap("share_adjustment remedy requires co-creator details")
@@ -557,9 +836,9 @@ func (k Keeper) ResolveDispute(ctx context.Context, msg types.MsgResolveDispute)
 		if err := types.ValidateCoCreators(newCoCreators); err != nil {
 			return err
 		}
-		asset, found := k.GetAsset(sdkCtx, dispute.AssetID)
+		asset, found := k.GetAsset(sdkCtx, dispute.AssetId)
 		if !found {
-			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetID)
+			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetId)
 		}
 		asset.CoCreators = newCoCreators
 		if err := k.SetAsset(sdkCtx, asset); err != nil {
@@ -570,18 +849,26 @@ func (k Keeper) ResolveDispute(ctx context.Context, msg types.MsgResolveDispute)
 		return types.ErrInvalidParams.Wrapf("unknown remedy: %d", msg.Remedy)
 	}
 
+	// Return dispute deposit to plaintiff (dispute was resolved — remedy applied).
+	plaintiffAddr, pErr := sdk.AccAddressFromBech32(dispute.Plaintiff)
+	if pErr == nil {
+		params := k.GetParams(sdkCtx)
+		deposit := sdk.NewCoins(params.DisputeDeposit)
+		_ = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, plaintiffAddr, deposit)
+	}
+
 	// Update dispute.
-	dispute.Status = types.StatusResolved
+	dispute.Status = types.DISPUTE_STATUS_RESOLVED
 	dispute.Remedy = msg.Remedy
 	dispute.Arbitrator = msg.Creator
-	dispute.ResolvedAt = sdkCtx.BlockTime().Unix()
+	dispute.ResolvedAt = sdkCtx.BlockTime()
 	if err := k.SetDispute(sdkCtx, dispute); err != nil {
 		return err
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		"dispute_resolved",
-		sdk.NewAttribute("dispute_id", msg.DisputeID),
+		sdk.NewAttribute("dispute_id", msg.DisputeId),
 		sdk.NewAttribute("remedy", msg.Remedy.String()),
 		sdk.NewAttribute("arbitrator", msg.Creator),
 	))
@@ -598,7 +885,7 @@ func (k Keeper) IterateAllAssets(ctx sdk.Context, cb func(asset types.DataAsset)
 
 	for ; iter.Valid(); iter.Next() {
 		var asset types.DataAsset
-		if err := json.Unmarshal(iter.Value(), &asset); err != nil {
+		if err := k.cdc.Unmarshal(iter.Value(), &asset); err != nil {
 			continue
 		}
 		if cb(asset) {

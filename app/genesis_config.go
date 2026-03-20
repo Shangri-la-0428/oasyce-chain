@@ -82,7 +82,7 @@ func patchReputationGenesis(genesis map[string]json.RawMessage) {
 			VerifiedWeight:          math.LegacyNewDec(1),
 			UnverifiedWeight:        math.LegacyNewDecWithPrec(1, 1), // 0.1
 		},
-		Scores:    []reputationtypes.ReputationScore{},
+		ReputationScores: []reputationtypes.ReputationScore{},
 		Feedbacks: []reputationtypes.Feedback{},
 		Reports:   []reputationtypes.MisbehaviorReport{},
 	}

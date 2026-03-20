@@ -1,11 +1,14 @@
 package app
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -14,6 +17,7 @@ import (
 	"cosmossdk.io/x/feegrant"
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	feegrantmodule "cosmossdk.io/x/feegrant/module"
+	txsigning "cosmossdk.io/x/tx/signing"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
@@ -75,9 +79,17 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	oasyceparams "github.com/oasyce/chain/app/params"
+	capability "github.com/oasyce/chain/x/capability"
+	capabilitykeeper "github.com/oasyce/chain/x/capability/keeper"
 	capabilitytypes "github.com/oasyce/chain/x/capability/types"
+	datarights "github.com/oasyce/chain/x/datarights"
+	datarightskeeper "github.com/oasyce/chain/x/datarights/keeper"
 	datarightstypes "github.com/oasyce/chain/x/datarights/types"
+	reputation "github.com/oasyce/chain/x/reputation"
+	reputationkeeper "github.com/oasyce/chain/x/reputation/keeper"
 	reputationtypes "github.com/oasyce/chain/x/reputation/types"
+	settlement "github.com/oasyce/chain/x/settlement"
+	settlementkeeper "github.com/oasyce/chain/x/settlement/keeper"
 	settlementtypes "github.com/oasyce/chain/x/settlement/types"
 )
 
@@ -106,6 +118,10 @@ var (
 		authzmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		settlement.AppModuleBasic{},
+		capability.AppModuleBasic{},
+		reputation.AppModuleBasic{},
+		datarights.AppModuleBasic{},
 	)
 
 	// Module account permissions.
@@ -116,6 +132,8 @@ var (
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
+		settlementtypes.ModuleName:     {authtypes.Burner},
+		datarightstypes.ModuleName:     {authtypes.Burner},
 	}
 )
 
@@ -165,11 +183,11 @@ type OasyceApp struct {
 	AuthzKeeper     authzkeeper.Keeper
 	ConsensusKeeper consensuskeeper.Keeper
 
-	// Oasyce custom module keepers (placeholders)
-	SettlementKeeper settlementtypes.Keeper
-	CapabilityKeeper capabilitytypes.Keeper
-	ReputationKeeper reputationtypes.Keeper
-	DataRightsKeeper datarightstypes.Keeper
+	// Oasyce custom module keepers
+	SettlementKeeper settlementkeeper.Keeper
+	CapabilityKeeper capabilitykeeper.Keeper
+	ReputationKeeper reputationkeeper.Keeper
+	DataRightsKeeper datarightskeeper.Keeper
 
 	// Module manager
 	ModuleManager *module.Manager
@@ -189,13 +207,25 @@ func NewOasyceApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *OasyceApp {
-	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	addrCodec := addresscodec.NewBech32Codec(oasyceparams.AccountAddressPrefix)
+	valAddrCodec := addresscodec.NewBech32Codec(oasyceparams.ValidatorAddressPrefix)
+	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
+		ProtoFiles: gogoproto.HybridResolver,
+		SigningOptions: txsigning.Options{
+			AddressCodec:          addrCodec,
+			ValidatorAddressCodec: valAddrCodec,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 	appCodec := codec.NewProtoCodec(interfaceRegistry)
 	legacyAmino := codec.NewLegacyAmino()
 	txConfig := authtx.NewTxConfig(appCodec, authtx.DefaultSignModes)
 
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
+	ModuleBasics.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -218,6 +248,10 @@ func NewOasyceApp(
 		feegrant.StoreKey,
 		authzkeeper.StoreKey,
 		consensustypes.StoreKey,
+		settlementtypes.StoreKey,
+		capabilitytypes.StoreKey,
+		reputationtypes.StoreKey,
+		datarightstypes.StoreKey,
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys()
@@ -375,11 +409,42 @@ func NewOasyceApp(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
 	govKeeper.SetLegacyRouter(govRouter)
 
-	// Oasyce custom module keepers (placeholders).
-	app.SettlementKeeper = settlementtypes.Keeper{}
-	app.CapabilityKeeper = capabilitytypes.Keeper{}
-	app.ReputationKeeper = reputationtypes.Keeper{}
-	app.DataRightsKeeper = datarightstypes.Keeper{}
+	// Register staking hooks so slashing/distribution are notified of validator events.
+	app.StakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
+	)
+
+	// --- Oasyce Custom Module Keepers ---
+	govAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+
+	app.SettlementKeeper = settlementkeeper.NewKeeper(
+		appCodec,
+		keys[settlementtypes.StoreKey],
+		app.BankKeeper,
+		govAuthority,
+	)
+
+	app.CapabilityKeeper = capabilitykeeper.NewKeeper(
+		keys[capabilitytypes.StoreKey],
+		appCodec,
+		app.BankKeeper,
+		app.SettlementKeeper,
+	)
+
+	app.ReputationKeeper = reputationkeeper.NewKeeper(
+		appCodec,
+		keys[reputationtypes.StoreKey],
+		app.CapabilityKeeper,
+		govAuthority,
+	)
+
+	app.DataRightsKeeper = datarightskeeper.NewKeeper(
+		appCodec,
+		keys[datarightstypes.StoreKey],
+		app.BankKeeper,
+		app.SettlementKeeper,
+		govAuthority,
+	)
 
 	// --- Module Manager ---
 	app.ModuleManager = module.NewManager(
@@ -397,6 +462,10 @@ func NewOasyceApp(
 		consensus.NewAppModule(appCodec, app.ConsensusKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		settlement.NewAppModule(app.SettlementKeeper),
+		capability.NewAppModule(appCodec, app.CapabilityKeeper),
+		reputation.NewAppModule(app.ReputationKeeper),
+		datarights.NewAppModule(appCodec, app.DataRightsKeeper),
 	)
 
 	// Set order of module operations.
@@ -417,6 +486,10 @@ func NewOasyceApp(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensustypes.ModuleName,
+		settlementtypes.ModuleName,
+		capabilitytypes.ModuleName,
+		reputationtypes.ModuleName,
+		datarightstypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -436,6 +509,10 @@ func NewOasyceApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensustypes.ModuleName,
+		settlementtypes.ModuleName,
+		capabilitytypes.ModuleName,
+		reputationtypes.ModuleName,
+		datarightstypes.ModuleName,
 	)
 
 	genesisModuleOrder := []string{
@@ -455,11 +532,23 @@ func NewOasyceApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensustypes.ModuleName,
+		settlementtypes.ModuleName,
+		capabilitytypes.ModuleName,
+		reputationtypes.ModuleName,
+		datarightstypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
+
+	// Register all module services (msg handlers + query servers).
+	app.ModuleManager.RegisterServices(module.NewConfigurator(appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter()))
+
+	// Set ABCI handlers.
+	app.SetInitChainer(app.InitChainer)
+	app.SetBeginBlocker(app.BeginBlocker)
+	app.SetEndBlocker(app.EndBlocker)
 
 	// Mount stores.
 	app.MountKVStores(keys)
@@ -499,6 +588,25 @@ func (app *OasyceApp) InterfaceRegistry() codectypes.InterfaceRegistry {
 // TxConfig returns the app's TxConfig.
 func (app *OasyceApp) TxConfig() client.TxConfig {
 	return app.txConfig
+}
+
+// InitChainer handles the chain initialization from genesis.
+func (app *OasyceApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
+	var genesisState map[string]json.RawMessage
+	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
+		panic(err)
+	}
+	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+}
+
+// BeginBlocker runs module begin-block logic.
+func (app *OasyceApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
+	return app.ModuleManager.BeginBlock(ctx)
+}
+
+// EndBlocker runs module end-block logic.
+func (app *OasyceApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	return app.ModuleManager.EndBlock(ctx)
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided API server.

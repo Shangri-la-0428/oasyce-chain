@@ -74,6 +74,15 @@ message MsgBuyShares {
 
   // amount is the coin amount to spend on shares.
   cosmos.base.v1beta1.Coin amount = 3 [(gogoproto.nullable) = false];
+
+  // min_shares_out is the minimum shares the buyer expects (slippage protection).
+  // If the bonding curve would mint fewer than this, the tx is rejected.
+  // Optional: set to "0" or omit to disable.
+  string min_shares_out = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true
+  ];
 }
 
 // MsgBuySharesResponse is the response for MsgBuyShares.
@@ -102,6 +111,9 @@ message MsgFileDispute {
 
   // evidence is the raw evidence data.
   bytes evidence = 4;
+
+  // requested_remedy is the remedy the plaintiff wants if the dispute is upheld.
+  DisputeRemedy requested_remedy = 5;
 }
 
 // MsgFileDisputeResponse is the response for MsgFileDispute.

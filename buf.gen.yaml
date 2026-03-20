@@ -1,15 +1,4 @@
 version: v1
-managed:
-  enabled: true
-  go_package_prefix:
-    default: github.com/oasyce/chain/api
-    except:
-      - buf.build/cosmos/cosmos-sdk
-      - buf.build/cosmos/cosmos-proto
-      - buf.build/cosmos/gogo-proto
-      - buf.build/googleapis/googleapis
-    override:
-      buf.build/oasyce/chain: github.com/oasyce/chain/api
 plugins:
   - name: gocosmos
     out: .
@@ -17,6 +6,3 @@ plugins:
   - name: grpc-gateway
     out: .
     opt: logtostderr=true,allow_colon_final_segments=true
-  - name: go-pulsar
-    out: ./api
-    opt: paths=source_relative

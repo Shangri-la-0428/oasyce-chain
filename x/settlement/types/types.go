@@ -1,68 +1,42 @@
 package types
 
 import (
-	"time"
-
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
-// EscrowStatus represents the state of an escrow.
-type EscrowStatus uint32
+// String returns a text representation of Params.
+// This is needed because the proto-generated genesis.pb.go omits it.
+func (m *Params) String() string { return proto.CompactTextString(m) }
 
-const (
-	EscrowStatusUnspecified EscrowStatus = 0
-	EscrowStatusLocked      EscrowStatus = 1
-	EscrowStatusReleased    EscrowStatus = 2
-	EscrowStatusRefunded    EscrowStatus = 3
-	EscrowStatusExpired     EscrowStatus = 4
+// Convenience aliases for proto-generated EscrowStatus enum values.
+var (
+	EscrowStatusUnspecified = ESCROW_STATUS_UNSPECIFIED
+	EscrowStatusLocked      = ESCROW_STATUS_LOCKED
+	EscrowStatusReleased    = ESCROW_STATUS_RELEASED
+	EscrowStatusRefunded    = ESCROW_STATUS_REFUNDED
+	EscrowStatusExpired     = ESCROW_STATUS_EXPIRED
 )
 
-func (s EscrowStatus) String() string {
-	switch s {
-	case EscrowStatusLocked:
-		return "LOCKED"
-	case EscrowStatusReleased:
-		return "RELEASED"
-	case EscrowStatusRefunded:
-		return "REFUNDED"
-	case EscrowStatusExpired:
-		return "EXPIRED"
-	default:
-		return "UNSPECIFIED"
-	}
+// IsEscrowTerminal returns true if the escrow status is terminal (no further transitions).
+func IsEscrowTerminal(status EscrowStatus) bool {
+	return status == ESCROW_STATUS_RELEASED || status == ESCROW_STATUS_REFUNDED || status == ESCROW_STATUS_EXPIRED
 }
 
-// IsTerminal returns true if the escrow status is terminal (no further transitions).
-func (s EscrowStatus) IsTerminal() bool {
-	return s == EscrowStatusReleased || s == EscrowStatusRefunded || s == EscrowStatusExpired
-}
+// Protocol-level constants for bonding curve math.
+var (
+	// ReserveRatio is the Bancor connector weight (CW = 0.5).
+	ReserveRatio = math.LegacyNewDecWithPrec(5, 1) // 0.5
 
-// Escrow represents a locked-fund escrow for a capability invocation or data purchase.
-type Escrow struct {
-	ID        string       `json:"id"`
-	Creator   string       `json:"creator"`
-	Provider  string       `json:"provider"`
-	Amount    sdk.Coin     `json:"amount"`
-	Status    EscrowStatus `json:"status"`
-	CreatedAt time.Time    `json:"created_at"`
-	ExpiresAt time.Time    `json:"expires_at"`
-}
+	// InitialPrice is the bootstrap price in uoas per token (1 uoas = 1 token).
+	InitialPrice = math.LegacyOneDec()
 
-// BondingCurveState holds the bonding curve parameters for an asset.
-type BondingCurveState struct {
-	AssetID     string        `json:"asset_id"`
-	TotalShares math.Int      `json:"total_shares"`
-	Reserve     math.Int      `json:"reserve"`
-	PriceFactor math.LegacyDec `json:"price_factor"`
-	BuyerCount  uint32        `json:"buyer_count"`
-}
+	// ReserveSolvencyCap is the maximum fraction of reserve payable on sell.
+	ReserveSolvencyCap = math.LegacyNewDecWithPrec(95, 2) // 0.95
 
-// Params defines the parameters for the settlement module.
-type Params struct {
-	EscrowTimeoutSeconds uint64         `json:"escrow_timeout_seconds"`
-	ProtocolFeeRate      math.LegacyDec `json:"protocol_fee_rate"`
-}
+	// BurnRate is the fraction of settlement burned permanently (2%).
+	BurnRate = math.LegacyNewDecWithPrec(2, 2) // 0.02
+)
 
 // DefaultParams returns the default settlement module parameters.
 func DefaultParams() Params {
@@ -70,13 +44,6 @@ func DefaultParams() Params {
 		EscrowTimeoutSeconds: 300, // 5 minutes
 		ProtocolFeeRate:      math.LegacyNewDecWithPrec(5, 2), // 5% = 0.05
 	}
-}
-
-// GenesisState defines the settlement module's genesis state.
-type GenesisState struct {
-	Escrows            []Escrow            `json:"escrows"`
-	BondingCurveStates []BondingCurveState `json:"bonding_curve_states"`
-	Params             Params              `json:"params"`
 }
 
 // DefaultGenesisState returns the default genesis state.

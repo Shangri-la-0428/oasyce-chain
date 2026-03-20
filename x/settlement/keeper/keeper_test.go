@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -36,7 +37,7 @@ func (m *mockBankKeeper) fundAccount(addr string, coins sdk.Coins) {
 	m.balances[addr] = m.balances[addr].Add(coins...)
 }
 
-func (m *mockBankKeeper) SendCoins(_ sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+func (m *mockBankKeeper) SendCoins(_ context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	from := fromAddr.String()
 	to := toAddr.String()
 	if !m.balances[from].IsAllGTE(amt) {
@@ -47,7 +48,7 @@ func (m *mockBankKeeper) SendCoins(_ sdk.Context, fromAddr, toAddr sdk.AccAddres
 	return nil
 }
 
-func (m *mockBankKeeper) SendCoinsFromAccountToModule(_ sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
+func (m *mockBankKeeper) SendCoinsFromAccountToModule(_ context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
 	from := senderAddr.String()
 	if !m.balances[from].IsAllGTE(amt) {
 		return types.ErrInsufficientFunds.Wrap("mock: insufficient funds")
@@ -57,7 +58,7 @@ func (m *mockBankKeeper) SendCoinsFromAccountToModule(_ sdk.Context, senderAddr 
 	return nil
 }
 
-func (m *mockBankKeeper) SendCoinsFromModuleToAccount(_ sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+func (m *mockBankKeeper) SendCoinsFromModuleToAccount(_ context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
 	if !m.moduleBalances[senderModule].IsAllGTE(amt) {
 		return types.ErrInsufficientFunds.Wrap("mock: insufficient module funds")
 	}
@@ -67,12 +68,20 @@ func (m *mockBankKeeper) SendCoinsFromModuleToAccount(_ sdk.Context, senderModul
 	return nil
 }
 
-func (m *mockBankKeeper) SendCoinsFromModuleToModule(_ sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error {
+func (m *mockBankKeeper) SendCoinsFromModuleToModule(_ context.Context, senderModule, recipientModule string, amt sdk.Coins) error {
 	if !m.moduleBalances[senderModule].IsAllGTE(amt) {
 		return types.ErrInsufficientFunds.Wrap("mock: insufficient module funds")
 	}
 	m.moduleBalances[senderModule] = m.moduleBalances[senderModule].Sub(amt...)
 	m.moduleBalances[recipientModule] = m.moduleBalances[recipientModule].Add(amt...)
+	return nil
+}
+
+func (m *mockBankKeeper) BurnCoins(_ context.Context, moduleName string, amt sdk.Coins) error {
+	if !m.moduleBalances[moduleName].IsAllGTE(amt) {
+		return types.ErrInsufficientFunds.Wrap("mock: insufficient module funds for burn")
+	}
+	m.moduleBalances[moduleName] = m.moduleBalances[moduleName].Sub(amt...)
 	return nil
 }
 
@@ -166,9 +175,9 @@ func TestCreateEscrowAndRelease(t *testing.T) {
 		t.Fatalf("expected RELEASED, got %s", escrow.Status)
 	}
 
-	// Verify fee split: provider gets 95%, protocol 5%.
+	// Verify fee split: provider gets 93%, protocol 5%, burn 2%.
 	providerBal := bank.balances[provider]
-	expectedProvider := sdk.NewCoin("uoas", math.NewInt(950000)) // 95% of 1000000
+	expectedProvider := sdk.NewCoin("uoas", math.NewInt(930000)) // 93% of 1000000
 	if !providerBal.Equal(sdk.NewCoins(expectedProvider)) {
 		t.Fatalf("expected provider balance %s, got %s", expectedProvider, providerBal)
 	}
@@ -177,6 +186,14 @@ func TestCreateEscrowAndRelease(t *testing.T) {
 	expectedFee := sdk.NewCoin("uoas", math.NewInt(50000)) // 5% of 1000000
 	if !feeCollectorBal.Equal(sdk.NewCoins(expectedFee)) {
 		t.Fatalf("expected fee_collector balance %s, got %s", expectedFee, feeCollectorBal)
+	}
+
+	// Verify 2% was burned (module balance should be reduced by the full amount).
+	// Total module received 1000000, sent 930000 to provider, 50000 to fee_collector, burned 20000.
+	// Module balance should be 0.
+	moduleBal = bank.moduleBalances[types.ModuleName]
+	if !moduleBal.IsZero() {
+		t.Fatalf("expected module balance 0 after release, got %s", moduleBal)
 	}
 }
 
@@ -252,22 +269,23 @@ func TestBondingCurvePricing(t *testing.T) {
 	bank.fundAccount(buyer1, sdk.NewCoins(sdk.NewCoin("uoas", payment)))
 	bank.fundAccount(buyer2, sdk.NewCoins(sdk.NewCoin("uoas", payment)))
 
-	// First buyer: 100% rate.
+	// First buyer (bootstrap): tokens = payment / INITIAL_PRICE = 100000
 	shares1, err := k.BuyShares(ctx, assetID, buyer1, payment)
 	if err != nil {
 		t.Fatalf("BuyShares buyer1 failed: %v", err)
 	}
-	expectedShares1 := payment.Mul(math.NewInt(10000)).Quo(math.NewInt(10000)) // 100%
+	expectedShares1 := math.NewInt(100000) // bootstrap: 1:1
 	if !shares1.Equal(expectedShares1) {
 		t.Fatalf("expected shares1 %s, got %s", expectedShares1, shares1)
 	}
 
-	// Second buyer: 80% rate.
+	// Second buyer: Bancor formula with supply=100000, reserve=100000
+	// tokens = 100000 * (sqrt(1 + 100000/100000) - 1) = 100000 * (sqrt(2)-1) ≈ 41421
 	shares2, err := k.BuyShares(ctx, assetID, buyer2, payment)
 	if err != nil {
 		t.Fatalf("BuyShares buyer2 failed: %v", err)
 	}
-	expectedShares2 := payment.Mul(math.NewInt(8000)).Quo(math.NewInt(10000)) // 80%
+	expectedShares2 := math.NewInt(41421)
 	if !shares2.Equal(expectedShares2) {
 		t.Fatalf("expected shares2 %s, got %s", expectedShares2, shares2)
 	}
@@ -286,13 +304,18 @@ func TestBondingCurvePricing(t *testing.T) {
 		t.Fatalf("expected reserve %s, got %s", expectedReserve, state.Reserve)
 	}
 
-	// Get price.
+	// Get price — should be higher after purchases.
+	// spot_price = reserve / (supply * CW) = 200000 / (141421 * 0.5) ≈ 2.83
 	price, err := k.GetPrice(ctx, assetID)
 	if err != nil {
 		t.Fatalf("GetPrice failed: %v", err)
 	}
 	if price.IsZero() {
 		t.Fatal("expected non-zero price")
+	}
+	// Price should be > 1 (initial price) since there have been purchases.
+	if price.LT(math.NewInt(2)) {
+		t.Fatalf("expected price > 1 after purchases, got %s", price)
 	}
 }
 

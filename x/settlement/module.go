@@ -1,6 +1,7 @@
 package settlement
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -14,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	"github.com/oasyce/chain/x/settlement/cli"
 	"github.com/oasyce/chain/x/settlement/keeper"
 	"github.com/oasyce/chain/x/settlement/types"
 )
@@ -39,32 +41,36 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 }
 
 // RegisterInterfaces registers the module's interface types.
-func (AppModuleBasic) RegisterInterfaces(_ codectypes.InterfaceRegistry) {}
+func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
+}
 
 // DefaultGenesis returns the module's default genesis state as raw JSON.
-func (AppModuleBasic) DefaultGenesis(_ codec.JSONCodec) json.RawMessage {
-	gs := types.DefaultGenesisState()
-	bz, _ := json.Marshal(gs)
-	return bz
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 // ValidateGenesis validates the module's genesis state as raw JSON.
-func (AppModuleBasic) ValidateGenesis(_ codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var gs types.GenesisState
-	if err := json.Unmarshal(bz, &gs); err != nil {
+	if err := cdc.UnmarshalJSON(bz, &gs); err != nil {
 		return fmt.Errorf("failed to unmarshal settlement genesis state: %w", err)
 	}
 	return types.ValidateGenesis(gs)
 }
 
 // RegisterGRPCGatewayRoutes registers the module's gRPC gateway routes.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(_ client.Context, _ *runtime.ServeMux) {}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+		panic(err)
+	}
+}
 
 // GetTxCmd returns the root tx command for the settlement module.
-func (AppModuleBasic) GetTxCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetTxCmd() *cobra.Command { return cli.GetTxCmd() }
 
 // GetQueryCmd returns the root query command for the settlement module.
-func (AppModuleBasic) GetQueryCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetQueryCmd() *cobra.Command { return cli.GetQueryCmd() }
 
 // ---------------------------------------------------------------------------
 // AppModule
@@ -89,17 +95,14 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // RegisterServices registers module gRPC services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	// Wire up msg and query servers once protobuf codegen is available.
-	_ = keeper.NewMsgServer(am.keeper)
-	_ = keeper.NewQueryServer(am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServer(am.keeper))
 }
 
 // InitGenesis initializes the module's state from genesis.
-func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var gs types.GenesisState
-	if err := json.Unmarshal(data, &gs); err != nil {
-		panic(fmt.Sprintf("failed to unmarshal settlement genesis: %v", err))
-	}
+	cdc.MustUnmarshalJSON(data, &gs)
 
 	// Set params.
 	if err := am.keeper.SetParams(ctx, gs.Params); err != nil {
@@ -109,14 +112,14 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.Ra
 	// Restore escrows.
 	for _, escrow := range gs.Escrows {
 		if err := am.keeper.SetEscrow(ctx, escrow); err != nil {
-			panic(fmt.Sprintf("failed to set escrow %s: %v", escrow.ID, err))
+			panic(fmt.Sprintf("failed to set escrow %s: %v", escrow.Id, err))
 		}
 	}
 
 	// Restore bonding curve states.
 	for _, bcs := range gs.BondingCurveStates {
 		if err := am.keeper.SetBondingCurveState(ctx, bcs); err != nil {
-			panic(fmt.Sprintf("failed to set bonding curve %s: %v", bcs.AssetID, err))
+			panic(fmt.Sprintf("failed to set bonding curve %s: %v", bcs.AssetId, err))
 		}
 	}
 
@@ -124,7 +127,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.Ra
 }
 
 // ExportGenesis exports the module's current state as genesis.
-func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMessage {
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	var escrows []types.Escrow
 	am.keeper.IterateAllEscrows(ctx, func(e types.Escrow) bool {
 		escrows = append(escrows, e)
@@ -143,8 +146,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMe
 		Params:             am.keeper.GetParams(ctx),
 	}
 
-	bz, _ := json.Marshal(gs)
-	return bz
+	return cdc.MustMarshalJSON(&gs)
 }
 
 // ConsensusVersion returns the module's consensus version.

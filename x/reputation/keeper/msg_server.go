@@ -8,37 +8,38 @@ import (
 	"github.com/oasyce/chain/x/reputation/types"
 )
 
-// MsgServer implements the reputation module's Msg service.
-type MsgServer struct {
-	keeper Keeper
+var _ types.MsgServer = msgServer{}
+
+// msgServer implements the reputation MsgServer interface.
+type msgServer struct {
+	Keeper
 }
 
-// NewMsgServer returns a new MsgServer instance.
-func NewMsgServer(k Keeper) MsgServer {
-	return MsgServer{keeper: k}
+// NewMsgServer returns an implementation of the reputation MsgServer interface.
+func NewMsgServer(keeper Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper}
 }
 
 // SubmitFeedback handles MsgSubmitFeedback.
-func (ms MsgServer) SubmitFeedback(goCtx context.Context, msg *types.MsgSubmitFeedback) (*types.MsgSubmitFeedbackResponse, error) {
+func (m msgServer) SubmitFeedback(goCtx context.Context, msg *types.MsgSubmitFeedback) (*types.MsgSubmitFeedbackResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	feedbackID, err := ms.keeper.SubmitFeedback(ctx, msg.Creator, msg.InvocationID, msg.Rating, msg.Comment)
+	feedbackID, err := m.Keeper.SubmitFeedback(ctx, msg.Creator, msg.InvocationId, msg.Rating, msg.Comment)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgSubmitFeedbackResponse{FeedbackID: feedbackID}, nil
+	return &types.MsgSubmitFeedbackResponse{FeedbackId: feedbackID}, nil
 }
 
 // ReportMisbehavior handles MsgReportMisbehavior.
-func (ms MsgServer) ReportMisbehavior(goCtx context.Context, msg *types.MsgReportMisbehavior) (*types.MsgReportMisbehaviorResponse, error) {
+func (m msgServer) ReportMisbehavior(goCtx context.Context, msg *types.MsgReportMisbehavior) (*types.MsgReportMisbehaviorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	reportID, err := ms.keeper.ReportMisbehavior(ctx, msg.Creator, msg.Target, msg.EvidenceType, msg.Evidence)
+	reportID, err := m.Keeper.ReportMisbehavior(ctx, msg.Creator, msg.Target, msg.EvidenceType, msg.Evidence)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgReportMisbehaviorResponse{ReportID: reportID}, nil
+	return &types.MsgReportMisbehaviorResponse{ReportId: reportID}, nil
 }
-

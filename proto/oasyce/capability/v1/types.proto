@@ -107,4 +107,7 @@ message Invocation {
   // timestamp is the time the invocation was created.
   google.protobuf.Timestamp timestamp = 9
       [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+
+  // escrow_id is the ID of the escrow backing this invocation.
+  string escrow_id = 10;
 }

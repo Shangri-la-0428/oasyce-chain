@@ -75,10 +75,13 @@ message BondingCurveState {
     (gogoproto.nullable) = false
   ];
 
-  // price_factors are coefficients for the bonding curve pricing function.
-  repeated string price_factors = 4 [
+  // price_factor is the coefficient for the bonding curve pricing function.
+  string price_factor = 4 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
+
+  // buyer_count is the number of unique buyers of this asset.
+  uint32 buyer_count = 5;
 }

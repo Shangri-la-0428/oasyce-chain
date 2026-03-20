@@ -1,6 +1,7 @@
 package reputation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -14,13 +15,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	"github.com/oasyce/chain/x/reputation/cli"
 	"github.com/oasyce/chain/x/reputation/keeper"
 	"github.com/oasyce/chain/x/reputation/types"
 )
 
 var (
-	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModule      = AppModule{}
 )
 
 // ---------------------------------------------------------------------------
@@ -39,34 +41,36 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 }
 
 // RegisterInterfaces registers the module's interface types.
-func (AppModuleBasic) RegisterInterfaces(_ codectypes.InterfaceRegistry) {
-	// Will register proper protobuf interfaces once codegen is ready.
+func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
 // DefaultGenesis returns the module's default genesis state as raw JSON.
-func (AppModuleBasic) DefaultGenesis(_ codec.JSONCodec) json.RawMessage {
-	gs := types.DefaultGenesisState()
-	bz, _ := json.Marshal(gs)
-	return bz
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 // ValidateGenesis validates the module's genesis state as raw JSON.
-func (AppModuleBasic) ValidateGenesis(_ codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var gs types.GenesisState
-	if err := json.Unmarshal(bz, &gs); err != nil {
+	if err := cdc.UnmarshalJSON(bz, &gs); err != nil {
 		return fmt.Errorf("failed to unmarshal reputation genesis state: %w", err)
 	}
 	return types.ValidateGenesis(gs)
 }
 
 // RegisterGRPCGatewayRoutes registers the module's gRPC gateway routes.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(_ client.Context, _ *runtime.ServeMux) {}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+		panic(err)
+	}
+}
 
 // GetTxCmd returns the root tx command for the reputation module.
-func (AppModuleBasic) GetTxCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetTxCmd() *cobra.Command { return cli.GetTxCmd() }
 
 // GetQueryCmd returns the root query command for the reputation module.
-func (AppModuleBasic) GetQueryCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetQueryCmd() *cobra.Command { return cli.GetQueryCmd() }
 
 // ---------------------------------------------------------------------------
 // AppModule
@@ -86,26 +90,19 @@ func NewAppModule(k keeper.Keeper) AppModule {
 	}
 }
 
-// Name returns the module name.
-func (am AppModule) Name() string { return types.ModuleName }
-
 // RegisterInvariants registers module invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // RegisterServices registers module gRPC services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	// Once protobuf codegen is available, register MsgServer and QueryServer here:
-	// types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
-	// types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServer(am.keeper))
-	_ = cfg
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServer(am.keeper))
 }
 
 // InitGenesis initializes the module's state from genesis.
-func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var gs types.GenesisState
-	if err := json.Unmarshal(data, &gs); err != nil {
-		panic(fmt.Sprintf("failed to unmarshal reputation genesis: %v", err))
-	}
+	cdc.MustUnmarshalJSON(data, &gs)
 
 	// Set params.
 	if err := am.keeper.SetParams(ctx, gs.Params); err != nil {
@@ -113,7 +110,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.Ra
 	}
 
 	// Restore scores.
-	for _, score := range gs.Scores {
+	for _, score := range gs.ReputationScores {
 		if err := am.keeper.SetReputation(ctx, score); err != nil {
 			panic(fmt.Sprintf("failed to set reputation score for %s: %v", score.Address, err))
 		}
@@ -122,14 +119,14 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.Ra
 	// Restore feedbacks.
 	for _, fb := range gs.Feedbacks {
 		if err := am.keeper.SetFeedback(ctx, fb); err != nil {
-			panic(fmt.Sprintf("failed to set feedback %s: %v", fb.ID, err))
+			panic(fmt.Sprintf("failed to set feedback %s: %v", fb.Id, err))
 		}
 	}
 
 	// Restore reports.
 	for _, report := range gs.Reports {
 		if err := am.keeper.SetReport(ctx, report); err != nil {
-			panic(fmt.Sprintf("failed to set report %s: %v", report.ID, err))
+			panic(fmt.Sprintf("failed to set report %s: %v", report.Id, err))
 		}
 	}
 
@@ -137,7 +134,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.Ra
 }
 
 // ExportGenesis exports the module's current state as genesis.
-func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMessage {
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	var scores []types.ReputationScore
 	am.keeper.IterateAllScores(ctx, func(s types.ReputationScore) bool {
 		scores = append(scores, s)
@@ -150,15 +147,20 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMe
 		return false
 	})
 
+	var reports []types.MisbehaviorReport
+	am.keeper.IterateAllReports(ctx, func(r types.MisbehaviorReport) bool {
+		reports = append(reports, r)
+		return false
+	})
+
 	gs := types.GenesisState{
-		Scores:    scores,
-		Feedbacks: feedbacks,
-		Reports:   []types.MisbehaviorReport{},
-		Params:    am.keeper.GetParams(ctx),
+		ReputationScores: scores,
+		Feedbacks:        feedbacks,
+		Reports:          reports,
+		Params:           am.keeper.GetParams(ctx),
 	}
 
-	bz, _ := json.Marshal(gs)
-	return bz
+	return cdc.MustMarshalJSON(&gs)
 }
 
 // ConsensusVersion returns the module's consensus version.

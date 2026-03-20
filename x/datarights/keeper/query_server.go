@@ -8,68 +8,95 @@ import (
 	"github.com/oasyce/chain/x/datarights/types"
 )
 
-// QueryServer implements the datarights query service.
-type QueryServer struct {
+var _ types.QueryServer = queryServer{}
+
+// queryServer implements the datarights QueryServer interface.
+type queryServer struct {
 	Keeper
 }
 
 // NewQueryServer returns an implementation of the datarights QueryServer.
-func NewQueryServer(keeper Keeper) QueryServer {
-	return QueryServer{Keeper: keeper}
+func NewQueryServer(keeper Keeper) types.QueryServer {
+	return &queryServer{Keeper: keeper}
 }
 
-// QueryAsset returns a single data asset by ID.
-func (q QueryServer) QueryAsset(ctx context.Context, assetID string) (*QueryAssetResponse, error) {
+// DataAsset returns a single data asset by ID.
+func (q queryServer) DataAsset(ctx context.Context, req *types.QueryDataAssetRequest) (*types.QueryDataAssetResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	asset, found := q.Keeper.GetAsset(sdkCtx, assetID)
+	asset, found := q.Keeper.GetAsset(sdkCtx, req.AssetId)
 	if !found {
-		return nil, types.ErrAssetNotFound.Wrapf("asset %s not found", assetID)
+		return nil, types.ErrAssetNotFound.Wrapf("asset %s not found", req.AssetId)
 	}
-	return &QueryAssetResponse{Asset: asset}, nil
+	return &types.QueryDataAssetResponse{DataAsset: asset}, nil
 }
 
-// QueryAssets returns all data assets.
-func (q QueryServer) QueryAssets(ctx context.Context) (*QueryAssetsResponse, error) {
+// DataAssets returns all data assets, optionally filtered by owner or tag.
+func (q queryServer) DataAssets(ctx context.Context, req *types.QueryDataAssetsRequest) (*types.QueryDataAssetsResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	assets := q.Keeper.ListAssets(sdkCtx)
-	return &QueryAssetsResponse{Assets: assets}, nil
+
+	var assets []types.DataAsset
+	if req.Owner != "" {
+		assets = q.Keeper.ListAssetsByOwner(sdkCtx, req.Owner)
+	} else {
+		assets = q.Keeper.ListAssets(sdkCtx)
+	}
+
+	// Filter by tag if specified.
+	if req.Tag != "" {
+		var filtered []types.DataAsset
+		for _, a := range assets {
+			for _, t := range a.Tags {
+				if t == req.Tag {
+					filtered = append(filtered, a)
+					break
+				}
+			}
+		}
+		assets = filtered
+	}
+
+	if assets == nil {
+		assets = []types.DataAsset{}
+	}
+
+	return &types.QueryDataAssetsResponse{DataAssets: assets}, nil
 }
 
-// QueryShareHolders returns all shareholders for an asset.
-func (q QueryServer) QueryShareHolders(ctx context.Context, assetID string) (*QueryShareHoldersResponse, error) {
+// Shares returns all shareholders for a data asset.
+func (q queryServer) Shares(ctx context.Context, req *types.QuerySharesRequest) (*types.QuerySharesResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	holders := q.Keeper.GetShareHolders(sdkCtx, assetID)
-	return &QueryShareHoldersResponse{ShareHolders: holders}, nil
+	holders := q.Keeper.GetShareHolders(sdkCtx, req.AssetId)
+	if holders == nil {
+		holders = []types.ShareHolder{}
+	}
+	return &types.QuerySharesResponse{Shareholders: holders}, nil
 }
 
-// QueryDispute returns a single dispute by ID.
-func (q QueryServer) QueryDispute(ctx context.Context, disputeID string) (*QueryDisputeResponse, error) {
+// Dispute returns a single dispute by ID.
+func (q queryServer) Dispute(ctx context.Context, req *types.QueryDisputeRequest) (*types.QueryDisputeResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	dispute, found := q.Keeper.GetDispute(sdkCtx, disputeID)
+	dispute, found := q.Keeper.GetDispute(sdkCtx, req.DisputeId)
 	if !found {
-		return nil, types.ErrDisputeNotFound.Wrapf("dispute %s not found", disputeID)
+		return nil, types.ErrDisputeNotFound.Wrapf("dispute %s not found", req.DisputeId)
 	}
-	return &QueryDisputeResponse{Dispute: dispute}, nil
+	return &types.QueryDisputeResponse{Dispute: dispute}, nil
 }
 
-// Response types for queries.
+// Disputes returns all disputes, optionally filtered by asset ID.
+func (q queryServer) Disputes(ctx context.Context, req *types.QueryDisputesRequest) (*types.QueryDisputesResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-// QueryAssetResponse is the response for QueryAsset.
-type QueryAssetResponse struct {
-	Asset types.DataAsset `json:"asset"`
-}
+	var disputes []types.Dispute
+	q.Keeper.IterateAllDisputes(sdkCtx, func(d types.Dispute) bool {
+		if req.AssetId == "" || d.AssetId == req.AssetId {
+			disputes = append(disputes, d)
+		}
+		return false
+	})
 
-// QueryAssetsResponse is the response for QueryAssets.
-type QueryAssetsResponse struct {
-	Assets []types.DataAsset `json:"assets"`
-}
+	if disputes == nil {
+		disputes = []types.Dispute{}
+	}
 
-// QueryShareHoldersResponse is the response for QueryShareHolders.
-type QueryShareHoldersResponse struct {
-	ShareHolders []types.ShareHolder `json:"share_holders"`
-}
-
-// QueryDisputeResponse is the response for QueryDispute.
-type QueryDisputeResponse struct {
-	Dispute types.Dispute `json:"dispute"`
+	return &types.QueryDisputesResponse{Disputes: disputes}, nil
 }

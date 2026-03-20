@@ -3,7 +3,7 @@ package oasyce.datarights.v1;
 
 option go_package = "github.com/oasyce/chain/x/datarights/types";
 
-import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "oasyce/datarights/v1/types.proto";
 
@@ -29,13 +29,9 @@ message Params {
   // max_co_creators is the maximum number of co-creators per data asset.
   uint32 max_co_creators = 1;
 
-  // dispute_deposit_denom is the denomination required for dispute deposits.
-  string dispute_deposit_denom = 2;
+  // dispute_deposit is the deposit required for filing a dispute.
+  cosmos.base.v1beta1.Coin dispute_deposit = 2 [(gogoproto.nullable) = false];
 
-  // dispute_deposit_amount is the minimum deposit amount for filing a dispute.
-  string dispute_deposit_amount = 3 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
-  ];
+  // dispute_timeout_days is the number of days before a dispute times out.
+  uint32 dispute_timeout_days = 3;
 }

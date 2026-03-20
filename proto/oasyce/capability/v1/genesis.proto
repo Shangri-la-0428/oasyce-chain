@@ -3,6 +3,7 @@ package oasyce.capability.v1;
 
 option go_package = "github.com/oasyce/chain/x/capability/types";
 
+import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "oasyce/capability/v1/types.proto";
 
@@ -22,9 +23,12 @@ message GenesisState {
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
-  // min_price_per_call is the minimum allowed price for a capability.
-  string min_price_denom = 1;
+  // min_provider_stake is the minimum stake required to register a capability.
+  cosmos.base.v1beta1.Coin min_provider_stake = 1 [(gogoproto.nullable) = false];
 
   // max_rate_limit is the maximum allowed rate limit per block.
   uint64 max_rate_limit = 2;
+
+  // protocol_fee_rate is the protocol fee in basis points (e.g. 500 = 5%).
+  uint64 protocol_fee_rate = 3;
 }

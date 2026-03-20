@@ -9,42 +9,44 @@ import (
 	"github.com/oasyce/chain/x/capability/types"
 )
 
-// QueryServer implements the capability module's Query service.
-type QueryServer struct {
+var _ types.QueryServer = queryServer{}
+
+// queryServer implements the proto-generated types.QueryServer interface.
+type queryServer struct {
 	keeper Keeper
 }
 
 // NewQueryServer returns a new QueryServer instance.
-func NewQueryServer(keeper Keeper) QueryServer {
-	return QueryServer{keeper: keeper}
+func NewQueryServer(keeper Keeper) types.QueryServer {
+	return queryServer{keeper: keeper}
 }
 
-// QueryCapability returns a single capability by ID.
-func (q QueryServer) QueryCapability(goCtx context.Context, req *types.QueryCapabilityRequest) (*types.QueryCapabilityResponse, error) {
+// Capability queries a single capability by ID.
+func (q queryServer) Capability(goCtx context.Context, req *types.QueryCapabilityRequest) (*types.QueryCapabilityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	cap, err := q.keeper.GetCapability(ctx, req.CapabilityID)
+	cap, err := q.keeper.GetCapability(ctx, req.CapabilityId)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryCapabilityResponse{Capability: cap}, nil
 }
 
-// QueryCapabilities returns all capabilities, optionally filtered by tag.
-func (q QueryServer) QueryCapabilities(goCtx context.Context, req *types.QueryCapabilitiesRequest) (*types.QueryCapabilitiesResponse, error) {
+// Capabilities queries all capabilities, optionally filtered by tag.
+func (q queryServer) Capabilities(goCtx context.Context, req *types.QueryCapabilitiesRequest) (*types.QueryCapabilitiesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	caps := q.keeper.ListCapabilities(ctx, req.Tag)
 	return &types.QueryCapabilitiesResponse{Capabilities: caps}, nil
 }
 
-// QueryCapabilitiesByProvider returns all capabilities for a given provider.
-func (q QueryServer) QueryCapabilitiesByProvider(goCtx context.Context, req *types.QueryCapabilitiesByProviderRequest) (*types.QueryCapabilitiesByProviderResponse, error) {
+// CapabilitiesByProvider queries all capabilities for a given provider.
+func (q queryServer) CapabilitiesByProvider(goCtx context.Context, req *types.QueryCapabilitiesByProviderRequest) (*types.QueryCapabilitiesByProviderResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	caps := q.keeper.ListByProvider(ctx, req.Provider)
 	return &types.QueryCapabilitiesByProviderResponse{Capabilities: caps}, nil
 }
 
-// QueryEarnings returns the total earnings for a provider across all capabilities.
-func (q QueryServer) QueryEarnings(goCtx context.Context, req *types.QueryEarningsRequest) (*types.QueryEarningsResponse, error) {
+// Earnings queries the total earnings for a provider across all capabilities.
+func (q queryServer) Earnings(goCtx context.Context, req *types.QueryEarningsRequest) (*types.QueryEarningsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	caps := q.keeper.ListByProvider(ctx, req.Provider)
 
@@ -56,7 +58,7 @@ func (q QueryServer) QueryEarnings(goCtx context.Context, req *types.QueryEarnin
 	}
 
 	// Return the total earned as a single coin (uoas).
-	var coins sdk.Coins
+	var coins []sdk.Coin
 	if totalEarned.IsPositive() {
 		coins = sdk.NewCoins(sdk.NewCoin("uoas", totalEarned))
 	}

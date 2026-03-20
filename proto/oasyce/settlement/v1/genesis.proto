@@ -3,6 +3,7 @@ package oasyce.settlement.v1;
 
 option go_package = "github.com/oasyce/chain/x/settlement/types";
 
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "oasyce/settlement/v1/types.proto";
 
@@ -22,6 +23,13 @@ message GenesisState {
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
-  // escrow_timeout is the default escrow expiration duration in seconds.
+  // escrow_timeout_seconds is the default escrow expiration duration in seconds.
   uint64 escrow_timeout_seconds = 1;
+
+  // protocol_fee_rate is the protocol fee as a decimal (e.g., 0.05 = 5%).
+  string protocol_fee_rate = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 }

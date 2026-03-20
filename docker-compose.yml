@@ -1,5 +1,19 @@
 version: "3.8"
 
+# 4-validator local testnet via Docker.
+#
+# Usage:
+#   1. Build: docker build -t oasyce/chain:latest .
+#   2. Initialize: bash scripts/init_multi_testnet.sh
+#      (or use docker-based init - see scripts/init_multi_testnet.sh)
+#   3. Run: docker-compose up
+#
+# Port allocation matches init_multi_testnet.sh (offset +100 per node):
+#   Node 0: P2P=26656  RPC=26657  API=1317  gRPC=9090
+#   Node 1: P2P=26756  RPC=26757  API=1417  gRPC=9190
+#   Node 2: P2P=26856  RPC=26857  API=1517  gRPC=9290
+#   Node 3: P2P=26956  RPC=26957  API=1617  gRPC=9390
+
 services:
   oasyce-node0:
     image: oasyce/chain:latest
@@ -13,45 +27,49 @@ services:
       - node0-data:/root/.oasyced
     networks:
       - oasyce-testnet
+    restart: unless-stopped
 
   oasyce-node1:
     image: oasyce/chain:latest
     container_name: oasyce-node1
     ports:
-      - "26666:26656"
-      - "26667:26657"
-      - "1318:1317"
-      - "9091:9090"
+      - "26756:26656"
+      - "26757:26657"
+      - "1417:1317"
+      - "9190:9090"
     volumes:
       - node1-data:/root/.oasyced
     networks:
       - oasyce-testnet
+    restart: unless-stopped
 
   oasyce-node2:
     image: oasyce/chain:latest
     container_name: oasyce-node2
     ports:
-      - "26676:26656"
-      - "26677:26657"
-      - "1319:1317"
-      - "9092:9090"
+      - "26856:26656"
+      - "26857:26657"
+      - "1517:1317"
+      - "9290:9090"
     volumes:
       - node2-data:/root/.oasyced
     networks:
       - oasyce-testnet
+    restart: unless-stopped
 
   oasyce-node3:
     image: oasyce/chain:latest
     container_name: oasyce-node3
     ports:
-      - "26686:26656"
-      - "26687:26657"
-      - "1320:1317"
-      - "9093:9090"
+      - "26956:26656"
+      - "26957:26657"
+      - "1617:1317"
+      - "9390:9090"
     volumes:
       - node3-data:/root/.oasyced
     networks:
       - oasyce-testnet
+    restart: unless-stopped
 
 volumes:
   node0-data:
