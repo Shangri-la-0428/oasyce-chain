@@ -8,3 +8,5 @@ vendor/
 *.swp
 *~
 .DS_Store
+coverage.html
+coverage.out

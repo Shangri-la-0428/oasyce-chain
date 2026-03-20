@@ -15,17 +15,18 @@
 - [x] E2E verification with real transactions
 - [x] CI/CD (GitHub Actions), Docker, 4-node testnet
 - [x] Open-source infrastructure (README, LICENSE, CONTRIBUTING, etc.)
-- [x] 30+ tests across 5 suites
+- [x] 40+ tests across 5 suites
 
-## Phase B — Production Readiness
+## Phase B — Production Readiness (In Progress)
 
-- [ ] Full `proto-gen` pipeline (MsgSellShares, MsgDelistAsset → protobuf wire format)
-- [ ] IBC integration (cross-chain asset transfers)
-- [ ] Governance module integration (parameter changes via proposals)
-- [ ] Mainnet genesis configuration
-- [ ] Validator incentive program
+- [x] Full `proto-gen` pipeline (MsgSellShares, MsgDelistAsset → protobuf wire format)
+- [x] IBC integration — ibc-go v8.8.0, cross-chain OAS transfers, Tendermint light client
+- [x] Governance module — fully wired (7d voting, 40% quorum, param change proposals)
+- [x] Mainnet genesis configuration — all modules with default params
+- [x] Swagger/OpenAPI documentation — REST API spec for all 4 custom modules + IBC
+- [x] IBC guide — channel setup, cross-chain transfer walkthrough
 - [ ] Security audit (external)
-- [ ] Swagger/OpenAPI auto-generated documentation
+- [ ] Validator incentive program
 - [ ] Testnet launch with external validators
 
 ## Phase C — Proof of Useful Work (PoUW)
