@@ -78,6 +78,19 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	// IBC
+	ibccapabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	ibccapabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	ibc "github.com/cosmos/ibc-go/v8/modules/core"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibcporttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
+	transfer "github.com/cosmos/ibc-go/v8/modules/apps/transfer"
+	transferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+
+	// Oasyce custom modules
 	oasyceparams "github.com/oasyce/chain/app/params"
 	capability "github.com/oasyce/chain/x/capability"
 	capabilitykeeper "github.com/oasyce/chain/x/capability/keeper"
@@ -118,6 +131,11 @@ var (
 		authzmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		// IBC modules
+		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
+		transfer.AppModuleBasic{},
+		// Oasyce custom modules
 		settlement.AppModuleBasic{},
 		capability.AppModuleBasic{},
 		reputation.AppModuleBasic{},
@@ -132,6 +150,8 @@ var (
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
+		ibcexported.ModuleName:         nil,
+		transfertypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		settlementtypes.ModuleName:     {authtypes.Burner},
 		datarightstypes.ModuleName:     {authtypes.Burner},
 	}
@@ -182,6 +202,13 @@ type OasyceApp struct {
 	FeeGrantKeeper  feegrantkeeper.Keeper
 	AuthzKeeper     authzkeeper.Keeper
 	ConsensusKeeper consensuskeeper.Keeper
+
+	// IBC keepers
+	IBCCapabilityKeeper *ibccapabilitykeeper.Keeper
+	IBCKeeper           *ibckeeper.Keeper
+	TransferKeeper      transferkeeper.Keeper
+	ScopedIBCKeeper     ibccapabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper ibccapabilitykeeper.ScopedKeeper
 
 	// Oasyce custom module keepers
 	SettlementKeeper settlementkeeper.Keeper
@@ -248,13 +275,18 @@ func NewOasyceApp(
 		feegrant.StoreKey,
 		authzkeeper.StoreKey,
 		consensustypes.StoreKey,
+		// IBC store keys
+		ibcexported.StoreKey,
+		ibccapabilitytypes.StoreKey,
+		transfertypes.StoreKey,
+		// Oasyce custom module store keys
 		settlementtypes.StoreKey,
 		capabilitytypes.StoreKey,
 		reputationtypes.StoreKey,
 		datarightstypes.StoreKey,
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys()
+	memKeys := storetypes.NewMemoryStoreKeys(ibccapabilitytypes.MemStoreKey)
 
 	app := &OasyceApp{
 		BaseApp:           bApp,
@@ -414,6 +446,50 @@ func NewOasyceApp(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
+	// --- Init IBC Capability Keeper ---
+	app.IBCCapabilityKeeper = ibccapabilitykeeper.NewKeeper(
+		appCodec,
+		keys[ibccapabilitytypes.StoreKey],
+		memKeys[ibccapabilitytypes.MemStoreKey],
+	)
+
+	// Create scoped keepers for IBC modules.
+	scopedIBCKeeper := app.IBCCapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
+	scopedTransferKeeper := app.IBCCapabilityKeeper.ScopeToModule(transfertypes.ModuleName)
+	app.ScopedIBCKeeper = scopedIBCKeeper
+	app.ScopedTransferKeeper = scopedTransferKeeper
+
+	// --- Init IBC Keeper ---
+	app.IBCKeeper = ibckeeper.NewKeeper(
+		appCodec,
+		keys[ibcexported.StoreKey],
+		app.GetSubspace(ibcexported.ModuleName),
+		app.StakingKeeper,
+		app.UpgradeKeeper,
+		scopedIBCKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	// --- Init Transfer Keeper ---
+	app.TransferKeeper = transferkeeper.NewKeeper(
+		appCodec,
+		keys[transfertypes.StoreKey],
+		app.GetSubspace(transfertypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		scopedTransferKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	// Create IBC router and add transfer route.
+	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
+	ibcRouter := ibcporttypes.NewRouter()
+	ibcRouter.AddRoute(transfertypes.ModuleName, transferIBCModule)
+	app.IBCKeeper.SetRouter(ibcRouter)
+
 	// --- Oasyce Custom Module Keepers ---
 	govAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
@@ -462,6 +538,11 @@ func NewOasyceApp(
 		consensus.NewAppModule(appCodec, app.ConsensusKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		// IBC modules
+		ibc.NewAppModule(app.IBCKeeper),
+		ibctm.NewAppModule(),
+		transfer.NewAppModule(app.TransferKeeper),
+		// Oasyce custom modules
 		settlement.NewAppModule(app.SettlementKeeper),
 		capability.NewAppModule(appCodec, app.CapabilityKeeper),
 		reputation.NewAppModule(app.ReputationKeeper),
@@ -471,6 +552,7 @@ func NewOasyceApp(
 	// Set order of module operations.
 	app.ModuleManager.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
+		ibccapabilitytypes.ModuleName,
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -480,6 +562,8 @@ func NewOasyceApp(
 		banktypes.ModuleName,
 		govtypes.ModuleName,
 		crisistypes.ModuleName,
+		ibcexported.ModuleName,
+		transfertypes.ModuleName,
 		genutiltypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
@@ -496,6 +580,9 @@ func NewOasyceApp(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
+		ibcexported.ModuleName,
+		ibccapabilitytypes.ModuleName,
+		transfertypes.ModuleName,
 		feegrant.ModuleName,
 		genutiltypes.ModuleName,
 		authtypes.ModuleName,
@@ -516,6 +603,7 @@ func NewOasyceApp(
 	)
 
 	genesisModuleOrder := []string{
+		ibccapabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -524,7 +612,9 @@ func NewOasyceApp(
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
+		ibcexported.ModuleName,
 		genutiltypes.ModuleName,
+		transfertypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
@@ -554,6 +644,9 @@ func NewOasyceApp(
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
+
+	// Seal the IBC capability keeper after all scoped keepers are created.
+	app.IBCCapabilityKeeper.Seal()
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -654,6 +747,9 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
+	// IBC subspaces
+	paramsKeeper.Subspace(ibcexported.ModuleName)
+	paramsKeeper.Subspace(transfertypes.ModuleName)
 
 	return paramsKeeper
 }
