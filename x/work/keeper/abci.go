@@ -81,7 +81,12 @@ func (k Keeper) expireTaskTimeout(ctx sdk.Context, task types.Task) error {
 	// Refund bounty + deposit to creator
 	creatorAddr, err := sdk.AccAddressFromBech32(task.Creator)
 	if err != nil {
-		return err
+		// Invalid address in stored task — log and mark expired without refund.
+		// This should never happen but must not halt block production.
+		ctx.Logger().Error("expireTaskTimeout: invalid creator address", "task_id", task.Id, "creator", task.Creator)
+		oldStatus := task.Status
+		task.Status = types.TASK_STATUS_EXPIRED
+		return k.setTaskWithIndexes(ctx, task, oldStatus)
 	}
 
 	refundCoins := sdk.NewCoins(task.Bounty)
@@ -89,13 +94,26 @@ func (k Keeper) expireTaskTimeout(ctx sdk.Context, task types.Task) error {
 		refundCoins = refundCoins.Add(task.Deposit)
 	}
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, creatorAddr, refundCoins); err != nil {
-		return err
+		ctx.Logger().Error("expireTaskTimeout: refund failed", "task_id", task.Id, "err", err)
+		// Mark expired anyway — don't block consensus over a failed refund
 	}
 
 	oldStatus := task.Status
 	task.Status = types.TASK_STATUS_EXPIRED
 	if err := k.setTaskWithIndexes(ctx, task, oldStatus); err != nil {
 		return err
+	}
+
+	// Penalize assigned executors who committed but didn't reveal
+	if oldStatus == types.TASK_STATUS_REVEALING || oldStatus == types.TASK_STATUS_COMMITTED {
+		for _, executor := range task.AssignedExecutors {
+			if _, hasResult := k.GetResult(ctx, task.Id, executor); hasResult {
+				continue // revealed — no penalty here
+			}
+			if _, committed := k.GetCommitment(ctx, task.Id, executor); committed {
+				k.incrementExecutorFailed(ctx, executor) // committed but didn't reveal
+			}
+		}
 	}
 
 	// Update epoch stats
@@ -127,7 +145,14 @@ func (k Keeper) EndBlocker(ctx sdk.Context) error {
 		return len(tasksToAssign) >= maxPerBlock
 	})
 
+	currentHeight := uint64(ctx.BlockHeight())
 	for _, task := range tasksToAssign {
+		// Expire SUBMITTED tasks stuck beyond MaxTimeoutBlocks (no executors available)
+		if currentHeight-task.SubmitHeight > params.MaxTimeoutBlocks {
+			_ = k.expireTaskTimeout(ctx, task)
+			continue
+		}
+
 		executors, err := k.AssignExecutors(ctx, task)
 		if err != nil {
 			// Not enough executors — leave as SUBMITTED for next block

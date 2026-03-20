@@ -3,7 +3,9 @@ package keeper
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,9 +43,17 @@ func (k Keeper) SettleTask(ctx sdk.Context, task types.Task) error {
 		hashCounts[key] = append(hashCounts[key], r)
 	}
 
+	// Deterministic: sort hashes so tie-breaking is consistent across validators
+	sortedHashes := make([]string, 0, len(hashCounts))
+	for hash := range hashCounts {
+		sortedHashes = append(sortedHashes, hash)
+	}
+	sort.Strings(sortedHashes)
+
 	var majorityHash string
 	var majorityResults []types.Result
-	for hash, res := range hashCounts {
+	for _, hash := range sortedHashes {
+		res := hashCounts[hash]
 		if len(res) > len(majorityResults) {
 			majorityHash = hash
 			majorityResults = res
@@ -114,13 +124,28 @@ func (k Keeper) SettleTask(ctx sdk.Context, task types.Task) error {
 		}
 	}
 
-	// Penalize minority executors
-	for hash, res := range hashCounts {
+	// Penalize minority executors — double penalty for actively wrong results
+	for _, hash := range sortedHashes {
 		if hash == majorityHash {
 			continue
 		}
-		for _, r := range res {
+		for _, r := range hashCounts[hash] {
 			k.incrementExecutorFailed(ctx, r.Executor)
+			k.incrementExecutorFailed(ctx, r.Executor) // 2x penalty for wrong result
+		}
+	}
+
+	// Penalize non-revealers: committed but didn't reveal
+	revealedSet := make(map[string]bool, len(results))
+	for _, r := range results {
+		revealedSet[r.Executor] = true
+	}
+	for _, executor := range task.AssignedExecutors {
+		if revealedSet[executor] {
+			continue
+		}
+		if _, committed := k.GetCommitment(ctx, task.Id, executor); committed {
+			k.incrementExecutorFailed(ctx, executor) // penalty for withholding reveal
 		}
 	}
 
@@ -240,11 +265,26 @@ func VerifyCommitment(commitment types.Commitment, outputHash, salt []byte, exec
 }
 
 // ComputeCommitHash generates the commit hash for the commit-reveal scheme.
+// Uses length-prefixed fields to prevent concatenation collisions.
+// Format: len(outputHash) || outputHash || len(salt) || salt || len(executor) || executor || unavailable_flag
 func ComputeCommitHash(outputHash, salt []byte, executor string, unavailable bool) []byte {
 	h := sha256.New()
+
+	// Length-prefix each field to prevent boundary ambiguity
+	lenBuf := make([]byte, 4)
+
+	binary.BigEndian.PutUint32(lenBuf, uint32(len(outputHash)))
+	h.Write(lenBuf)
 	h.Write(outputHash)
+
+	binary.BigEndian.PutUint32(lenBuf, uint32(len(salt)))
+	h.Write(lenBuf)
 	h.Write(salt)
+
+	binary.BigEndian.PutUint32(lenBuf, uint32(len(executor)))
+	h.Write(lenBuf)
 	h.Write([]byte(executor))
+
 	if unavailable {
 		h.Write([]byte{1})
 	} else {

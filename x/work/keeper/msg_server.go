@@ -21,6 +21,7 @@ func NewMsgServer(keeper Keeper) types.MsgServer {
 }
 
 // RegisterExecutor registers a new compute executor.
+// Auth: cosmos.msg.v1.signer = "executor" ensures only the executor can sign.
 func (m msgServer) RegisterExecutor(goCtx context.Context, msg *types.MsgRegisterExecutor) (*types.MsgRegisterExecutorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -48,6 +49,7 @@ func (m msgServer) RegisterExecutor(goCtx context.Context, msg *types.MsgRegiste
 }
 
 // UpdateExecutor updates an executor's profile.
+// Auth: cosmos.msg.v1.signer = "executor" ensures only the executor can sign.
 func (m msgServer) UpdateExecutor(goCtx context.Context, msg *types.MsgUpdateExecutor) (*types.MsgUpdateExecutorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

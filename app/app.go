@@ -652,7 +652,9 @@ func NewOasyceApp(
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 
 	// Register all module services (msg handlers + query servers).
-	app.ModuleManager.RegisterServices(module.NewConfigurator(appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter()))
+	if err := app.ModuleManager.RegisterServices(module.NewConfigurator(appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())); err != nil {
+		panic(err)
+	}
 
 	// Set ABCI handlers.
 	app.SetInitChainer(app.InitChainer)

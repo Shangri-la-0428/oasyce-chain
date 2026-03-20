@@ -13,7 +13,7 @@ func DefaultParams() Params {
 		MinTimeoutBlocks:      100,
 		MaxTimeoutBlocks:      10000,
 		RevealBlocks:          50,
-		MinBounty:             math.NewInt(100),
+		MinBounty:             math.NewInt(1000000), // 1 OAS minimum bounty (anti-spam)
 		ExecutorShare:         math.LegacyNewDecWithPrec(90, 2), // 0.90
 		ProtocolShare:         math.LegacyNewDecWithPrec(5, 2),  // 0.05
 		BurnShare:             math.LegacyNewDecWithPrec(2, 2),  // 0.02

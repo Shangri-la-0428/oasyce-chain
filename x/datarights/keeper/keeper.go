@@ -578,14 +578,12 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 
 	// Deduct protocol fee (5%).
 	protocolFeeDec := grossPayout.Mul(settlementtypes.DefaultParams().ProtocolFeeRate)
-	netPayout := grossPayout.Sub(protocolFeeDec)
-
 	feeAmount := protocolFeeDec.TruncateInt()
 	// Guard against fee truncation to 0 on small sells — minimum 1 uoas fee.
 	if feeAmount.IsZero() && grossPayout.IsPositive() {
 		feeAmount = math.OneInt()
 	}
-	netPayout = grossPayout.Sub(math.LegacyNewDecFromInt(feeAmount))
+	netPayout := grossPayout.Sub(math.LegacyNewDecFromInt(feeAmount))
 	payoutAmount := netPayout.TruncateInt()
 
 	if payoutAmount.IsZero() {

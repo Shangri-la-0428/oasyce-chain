@@ -36,10 +36,6 @@ func newMockBankKeeper() *mockBankKeeper {
 	}
 }
 
-func (m *mockBankKeeper) fundAccount(addr string, coins sdk.Coins) {
-	m.balances[addr] = m.balances[addr].Add(coins...)
-}
-
 func (m *mockBankKeeper) SendCoins(_ context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	from := fromAddr.String()
 	to := toAddr.String()
@@ -618,8 +614,8 @@ func TestSettlementWithMinority(t *testing.T) {
 	}
 
 	p3, _ := k.GetExecutorProfile(ctx, exec3)
-	if p3.TasksFailed != 1 {
-		t.Errorf("exec3 tasks_failed: got %d, want 1", p3.TasksFailed)
+	if p3.TasksFailed != 2 {
+		t.Errorf("exec3 tasks_failed: got %d, want 2 (2x penalty for wrong result)", p3.TasksFailed)
 	}
 }
 

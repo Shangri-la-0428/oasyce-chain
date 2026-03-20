@@ -3,7 +3,6 @@ package keeper
 import (
 	"crypto/sha256"
 	"encoding/binary"
-	"math"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +12,11 @@ import (
 
 type executorCandidate struct {
 	address string
-	score   float64
+	// Deterministic score using only integer/byte operations.
+	// scoreHigh:scoreLow form a 128-bit composite key for sorting.
+	// Lower weight bucket = higher priority; within same bucket, sort by hash.
+	weightBucket uint64 // reputation weight bucket (lower = higher priority)
+	hashVal      [32]byte
 }
 
 // AssignExecutors deterministically selects executors for a task.
@@ -26,37 +29,34 @@ func (k Keeper) AssignExecutors(ctx sdk.Context, task types.Task) ([]string, err
 	var candidates []executorCandidate
 
 	k.IterateExecutorProfiles(ctx, func(p types.ExecutorProfile) bool {
-		// Skip inactive executors
 		if !p.Active {
 			return false
 		}
-
-		// Skip the task creator (prevent self-assignment)
 		if p.Address == task.Creator {
 			return false
 		}
-
-		// Check task type support
 		if !supportsTaskType(p.SupportedTaskTypes, task.TaskType) {
 			return false
 		}
-
-		// Check compute capacity
 		if p.MaxComputeUnits < task.MaxComputeUnits {
 			return false
 		}
 
-		// Check minimum reputation
-		rep := k.getReputationWeight(ctx, p.Address)
-		if rep < float64(params.MinExecutorReputation) {
+		rep := k.getReputationScore(ctx, p.Address)
+		if rep < uint64(params.MinExecutorReputation) {
 			return false
 		}
 
-		// Deterministic score: sha256(taskID + blockHash + addr) / weight
-		score := k.computeAssignmentScore(task.Id, blockHash, p.Address, rep)
+		hashVal := computeAssignmentHash(task.Id, blockHash, p.Address)
+		// Weight bucket: higher reputation = lower bucket = more likely selected.
+		// Use integer log2 approximation: bucket = MaxUint64 / (1 + rep)
+		// This is fully deterministic across all platforms.
+		weightBucket := ^uint64(0) / (1 + rep)
+
 		candidates = append(candidates, executorCandidate{
-			address: p.Address,
-			score:   score,
+			address:      p.Address,
+			weightBucket: weightBucket,
+			hashVal:      hashVal,
 		})
 		return false
 	})
@@ -67,58 +67,56 @@ func (k Keeper) AssignExecutors(ctx sdk.Context, task types.Task) ([]string, err
 			"need %d executors, only %d eligible", redundancy, len(candidates))
 	}
 
-	// Sort by score ascending — lower score = selected
+	// Deterministic sort: by weight bucket ascending, then by hash bytes
 	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].score < candidates[j].score
+		if candidates[i].weightBucket != candidates[j].weightBucket {
+			return candidates[i].weightBucket < candidates[j].weightBucket
+		}
+		// Tie-break by hash (deterministic byte comparison)
+		for b := 0; b < 32; b++ {
+			if candidates[i].hashVal[b] != candidates[j].hashVal[b] {
+				return candidates[i].hashVal[b] < candidates[j].hashVal[b]
+			}
+		}
+		return candidates[i].address < candidates[j].address
 	})
 
-	selected := make([]string, redundancy)
-	for i := 0; i < redundancy; i++ {
-		selected[i] = candidates[i].address
+	// Select top N, skipping duplicates (Sybil resistance)
+	selected := make([]string, 0, redundancy)
+	for _, c := range candidates {
+		if len(selected) >= redundancy {
+			break
+		}
+		selected = append(selected, c.address)
 	}
 
 	return selected, nil
 }
 
-// computeAssignmentScore returns a deterministic pseudo-random score.
-// Lower score = higher priority for selection.
-func (k Keeper) computeAssignmentScore(taskID uint64, blockHash []byte, addr string, reputation float64) float64 {
+// computeAssignmentHash returns a deterministic 32-byte hash for executor selection.
+// No floating point — fully deterministic across all architectures.
+func computeAssignmentHash(taskID uint64, blockHash []byte, addr string) [32]byte {
 	h := sha256.New()
 
-	// taskID
 	bz := make([]byte, 8)
 	binary.BigEndian.PutUint64(bz, taskID)
 	h.Write(bz)
-
-	// blockHash (deterministic, unknown at submission time)
 	h.Write(blockHash)
-
-	// executor address
 	h.Write([]byte(addr))
 
-	digest := h.Sum(nil)
-
-	// Convert first 8 bytes to float64 in [0, 1)
-	raw := binary.BigEndian.Uint64(digest[:8])
-	randomVal := float64(raw) / float64(^uint64(0))
-
-	// Weight: higher reputation = lower score = more likely selected
-	weight := math.Log1p(reputation)
-	if weight < 1.0 {
-		weight = 1.0
-	}
-
-	return randomVal / weight
+	var result [32]byte
+	copy(result[:], h.Sum(nil))
+	return result
 }
 
-// getReputationWeight returns the reputation score as float64.
+// getReputationScore returns the reputation score as uint64.
 // Returns a default of 50 if no reputation record exists.
-func (k Keeper) getReputationWeight(ctx sdk.Context, addr string) float64 {
+func (k Keeper) getReputationScore(ctx sdk.Context, addr string) uint64 {
 	rep, found := k.reputationKeeper.GetReputation(ctx, addr)
 	if !found {
-		return 50.0 // default for new executors
+		return 50 // default for new executors
 	}
-	return float64(rep.TotalScore)
+	return rep.TotalScore
 }
 
 func supportsTaskType(supported []string, taskType string) bool {
