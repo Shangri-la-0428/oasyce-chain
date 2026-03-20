@@ -52,9 +52,9 @@
 
 | 仓库 | 开源就绪度 | 阻塞项数 |
 |------|-----------|---------|
-| Plugin Engine | **95%** | 0 阻塞 |
-| oasyce-chain | **90%** | 1 阻塞 (需配置 git remote + push) |
-| DataVault | **85%** | 0 阻塞 |
+| Plugin Engine | **98%** | 0 阻塞 |
+| oasyce-chain | **98%** | 0 阻塞 (已推送 GitHub) |
+| DataVault | **95%** | 0 阻塞 |
 
 ### oasyce-chain — 阻塞项 (必须完成)
 
@@ -145,10 +145,10 @@
 
 | 问题 | 严重度 | 说明 |
 |------|--------|------|
-| E-7: 前端运行保护 | Medium | BuyShares 需要 minSharesOut 参数防止三明治攻击 |
-| E-9: Jury 仅支持 delist | Low | 应支持 transfer/rights_correction 等补救措施 |
+| ~~E-7: 前端运行保护~~ | ✅ 已解决 | MinSharesOut / MinPayoutOut 已实现 |
+| ~~E-9: Jury 仅支持 delist~~ | ✅ 已解决 | 支持 delist + rights_correction |
 | A-4: ReserveRatio 常量未统一引用 | Low | settlement 和 datarights 各自计算 |
-| MsgSellShares 非 proto | Low | 手写 Go struct, 无法用 CLI tx 广播 |
+| ~~MsgSellShares 非 proto~~ | ✅ 已解决 | proto 定义 + CLI tx 广播完整支持 |
 | x/work 模块 (PoUW) | 规划中 | Proof of Useful Work, Phase A+B 后实现 |
 
 ---
