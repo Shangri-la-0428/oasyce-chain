@@ -13,6 +13,8 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgBuyShares{}, "oasyce/datarights/MsgBuyShares", nil)
 	cdc.RegisterConcrete(&MsgFileDispute{}, "oasyce/datarights/MsgFileDispute", nil)
 	cdc.RegisterConcrete(&MsgResolveDispute{}, "oasyce/datarights/MsgResolveDispute", nil)
+	cdc.RegisterConcrete(&MsgSellShares{}, "oasyce/datarights/MsgSellShares", nil)
+	cdc.RegisterConcrete(&MsgDelistAsset{}, "oasyce/datarights/MsgDelistAsset", nil)
 }
 
 // RegisterInterfaces registers the module's interface types with the interface registry.
@@ -22,6 +24,8 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgBuyShares{},
 		&MsgFileDispute{},
 		&MsgResolveDispute{},
+		&MsgSellShares{},
+		&MsgDelistAsset{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

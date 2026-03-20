@@ -27,6 +27,8 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdRegisterDataAsset(),
 		CmdBuyShares(),
+		CmdSellShares(),
+		CmdDelistAsset(),
 		CmdFileDispute(),
 		CmdResolveDispute(),
 	)
@@ -127,6 +129,71 @@ func CmdBuyShares() *cobra.Command {
 	}
 
 	cmd.Flags().String("min-shares-out", "", "Minimum shares expected (slippage protection)")
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdSellShares creates a SellShares transaction.
+func CmdSellShares() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "sell-shares [asset-id] [shares]",
+		Short: "Sell shares back to the bonding curve",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			shares, ok := math.NewIntFromString(args[1])
+			if !ok {
+				return fmt.Errorf("invalid shares amount: %s", args[1])
+			}
+
+			msg := &types.MsgSellShares{
+				Creator: clientCtx.GetFromAddress().String(),
+				AssetId: args[0],
+				Shares:  shares,
+			}
+
+			minOutStr, _ := cmd.Flags().GetString("min-payout-out")
+			if minOutStr != "" {
+				minOut, ok := math.NewIntFromString(minOutStr)
+				if ok {
+					msg.MinPayoutOut = &minOut
+				}
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String("min-payout-out", "", "Minimum payout expected (slippage protection)")
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdDelistAsset creates a DelistAsset transaction.
+func CmdDelistAsset() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delist [asset-id]",
+		Short: "Delist a data asset (owner only)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgDelistAsset{
+				Creator: clientCtx.GetFromAddress().String(),
+				AssetId: args[0],
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

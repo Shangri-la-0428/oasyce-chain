@@ -26,6 +26,12 @@ service Msg {
 
   // ResolveDispute resolves an open dispute (arbitrator only).
   rpc ResolveDispute(MsgResolveDispute) returns (MsgResolveDisputeResponse);
+
+  // SellShares sells shares back to the bonding curve.
+  rpc SellShares(MsgSellShares) returns (MsgSellSharesResponse);
+
+  // DelistAsset allows the asset owner to voluntarily delist.
+  rpc DelistAsset(MsgDelistAsset) returns (MsgDelistAssetResponse);
 }
 
 // MsgRegisterDataAsset registers a new data asset on-chain.
@@ -142,3 +148,55 @@ message MsgResolveDispute {
 
 // MsgResolveDisputeResponse is the response for MsgResolveDispute.
 message MsgResolveDisputeResponse {}
+
+// MsgSellShares sells shares back to the bonding curve.
+message MsgSellShares {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgSellShares";
+
+  // creator is the address of the seller.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset_id is the ID of the data asset.
+  string asset_id = 2;
+
+  // shares is the number of shares to sell.
+  string shares = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // min_payout_out is the minimum payout expected (slippage protection).
+  // Optional: nil or zero disables the check.
+  string min_payout_out = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true
+  ];
+}
+
+// MsgSellSharesResponse is the response for MsgSellShares.
+message MsgSellSharesResponse {
+  // payout is the amount received after fees.
+  string payout = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgDelistAsset allows an asset owner to voluntarily delist their asset.
+message MsgDelistAsset {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgDelistAsset";
+
+  // creator is the address of the asset owner.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset_id is the ID of the data asset to delist.
+  string asset_id = 2;
+}
+
+// MsgDelistAssetResponse is the response for MsgDelistAsset.
+message MsgDelistAssetResponse {}

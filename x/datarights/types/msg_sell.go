@@ -1,28 +1,8 @@
 package types
 
 import (
-	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// MsgSellShares sells shares back to the bonding curve.
-type MsgSellShares struct {
-	// Creator is the address of the seller.
-	Creator string `json:"creator"`
-	// AssetId is the ID of the data asset.
-	AssetId string `json:"asset_id"`
-	// Shares is the number of shares to sell.
-	Shares math.Int `json:"shares"`
-	// MinPayoutOut is the minimum payout expected (slippage protection).
-	// Optional: nil or zero disables the check.
-	MinPayoutOut *math.Int `json:"min_payout_out,omitempty"`
-}
-
-// MsgSellSharesResponse is the response for MsgSellShares.
-type MsgSellSharesResponse struct {
-	// Payout is the amount received after fees.
-	Payout math.Int `json:"payout"`
-}
 
 // ValidateBasic performs basic validation on MsgSellShares.
 func (m *MsgSellShares) ValidateBasic() error {
