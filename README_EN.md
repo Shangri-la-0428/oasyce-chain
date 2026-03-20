@@ -199,9 +199,12 @@ oasyced query reputation show cosmos1xxx
 - Validator incentive program
 - Public testnet launch
 
-### Phase C: Proof of Useful Work (Planned)
+### Phase C: Proof of Useful Work ✅
 
-- x/work module: task submission + verification + rewards
+- x/work module: AI compute task submission + redundant execution + majority consensus settlement
+- Commit-reveal anti-copy scheme, deterministic executor assignment, reputation-weighted
+- Economics: 90% executor / 5% protocol / 2% burn / 3% submitter rebate
+- 6 tx commands + 8 query commands, 13 unit tests
 
 ### Phase D: Ecosystem Growth (Planned)
 

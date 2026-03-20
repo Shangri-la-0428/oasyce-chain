@@ -1,0 +1,101 @@
+syntax = "proto3";
+package oasyce.work.v1;
+
+option go_package = "github.com/oasyce/chain/x/work/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+
+// Msg defines the work module's transaction service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  rpc RegisterExecutor(MsgRegisterExecutor) returns (MsgRegisterExecutorResponse);
+  rpc UpdateExecutor(MsgUpdateExecutor)     returns (MsgUpdateExecutorResponse);
+  rpc SubmitTask(MsgSubmitTask)             returns (MsgSubmitTaskResponse);
+  rpc CommitResult(MsgCommitResult)         returns (MsgCommitResultResponse);
+  rpc RevealResult(MsgRevealResult)         returns (MsgRevealResultResponse);
+  rpc DisputeResult(MsgDisputeResult)       returns (MsgDisputeResultResponse);
+}
+
+// MsgRegisterExecutor registers a validator as a compute executor.
+message MsgRegisterExecutor {
+  option (cosmos.msg.v1.signer) = "executor";
+  option (amino.name)           = "oasyce/work/MsgRegisterExecutor";
+
+  string   executor              = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated string supported_task_types = 2;
+  uint64   max_compute_units     = 3;
+}
+message MsgRegisterExecutorResponse {}
+
+// MsgUpdateExecutor updates an executor's profile.
+message MsgUpdateExecutor {
+  option (cosmos.msg.v1.signer) = "executor";
+  option (amino.name)           = "oasyce/work/MsgUpdateExecutor";
+
+  string   executor              = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated string supported_task_types = 2;
+  uint64   max_compute_units     = 3;
+  bool     active                = 4;
+}
+message MsgUpdateExecutorResponse {}
+
+// MsgSubmitTask submits a new compute task with bounty.
+message MsgSubmitTask {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name)           = "oasyce/work/MsgSubmitTask";
+
+  string creator           = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string task_type         = 2;
+  bytes  input_hash        = 3;
+  string input_uri         = 4;
+  uint64 max_compute_units = 5;
+  cosmos.base.v1beta1.Coin bounty = 6 [(gogoproto.nullable) = false];
+  uint32 redundancy        = 7;
+  uint64 timeout_blocks    = 8;
+}
+message MsgSubmitTaskResponse {
+  uint64 task_id = 1;
+}
+
+// MsgCommitResult submits a sealed result hash (commit phase of commit-reveal).
+message MsgCommitResult {
+  option (cosmos.msg.v1.signer) = "executor";
+  option (amino.name)           = "oasyce/work/MsgCommitResult";
+
+  string executor    = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id     = 2;
+  bytes  commit_hash = 3;
+}
+message MsgCommitResultResponse {}
+
+// MsgRevealResult reveals the actual result (reveal phase of commit-reveal).
+message MsgRevealResult {
+  option (cosmos.msg.v1.signer) = "executor";
+  option (amino.name)           = "oasyce/work/MsgRevealResult";
+
+  string executor          = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id           = 2;
+  bytes  output_hash       = 3;
+  string output_uri        = 4;
+  uint64 compute_units_used = 5;
+  bytes  salt              = 6;
+  bool   unavailable       = 7;
+}
+message MsgRevealResultResponse {}
+
+// MsgDisputeResult challenges a settled task's result.
+message MsgDisputeResult {
+  option (cosmos.msg.v1.signer) = "challenger";
+  option (amino.name)           = "oasyce/work/MsgDisputeResult";
+
+  string challenger = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id    = 2;
+  string reason     = 3;
+  cosmos.base.v1beta1.Coin bond = 4 [(gogoproto.nullable) = false];
+}
+message MsgDisputeResultResponse {}

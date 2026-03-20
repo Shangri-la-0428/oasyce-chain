@@ -1,0 +1,106 @@
+syntax = "proto3";
+package oasyce.work.v1;
+
+option go_package = "github.com/oasyce/chain/x/work/types";
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+import "oasyce/work/v1/types.proto";
+import "oasyce/work/v1/genesis.proto";
+
+// Query defines the work module's gRPC query service.
+service Query {
+  rpc Task(QueryTaskRequest) returns (QueryTaskResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/task/{task_id}";
+  }
+
+  rpc TasksByStatus(QueryTasksByStatusRequest) returns (QueryTasksByStatusResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/tasks/status/{status}";
+  }
+
+  rpc TasksByCreator(QueryTasksByCreatorRequest) returns (QueryTasksByCreatorResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/tasks/creator/{creator}";
+  }
+
+  rpc TasksByExecutor(QueryTasksByExecutorRequest) returns (QueryTasksByExecutorResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/tasks/executor/{executor}";
+  }
+
+  rpc ExecutorProfile(QueryExecutorProfileRequest) returns (QueryExecutorProfileResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/executor/{address}";
+  }
+
+  rpc Executors(QueryExecutorsRequest) returns (QueryExecutorsResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/executors";
+  }
+
+  rpc WorkParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/params";
+  }
+
+  rpc EpochStats(QueryEpochStatsRequest) returns (QueryEpochStatsResponse) {
+    option (google.api.http).get = "/oasyce/work/v1/epoch/{epoch}";
+  }
+}
+
+message QueryTaskRequest {
+  uint64 task_id = 1;
+}
+message QueryTaskResponse {
+  Task task = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryTasksByStatusRequest {
+  uint32 status = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+message QueryTasksByStatusResponse {
+  repeated Task tasks = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryTasksByCreatorRequest {
+  string creator = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+message QueryTasksByCreatorResponse {
+  repeated Task tasks = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryTasksByExecutorRequest {
+  string executor = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+message QueryTasksByExecutorResponse {
+  repeated Task tasks = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryExecutorProfileRequest {
+  string address = 1;
+}
+message QueryExecutorProfileResponse {
+  ExecutorProfile profile = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryExecutorsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+message QueryExecutorsResponse {
+  repeated ExecutorProfile executors = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryParamsRequest {}
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryEpochStatsRequest {
+  uint64 epoch = 1;
+}
+message QueryEpochStatsResponse {
+  EpochStats stats = 1 [(gogoproto.nullable) = false];
+}

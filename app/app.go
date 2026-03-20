@@ -104,6 +104,9 @@ import (
 	settlement "github.com/oasyce/chain/x/settlement"
 	settlementkeeper "github.com/oasyce/chain/x/settlement/keeper"
 	settlementtypes "github.com/oasyce/chain/x/settlement/types"
+	work "github.com/oasyce/chain/x/work"
+	workkeeper "github.com/oasyce/chain/x/work/keeper"
+	worktypes "github.com/oasyce/chain/x/work/types"
 )
 
 const Name = "oasyce"
@@ -140,6 +143,7 @@ var (
 		capability.AppModuleBasic{},
 		reputation.AppModuleBasic{},
 		datarights.AppModuleBasic{},
+		work.AppModuleBasic{},
 	)
 
 	// Module account permissions.
@@ -154,6 +158,7 @@ var (
 		transfertypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		settlementtypes.ModuleName:     {authtypes.Burner},
 		datarightstypes.ModuleName:     {authtypes.Burner},
+		worktypes.ModuleName:           {authtypes.Burner},
 	}
 )
 
@@ -215,6 +220,7 @@ type OasyceApp struct {
 	CapabilityKeeper capabilitykeeper.Keeper
 	ReputationKeeper reputationkeeper.Keeper
 	DataRightsKeeper datarightskeeper.Keeper
+	WorkKeeper       workkeeper.Keeper
 
 	// Module manager
 	ModuleManager *module.Manager
@@ -284,6 +290,7 @@ func NewOasyceApp(
 		capabilitytypes.StoreKey,
 		reputationtypes.StoreKey,
 		datarightstypes.StoreKey,
+		worktypes.StoreKey,
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys(ibccapabilitytypes.MemStoreKey)
@@ -522,6 +529,14 @@ func NewOasyceApp(
 		govAuthority,
 	)
 
+	app.WorkKeeper = workkeeper.NewKeeper(
+		appCodec,
+		keys[worktypes.StoreKey],
+		app.BankKeeper,
+		app.ReputationKeeper,
+		govAuthority,
+	)
+
 	// --- Module Manager ---
 	app.ModuleManager = module.NewManager(
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, txConfig),
@@ -547,6 +562,7 @@ func NewOasyceApp(
 		capability.NewAppModule(appCodec, app.CapabilityKeeper),
 		reputation.NewAppModule(app.ReputationKeeper),
 		datarights.NewAppModule(appCodec, app.DataRightsKeeper),
+		work.NewAppModule(appCodec, app.WorkKeeper),
 	)
 
 	// Set order of module operations.
@@ -574,6 +590,7 @@ func NewOasyceApp(
 		capabilitytypes.ModuleName,
 		reputationtypes.ModuleName,
 		datarightstypes.ModuleName,
+		worktypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -600,6 +617,7 @@ func NewOasyceApp(
 		capabilitytypes.ModuleName,
 		reputationtypes.ModuleName,
 		datarightstypes.ModuleName,
+		worktypes.ModuleName,
 	)
 
 	genesisModuleOrder := []string{
@@ -626,6 +644,7 @@ func NewOasyceApp(
 		capabilitytypes.ModuleName,
 		reputationtypes.ModuleName,
 		datarightstypes.ModuleName,
+		worktypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)

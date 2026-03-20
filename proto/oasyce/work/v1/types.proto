@@ -1,0 +1,106 @@
+syntax = "proto3";
+package oasyce.work.v1;
+
+option go_package = "github.com/oasyce/chain/x/work/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+// TaskStatus represents the lifecycle state of a compute task.
+enum TaskStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_SUBMITTED   = 1;
+  TASK_STATUS_ASSIGNED    = 2;
+  TASK_STATUS_COMMITTED   = 3;
+  TASK_STATUS_REVEALING   = 4;
+  TASK_STATUS_SETTLED     = 5;
+  TASK_STATUS_EXPIRED     = 6;
+  TASK_STATUS_DISPUTED    = 7;
+}
+
+// Task represents an AI compute task submitted to the network.
+message Task {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters) = false;
+
+  uint64 id                = 1;
+  string creator           = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string task_type         = 3;
+  bytes  input_hash        = 4;
+  string input_uri         = 5;
+  uint64 max_compute_units = 6;
+
+  cosmos.base.v1beta1.Coin bounty  = 7 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin deposit = 8 [(gogoproto.nullable) = false];
+
+  uint32 redundancy             = 9;
+  uint64 timeout_height         = 10;
+  uint64 reveal_timeout_height  = 11;
+  TaskStatus status             = 12;
+  repeated string assigned_executors = 13;
+  uint64 submit_height          = 14;
+  uint64 assign_height          = 15;
+}
+
+// Commitment is a sealed result hash submitted during the commit phase.
+message Commitment {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string executor      = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id       = 2;
+  bytes  commit_hash   = 3;
+  uint64 commit_height = 4;
+}
+
+// Result is the revealed output of a compute task execution.
+message Result {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string executor          = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id           = 2;
+  bytes  output_hash       = 3;
+  string output_uri        = 4;
+  uint64 compute_units_used = 5;
+  bytes  salt              = 6;
+  bool   unavailable       = 7;
+}
+
+// ExecutorProfile stores an executor's capabilities and track record.
+message ExecutorProfile {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   address              = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated string supported_task_types = 2;
+  uint64   max_compute_units    = 3;
+  uint64   tasks_completed      = 4;
+  uint64   tasks_failed         = 5;
+  bool     active               = 6;
+}
+
+// EpochStats aggregates work statistics per epoch.
+message EpochStats {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters) = false;
+
+  uint64 epoch           = 1;
+  uint64 tasks_submitted = 2;
+  uint64 tasks_settled   = 3;
+  uint64 tasks_expired   = 4;
+
+  string total_bounties = 5 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable)   = false
+  ];
+  string total_burned = 6 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable)   = false
+  ];
+}

@@ -1,0 +1,67 @@
+syntax = "proto3";
+package oasyce.work.v1;
+
+option go_package = "github.com/oasyce/chain/x/work/types";
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "oasyce/work/v1/types.proto";
+
+// GenesisState defines the work module's genesis state.
+message GenesisState {
+  Params                  params    = 1 [(gogoproto.nullable) = false];
+  repeated Task           tasks     = 2 [(gogoproto.nullable) = false];
+  repeated ExecutorProfile executors = 3 [(gogoproto.nullable) = false];
+  uint64                  task_counter = 4;
+}
+
+// Params defines the governance-tunable parameters for the work module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  uint32 default_redundancy = 1;
+  uint64 min_timeout_blocks = 2;
+  uint64 max_timeout_blocks = 3;
+  uint64 reveal_blocks      = 4;
+
+  string min_bounty = 5 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable)   = false
+  ];
+
+  string executor_share = 6 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  string protocol_share = 7 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  string burn_share = 8 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  string submitter_rebate = 9 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  string deposit_rate = 10 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  string dispute_bond_rate = 11 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+
+  uint32 min_executor_reputation = 12;
+  uint32 max_tasks_per_block     = 13;
+  uint32 reputation_cap_per_epoch = 14;
+}

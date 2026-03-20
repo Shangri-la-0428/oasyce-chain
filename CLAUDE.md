@@ -1,12 +1,12 @@
 # Oasyce L1 Chain
 
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 4 custom modules: settlement, capability, reputation, datarights.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 5 custom modules: settlement, capability, reputation, datarights, work.
 
 ## Current Status
 
 ### Protobuf Migration — COMPLETE ✅
-- All 4 modules fully protobuf-migrated
+- All 5 modules fully protobuf-migrated (including x/work)
 - app.go wired with real keepers, store keys, module manager
 
 ### REST/gRPC Integration — COMPLETE ✅
@@ -65,15 +65,30 @@ All 4 modules verified with real transactions:
 - `datarights.dispute_deposit`: 1B uoas (1000 OAS) — high for testing
 - Patch genesis.json after `init` before starting chain
 
+### x/work Module (Proof of Useful Work) — COMPLETE ✅
+- Task lifecycle: Submit → Assign → Commit → Reveal → Settle/Expire/Dispute
+- **Commit-reveal** scheme prevents result copying (sha256(output_hash + salt + executor + unavailable))
+- **Deterministic assignment**: sha256(taskID + blockHash + addr) / log(1 + reputation), creator excluded
+- **Settlement**: 90% executor / 5% protocol / 2% burn / 3% submitter rebate
+- **Anti-DoS**: bounty × deposit_rate held as deposit, forfeited if input unavailable
+- **BeginBlocker**: expires timed-out tasks (max_tasks_per_block cap per block)
+- **EndBlocker**: assigns executors to SUBMITTED tasks using current block hash
+- 6 Msg types: RegisterExecutor, UpdateExecutor, SubmitTask, CommitResult, RevealResult, DisputeResult
+- 8 Query types: Task, TasksByStatus, TasksByCreator, TasksByExecutor, ExecutorProfile, Executors, WorkParams, EpochStats
+- CLI: `oasyced tx work submit-task|commit-result|reveal-result|register-executor|update-executor|dispute-result`
+- Query: `oasyced query work task|tasks-by-status|executor|executors|params|epoch`
+- Files: `x/work/`, `proto/oasyce/work/v1/`
+
 ### Build & Test Status
 ```
 go build ./...  ✅
-go test ./...   ✅ (27+ tests across 5 suites)
+go test ./...   ✅ (40+ tests across 6 suites)
   tests/integration     — 3 tests (full capability flow, Bancor curve, escrow lifecycle)
   x/capability/keeper   — capability tests
   x/datarights/keeper   — 12 tests (Bancor buy/sell, access gating, jury voting)
   x/reputation/keeper   — reputation tests
   x/settlement/keeper   — escrow + bonding curve tests
+  x/work/keeper         — 13 tests (executor, task CRUD, commit-reveal, assignment, settlement, minority penalty)
 ```
 
 ### Protocol Constants (x/settlement/types/types.go)

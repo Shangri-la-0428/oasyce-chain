@@ -38,6 +38,7 @@ import (
 	datarightscli "github.com/oasyce/chain/x/datarights/cli"
 	reputationcli "github.com/oasyce/chain/x/reputation/cli"
 	settlementcli "github.com/oasyce/chain/x/settlement/cli"
+	workcli "github.com/oasyce/chain/x/work/cli"
 )
 
 // NewRootCmd creates the root command for the oasyced daemon.
@@ -174,6 +175,7 @@ func initRootCmd(rootCmd *cobra.Command, txCfg client.TxConfig) {
 		settlementcli.GetTxCmd(),
 		capabilitycli.GetTxCmd(),
 		reputationcli.GetTxCmd(),
+		workcli.GetTxCmd(),
 	)
 	txCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
