@@ -25,6 +25,7 @@ var (
 	AssetByOwnerPrefix       = []byte{0x07}
 	ShareHolderByAssetPrefix = []byte{0x08}
 	AssetReservePrefix       = []byte{0x09}
+	MigrationPathKeyPrefix   = []byte{0x0C}
 )
 
 // AssetReserveKey returns the store key for the bonding curve reserve of an asset.
@@ -78,4 +79,19 @@ func ShareHolderByAssetKey(assetID, address string) []byte {
 // DisputeKey returns the store key for a specific dispute by ID.
 func DisputeKey(disputeID string) []byte {
 	return append(DisputeKeyPrefix, []byte(disputeID)...)
+}
+
+// MigrationPathKey returns the store key for a migration path.
+func MigrationPathKey(sourceAssetID, targetAssetID string) []byte {
+	key := append(MigrationPathKeyPrefix, []byte(sourceAssetID)...)
+	key = append(key, '/')
+	key = append(key, []byte(targetAssetID)...)
+	return key
+}
+
+// MigrationPathBySourcePrefix returns the prefix for iterating migration paths by source asset.
+func MigrationPathBySourcePrefix(sourceAssetID string) []byte {
+	key := append(MigrationPathKeyPrefix, []byte(sourceAssetID)...)
+	key = append(key, '/')
+	return key
 }

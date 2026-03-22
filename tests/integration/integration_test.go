@@ -160,25 +160,6 @@ func (m *ctxBankKeeper) SendCoinsFromModuleToModule(_ context.Context, senderMod
 }
 
 // ---------------------------------------------------------------------------
-// mockSettlementKeeper for datarights: wraps the real settlement keeper but
-// satisfies the datarights SettlementKeeper interface (context.Context-based
-// BuyShares). The datarights module has its own BuyShares so this is not
-// actually called, but we need it to satisfy the interface.
-// ---------------------------------------------------------------------------
-
-type drSettlementAdapter struct {
-	k setkeeper.Keeper
-}
-
-func (a *drSettlementAdapter) GetBondingCurveState(ctx sdk.Context, assetID string) (settypes.BondingCurveState, bool) {
-	return settypes.BondingCurveState{}, false
-}
-
-func (a *drSettlementAdapter) BuyShares(_ sdk.Context, assetID string, buyer string, paymentAmount math.Int) (math.Int, error) {
-	return math.Int{}, nil
-}
-
-// ---------------------------------------------------------------------------
 // Test addresses
 // ---------------------------------------------------------------------------
 
@@ -249,8 +230,7 @@ func setupSuite(t *testing.T) *testSuite {
 	settlementK := setkeeper.NewKeeper(cdc, settlementStoreKey, sdkBank, "authority")
 	capabilityK := capkeeper.NewKeeper(capabilityStoreKey, cdc, sdkBank, settlementK)
 	reputationK := repkeeper.NewKeeper(cdc, reputationStoreKey, capabilityK, "authority")
-	drSettlement := &drSettlementAdapter{k: settlementK}
-	datarightsK := drkeeper.NewKeeper(cdc, datarightsStoreKey, ctxBank, drSettlement, arbitratorAddr())
+	datarightsK := drkeeper.NewKeeper(cdc, datarightsStoreKey, ctxBank, arbitratorAddr())
 
 	// Set default params for all modules.
 	if err := settlementK.SetParams(ctx, settypes.DefaultParams()); err != nil {
@@ -523,7 +503,7 @@ func TestDataAssetLifecycle(t *testing.T) {
 	if !found {
 		t.Fatal("asset not found after registration")
 	}
-	if !asset.IsActive {
+	if asset.Status != drtypes.ASSET_STATUS_ACTIVE {
 		t.Fatal("expected asset to be active")
 	}
 
@@ -590,8 +570,8 @@ func TestDataAssetLifecycle(t *testing.T) {
 	if !found {
 		t.Fatal("asset not found after dispute resolution")
 	}
-	if asset.IsActive {
-		t.Fatal("expected asset to be inactive after delist")
+	if asset.Status == drtypes.ASSET_STATUS_ACTIVE {
+		t.Fatal("expected asset to not be active after delist")
 	}
 
 	// Verify dispute is resolved.

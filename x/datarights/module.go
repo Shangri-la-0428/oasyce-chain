@@ -136,6 +136,13 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		}
 	}
 
+	// Restore migration paths.
+	for _, mp := range gs.MigrationPaths {
+		if err := am.keeper.SetMigrationPath(ctx, mp); err != nil {
+			panic(fmt.Sprintf("failed to set migration path %s->%s: %v", mp.SourceAssetId, mp.TargetAssetId, err))
+		}
+	}
+
 	return nil
 }
 
@@ -168,18 +175,28 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 		disputes = []types.Dispute{}
 	}
 
+	var migrationPaths []types.MigrationPath
+	am.keeper.IterateAllMigrationPaths(ctx, func(mp types.MigrationPath) bool {
+		migrationPaths = append(migrationPaths, mp)
+		return false
+	})
+	if migrationPaths == nil {
+		migrationPaths = []types.MigrationPath{}
+	}
+
 	gs := types.GenesisState{
-		DataAssets:   assets,
-		Shareholders: shareholders,
-		Disputes:     disputes,
-		Params:       am.keeper.GetParams(ctx),
+		DataAssets:     assets,
+		Shareholders:   shareholders,
+		Disputes:       disputes,
+		Params:         am.keeper.GetParams(ctx),
+		MigrationPaths: migrationPaths,
 	}
 
 	return cdc.MustMarshalJSON(&gs)
 }
 
 // ConsensusVersion returns the module's consensus version.
-func (am AppModule) ConsensusVersion() uint64 { return 1 }
+func (am AppModule) ConsensusVersion() uint64 { return 2 }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
 func (am AppModule) IsOnePerModuleType() {}

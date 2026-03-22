@@ -100,3 +100,45 @@ func (q queryServer) Disputes(ctx context.Context, req *types.QueryDisputesReque
 
 	return &types.QueryDisputesResponse{Disputes: disputes}, nil
 }
+
+// MigrationPath returns a specific migration path by source and target.
+func (q queryServer) MigrationPath(ctx context.Context, req *types.QueryMigrationPathRequest) (*types.QueryMigrationPathResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	mp, found := q.Keeper.GetMigrationPath(sdkCtx, req.SourceAssetId, req.TargetAssetId)
+	if !found {
+		return nil, types.ErrMigrationNotFound.Wrapf("migration path %s -> %s not found", req.SourceAssetId, req.TargetAssetId)
+	}
+	return &types.QueryMigrationPathResponse{MigrationPath: mp}, nil
+}
+
+// MigrationPaths returns all migration paths from a given source asset.
+func (q queryServer) MigrationPaths(ctx context.Context, req *types.QueryMigrationPathsRequest) (*types.QueryMigrationPathsResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	var paths []types.MigrationPath
+	q.Keeper.IterateAllMigrationPaths(sdkCtx, func(mp types.MigrationPath) bool {
+		if mp.SourceAssetId == req.SourceAssetId {
+			paths = append(paths, mp)
+		}
+		return false
+	})
+	if paths == nil {
+		paths = []types.MigrationPath{}
+	}
+	return &types.QueryMigrationPathsResponse{MigrationPaths: paths}, nil
+}
+
+// AssetChildren returns all assets whose parent_asset_id matches the request.
+func (q queryServer) AssetChildren(ctx context.Context, req *types.QueryAssetChildrenRequest) (*types.QueryAssetChildrenResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	allAssets := q.Keeper.ListAssets(sdkCtx)
+	var children []types.DataAsset
+	for _, a := range allAssets {
+		if a.ParentAssetId == req.ParentAssetId {
+			children = append(children, a)
+		}
+	}
+	if children == nil {
+		children = []types.DataAsset{}
+	}
+	return &types.QueryAssetChildrenResponse{DataAssets: children}, nil
+}

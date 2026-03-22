@@ -49,6 +49,8 @@ type MsgRegisterDataAsset struct {
 	Tags []string `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
 	// co_creators is the list of co-creators and their share allocations.
 	CoCreators []CoCreator `protobuf:"bytes,7,rep,name=co_creators,json=coCreators,proto3" json:"co_creators"`
+	// parent_asset_id is the ID of the parent asset (empty for original v1 assets).
+	ParentAssetId string `protobuf:"bytes,8,opt,name=parent_asset_id,json=parentAssetId,proto3" json:"parent_asset_id,omitempty"`
 }
 
 func (m *MsgRegisterDataAsset) Reset()         { *m = MsgRegisterDataAsset{} }
@@ -131,6 +133,13 @@ func (m *MsgRegisterDataAsset) GetCoCreators() []CoCreator {
 		return m.CoCreators
 	}
 	return nil
+}
+
+func (m *MsgRegisterDataAsset) GetParentAssetId() string {
+	if m != nil {
+		return m.ParentAssetId
+	}
+	return ""
 }
 
 // MsgRegisterDataAssetResponse is the response for MsgRegisterDataAsset.
@@ -715,6 +724,510 @@ func (m *MsgDelistAssetResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgDelistAssetResponse proto.InternalMessageInfo
 
+// MsgInitiateShutdown begins graceful shutdown of a data asset.
+type MsgInitiateShutdown struct {
+	// creator is the address of the asset owner.
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	// asset_id is the ID of the data asset to shut down.
+	AssetId string `protobuf:"bytes,2,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
+}
+
+func (m *MsgInitiateShutdown) Reset()         { *m = MsgInitiateShutdown{} }
+func (m *MsgInitiateShutdown) String() string { return proto.CompactTextString(m) }
+func (*MsgInitiateShutdown) ProtoMessage()    {}
+func (*MsgInitiateShutdown) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{12}
+}
+func (m *MsgInitiateShutdown) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgInitiateShutdown) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgInitiateShutdown.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgInitiateShutdown) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInitiateShutdown.Merge(m, src)
+}
+func (m *MsgInitiateShutdown) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgInitiateShutdown) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInitiateShutdown.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgInitiateShutdown proto.InternalMessageInfo
+
+func (m *MsgInitiateShutdown) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgInitiateShutdown) GetAssetId() string {
+	if m != nil {
+		return m.AssetId
+	}
+	return ""
+}
+
+// MsgInitiateShutdownResponse is the response for MsgInitiateShutdown.
+type MsgInitiateShutdownResponse struct {
+}
+
+func (m *MsgInitiateShutdownResponse) Reset()         { *m = MsgInitiateShutdownResponse{} }
+func (m *MsgInitiateShutdownResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgInitiateShutdownResponse) ProtoMessage()    {}
+func (*MsgInitiateShutdownResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{13}
+}
+func (m *MsgInitiateShutdownResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgInitiateShutdownResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgInitiateShutdownResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgInitiateShutdownResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInitiateShutdownResponse.Merge(m, src)
+}
+func (m *MsgInitiateShutdownResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgInitiateShutdownResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInitiateShutdownResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgInitiateShutdownResponse proto.InternalMessageInfo
+
+// MsgClaimSettlement claims pro-rata reserve payout after shutdown cooldown.
+type MsgClaimSettlement struct {
+	// creator is the address of the shareholder claiming settlement.
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	// asset_id is the ID of the data asset.
+	AssetId string `protobuf:"bytes,2,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
+}
+
+func (m *MsgClaimSettlement) Reset()         { *m = MsgClaimSettlement{} }
+func (m *MsgClaimSettlement) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimSettlement) ProtoMessage()    {}
+func (*MsgClaimSettlement) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{14}
+}
+func (m *MsgClaimSettlement) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimSettlement) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimSettlement.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimSettlement) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimSettlement.Merge(m, src)
+}
+func (m *MsgClaimSettlement) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimSettlement) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimSettlement.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimSettlement proto.InternalMessageInfo
+
+func (m *MsgClaimSettlement) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgClaimSettlement) GetAssetId() string {
+	if m != nil {
+		return m.AssetId
+	}
+	return ""
+}
+
+// MsgClaimSettlementResponse is the response for MsgClaimSettlement.
+type MsgClaimSettlementResponse struct {
+	// payout is the amount received.
+	Payout cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=payout,proto3,customtype=cosmossdk.io/math.Int" json:"payout"`
+}
+
+func (m *MsgClaimSettlementResponse) Reset()         { *m = MsgClaimSettlementResponse{} }
+func (m *MsgClaimSettlementResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimSettlementResponse) ProtoMessage()    {}
+func (*MsgClaimSettlementResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{15}
+}
+func (m *MsgClaimSettlementResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimSettlementResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimSettlementResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimSettlementResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimSettlementResponse.Merge(m, src)
+}
+func (m *MsgClaimSettlementResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimSettlementResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimSettlementResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimSettlementResponse proto.InternalMessageInfo
+
+// MsgCreateMigrationPath creates a migration path between two asset versions.
+type MsgCreateMigrationPath struct {
+	// creator is the address of the target asset owner.
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	// source_asset_id is the asset being migrated from.
+	SourceAssetId string `protobuf:"bytes,2,opt,name=source_asset_id,json=sourceAssetId,proto3" json:"source_asset_id,omitempty"`
+	// target_asset_id is the asset being migrated to.
+	TargetAssetId string `protobuf:"bytes,3,opt,name=target_asset_id,json=targetAssetId,proto3" json:"target_asset_id,omitempty"`
+	// exchange_rate_bps is the share exchange rate in basis points (10000 = 1:1).
+	ExchangeRateBps uint32 `protobuf:"varint,4,opt,name=exchange_rate_bps,json=exchangeRateBps,proto3" json:"exchange_rate_bps,omitempty"`
+	// max_migrated_shares caps the total shares that can migrate (0 = unlimited).
+	MaxMigratedShares cosmossdk_io_math.Int `protobuf:"bytes,5,opt,name=max_migrated_shares,json=maxMigratedShares,proto3,customtype=cosmossdk.io/math.Int" json:"max_migrated_shares"`
+}
+
+func (m *MsgCreateMigrationPath) Reset()         { *m = MsgCreateMigrationPath{} }
+func (m *MsgCreateMigrationPath) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateMigrationPath) ProtoMessage()    {}
+func (*MsgCreateMigrationPath) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{16}
+}
+func (m *MsgCreateMigrationPath) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateMigrationPath) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateMigrationPath.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateMigrationPath) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateMigrationPath.Merge(m, src)
+}
+func (m *MsgCreateMigrationPath) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateMigrationPath) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateMigrationPath.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateMigrationPath proto.InternalMessageInfo
+
+func (m *MsgCreateMigrationPath) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgCreateMigrationPath) GetSourceAssetId() string {
+	if m != nil {
+		return m.SourceAssetId
+	}
+	return ""
+}
+
+func (m *MsgCreateMigrationPath) GetTargetAssetId() string {
+	if m != nil {
+		return m.TargetAssetId
+	}
+	return ""
+}
+
+func (m *MsgCreateMigrationPath) GetExchangeRateBps() uint32 {
+	if m != nil {
+		return m.ExchangeRateBps
+	}
+	return 0
+}
+
+// MsgCreateMigrationPathResponse is the response for MsgCreateMigrationPath.
+type MsgCreateMigrationPathResponse struct {
+}
+
+func (m *MsgCreateMigrationPathResponse) Reset()         { *m = MsgCreateMigrationPathResponse{} }
+func (m *MsgCreateMigrationPathResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateMigrationPathResponse) ProtoMessage()    {}
+func (*MsgCreateMigrationPathResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{17}
+}
+func (m *MsgCreateMigrationPathResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateMigrationPathResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateMigrationPathResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateMigrationPathResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateMigrationPathResponse.Merge(m, src)
+}
+func (m *MsgCreateMigrationPathResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateMigrationPathResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateMigrationPathResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateMigrationPathResponse proto.InternalMessageInfo
+
+// MsgDisableMigration disables an active migration path.
+type MsgDisableMigration struct {
+	// creator is the address of the target asset owner.
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	// source_asset_id is the source asset of the migration path.
+	SourceAssetId string `protobuf:"bytes,2,opt,name=source_asset_id,json=sourceAssetId,proto3" json:"source_asset_id,omitempty"`
+	// target_asset_id is the target asset of the migration path.
+	TargetAssetId string `protobuf:"bytes,3,opt,name=target_asset_id,json=targetAssetId,proto3" json:"target_asset_id,omitempty"`
+}
+
+func (m *MsgDisableMigration) Reset()         { *m = MsgDisableMigration{} }
+func (m *MsgDisableMigration) String() string { return proto.CompactTextString(m) }
+func (*MsgDisableMigration) ProtoMessage()    {}
+func (*MsgDisableMigration) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{18}
+}
+func (m *MsgDisableMigration) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgDisableMigration) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgDisableMigration.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgDisableMigration) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgDisableMigration.Merge(m, src)
+}
+func (m *MsgDisableMigration) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgDisableMigration) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgDisableMigration.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgDisableMigration proto.InternalMessageInfo
+
+func (m *MsgDisableMigration) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgDisableMigration) GetSourceAssetId() string {
+	if m != nil {
+		return m.SourceAssetId
+	}
+	return ""
+}
+
+func (m *MsgDisableMigration) GetTargetAssetId() string {
+	if m != nil {
+		return m.TargetAssetId
+	}
+	return ""
+}
+
+// MsgDisableMigrationResponse is the response for MsgDisableMigration.
+type MsgDisableMigrationResponse struct {
+}
+
+func (m *MsgDisableMigrationResponse) Reset()         { *m = MsgDisableMigrationResponse{} }
+func (m *MsgDisableMigrationResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgDisableMigrationResponse) ProtoMessage()    {}
+func (*MsgDisableMigrationResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{19}
+}
+func (m *MsgDisableMigrationResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgDisableMigrationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgDisableMigrationResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgDisableMigrationResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgDisableMigrationResponse.Merge(m, src)
+}
+func (m *MsgDisableMigrationResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgDisableMigrationResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgDisableMigrationResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgDisableMigrationResponse proto.InternalMessageInfo
+
+// MsgMigrate converts shares from source asset to target asset.
+type MsgMigrate struct {
+	// creator is the address of the shareholder migrating.
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	// source_asset_id is the asset to migrate from.
+	SourceAssetId string `protobuf:"bytes,2,opt,name=source_asset_id,json=sourceAssetId,proto3" json:"source_asset_id,omitempty"`
+	// target_asset_id is the asset to migrate to.
+	TargetAssetId string `protobuf:"bytes,3,opt,name=target_asset_id,json=targetAssetId,proto3" json:"target_asset_id,omitempty"`
+	// shares is the number of shares to migrate from source.
+	Shares cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=shares,proto3,customtype=cosmossdk.io/math.Int" json:"shares"`
+}
+
+func (m *MsgMigrate) Reset()         { *m = MsgMigrate{} }
+func (m *MsgMigrate) String() string { return proto.CompactTextString(m) }
+func (*MsgMigrate) ProtoMessage()    {}
+func (*MsgMigrate) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{20}
+}
+func (m *MsgMigrate) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgMigrate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgMigrate.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgMigrate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMigrate.Merge(m, src)
+}
+func (m *MsgMigrate) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgMigrate) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMigrate.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgMigrate proto.InternalMessageInfo
+
+func (m *MsgMigrate) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgMigrate) GetSourceAssetId() string {
+	if m != nil {
+		return m.SourceAssetId
+	}
+	return ""
+}
+
+func (m *MsgMigrate) GetTargetAssetId() string {
+	if m != nil {
+		return m.TargetAssetId
+	}
+	return ""
+}
+
+// MsgMigrateResponse is the response for MsgMigrate.
+type MsgMigrateResponse struct {
+	// shares_received is the number of shares received in the target asset.
+	SharesReceived cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=shares_received,json=sharesReceived,proto3,customtype=cosmossdk.io/math.Int" json:"shares_received"`
+}
+
+func (m *MsgMigrateResponse) Reset()         { *m = MsgMigrateResponse{} }
+func (m *MsgMigrateResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgMigrateResponse) ProtoMessage()    {}
+func (*MsgMigrateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f4554f457b53c7be, []int{21}
+}
+func (m *MsgMigrateResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgMigrateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgMigrateResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgMigrateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMigrateResponse.Merge(m, src)
+}
+func (m *MsgMigrateResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgMigrateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMigrateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgMigrateResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgRegisterDataAsset)(nil), "oasyce.datarights.v1.MsgRegisterDataAsset")
 	proto.RegisterType((*MsgRegisterDataAssetResponse)(nil), "oasyce.datarights.v1.MsgRegisterDataAssetResponse")
@@ -728,74 +1241,108 @@ func init() {
 	proto.RegisterType((*MsgSellSharesResponse)(nil), "oasyce.datarights.v1.MsgSellSharesResponse")
 	proto.RegisterType((*MsgDelistAsset)(nil), "oasyce.datarights.v1.MsgDelistAsset")
 	proto.RegisterType((*MsgDelistAssetResponse)(nil), "oasyce.datarights.v1.MsgDelistAssetResponse")
+	proto.RegisterType((*MsgInitiateShutdown)(nil), "oasyce.datarights.v1.MsgInitiateShutdown")
+	proto.RegisterType((*MsgInitiateShutdownResponse)(nil), "oasyce.datarights.v1.MsgInitiateShutdownResponse")
+	proto.RegisterType((*MsgClaimSettlement)(nil), "oasyce.datarights.v1.MsgClaimSettlement")
+	proto.RegisterType((*MsgClaimSettlementResponse)(nil), "oasyce.datarights.v1.MsgClaimSettlementResponse")
+	proto.RegisterType((*MsgCreateMigrationPath)(nil), "oasyce.datarights.v1.MsgCreateMigrationPath")
+	proto.RegisterType((*MsgCreateMigrationPathResponse)(nil), "oasyce.datarights.v1.MsgCreateMigrationPathResponse")
+	proto.RegisterType((*MsgDisableMigration)(nil), "oasyce.datarights.v1.MsgDisableMigration")
+	proto.RegisterType((*MsgDisableMigrationResponse)(nil), "oasyce.datarights.v1.MsgDisableMigrationResponse")
+	proto.RegisterType((*MsgMigrate)(nil), "oasyce.datarights.v1.MsgMigrate")
+	proto.RegisterType((*MsgMigrateResponse)(nil), "oasyce.datarights.v1.MsgMigrateResponse")
 }
 
 func init() { proto.RegisterFile("oasyce/datarights/v1/tx.proto", fileDescriptor_f4554f457b53c7be) }
 
 var fileDescriptor_f4554f457b53c7be = []byte{
-	// 983 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0x41, 0x6f, 0xe3, 0x44,
-	0x14, 0x8e, 0x93, 0x6e, 0xba, 0x7d, 0x29, 0xdd, 0xad, 0xd5, 0x5d, 0xdc, 0xc0, 0x26, 0xc1, 0x45,
-	0x50, 0x65, 0x59, 0x9b, 0x04, 0xa4, 0x8a, 0x72, 0x6a, 0x52, 0xad, 0xe8, 0x21, 0xb0, 0xb8, 0x88,
-	0x03, 0x20, 0xa2, 0xa9, 0x3d, 0x72, 0x06, 0x62, 0x4f, 0xf0, 0x4c, 0xa2, 0xcd, 0x0d, 0x71, 0xe4,
-	0x84, 0x38, 0x70, 0xe0, 0x17, 0x70, 0xec, 0x61, 0x7f, 0x44, 0x8f, 0xab, 0x3d, 0x21, 0x0e, 0x15,
-	0x6a, 0x0f, 0xbd, 0x22, 0x71, 0xe4, 0x82, 0x3c, 0x33, 0x71, 0xdc, 0xd4, 0x59, 0x42, 0x17, 0x2e,
-	0xd1, 0xcc, 0x37, 0xdf, 0x7b, 0xf3, 0xf9, 0x7b, 0xef, 0xd9, 0x81, 0x7b, 0x14, 0xb1, 0xb1, 0x8b,
-	0x6d, 0x0f, 0x71, 0x14, 0x11, 0xbf, 0xc7, 0x99, 0x3d, 0x6a, 0xd8, 0xfc, 0xb1, 0x35, 0x88, 0x28,
-	0xa7, 0xfa, 0x86, 0x3c, 0xb6, 0xa6, 0xc7, 0xd6, 0xa8, 0x51, 0xae, 0xb8, 0x94, 0x05, 0x94, 0xd9,
-	0x47, 0x88, 0x61, 0x7b, 0xd4, 0x38, 0xc2, 0x1c, 0x35, 0x6c, 0x97, 0x92, 0x50, 0x46, 0x95, 0x5f,
-	0x56, 0xe7, 0x01, 0xf3, 0xe3, 0x6c, 0x01, 0xf3, 0xd5, 0xc1, 0xa6, 0x3c, 0xe8, 0x8a, 0x9d, 0x2d,
-	0x37, 0xea, 0x68, 0xc3, 0xa7, 0x3e, 0x95, 0x78, 0xbc, 0x52, 0xe8, 0x3a, 0x0a, 0x48, 0x48, 0x6d,
-	0xf1, 0xab, 0xa0, 0x5a, 0xb6, 0xe2, 0xf1, 0x00, 0xab, 0x54, 0xe6, 0x5f, 0x79, 0xd8, 0xe8, 0x30,
-	0xdf, 0xc1, 0x3e, 0x61, 0x1c, 0x47, 0xfb, 0x88, 0xa3, 0x3d, 0xc6, 0x30, 0xd7, 0x9b, 0xb0, 0xec,
-	0x46, 0x18, 0x71, 0x1a, 0x19, 0x5a, 0x4d, 0xdb, 0x5e, 0x69, 0x19, 0xcf, 0x9e, 0x3c, 0xd8, 0x50,
-	0x32, 0xf6, 0x3c, 0x2f, 0xc2, 0x8c, 0x1d, 0xf2, 0x88, 0x84, 0xbe, 0x33, 0x21, 0xea, 0x3a, 0x2c,
-	0x85, 0x28, 0xc0, 0x46, 0x3e, 0x0e, 0x70, 0xc4, 0x5a, 0xaf, 0x41, 0xc9, 0xc3, 0xcc, 0x8d, 0xc8,
-	0x80, 0x13, 0x1a, 0x1a, 0x05, 0x71, 0x94, 0x86, 0xf4, 0xd7, 0x60, 0xd5, 0xa5, 0x21, 0xc7, 0x21,
-	0xef, 0xf6, 0x10, 0xeb, 0x19, 0x4b, 0x92, 0xa2, 0xb0, 0x0f, 0x10, 0xeb, 0xe9, 0x7b, 0x50, 0x92,
-	0xf2, 0xbb, 0xb1, 0x76, 0xe3, 0x46, 0x4d, 0xdb, 0x5e, 0x6b, 0xd6, 0xac, 0x2c, 0xc3, 0x2d, 0x47,
-	0xac, 0x3e, 0x19, 0x0f, 0xb0, 0x03, 0x51, 0xb2, 0x8e, 0xb5, 0x71, 0xe4, 0x33, 0xa3, 0x58, 0x2b,
-	0xc4, 0xda, 0xe2, 0xb5, 0xfe, 0x10, 0x4a, 0x2e, 0xed, 0x2a, 0xf5, 0xcc, 0x58, 0xae, 0x15, 0xb6,
-	0x4b, 0xcd, 0x6a, 0x76, 0xda, 0x36, 0x6d, 0x4b, 0x5e, 0x6b, 0xe9, 0xe4, 0xb4, 0x9a, 0x73, 0xc0,
-	0x9d, 0x00, 0x6c, 0x77, 0xe7, 0xbb, 0x8b, 0xe3, 0xfa, 0xc4, 0x85, 0xef, 0x2f, 0x8e, 0xeb, 0x6f,
-	0x5c, 0xf5, 0x3d, 0xcb, 0x64, 0xf3, 0x3d, 0x78, 0x35, 0x0b, 0x77, 0x30, 0x1b, 0xd0, 0x90, 0x61,
-	0x7d, 0x13, 0x6e, 0xa2, 0x18, 0xe8, 0x12, 0x4f, 0x56, 0xc1, 0x59, 0x16, 0xfb, 0x03, 0xcf, 0xfc,
-	0x39, 0x0f, 0xab, 0x1d, 0xe6, 0xb7, 0x86, 0xe3, 0xc3, 0x1e, 0x8a, 0x30, 0xbb, 0x56, 0xc1, 0xd2,
-	0xf9, 0xf3, 0x97, 0xf2, 0xeb, 0x3b, 0x50, 0x44, 0x01, 0x1d, 0x86, 0x5c, 0x94, 0xac, 0xd4, 0xdc,
-	0xb4, 0x54, 0xaa, 0xb8, 0x91, 0x2d, 0xd5, 0xc8, 0x56, 0x9b, 0x92, 0x50, 0x19, 0xa2, 0xe8, 0xfa,
-	0xc7, 0xb0, 0x16, 0x90, 0xb0, 0xcb, 0x84, 0xaa, 0x2e, 0x1d, 0x72, 0x59, 0xd0, 0xd6, 0xfd, 0x93,
-	0xd3, 0xaa, 0xf6, 0xdb, 0x69, 0xf5, 0x8e, 0xcc, 0xc3, 0xbc, 0xaf, 0x2d, 0x42, 0xed, 0x00, 0xf1,
-	0x9e, 0x75, 0x10, 0xf2, 0x67, 0x4f, 0x1e, 0x80, 0xba, 0xe0, 0x20, 0xe4, 0xce, 0x6a, 0x40, 0x42,
-	0xf9, 0x5c, 0x1f, 0x0d, 0xf9, 0xae, 0x3d, 0xeb, 0x6f, 0x25, 0xd3, 0xdf, 0xc4, 0x0b, 0x33, 0x14,
-	0x4d, 0x9d, 0xec, 0x13, 0x3f, 0x3f, 0x85, 0xdb, 0x4a, 0xd7, 0x60, 0x18, 0xb9, 0x3d, 0xc4, 0xb0,
-	0xf2, 0x55, 0xa8, 0xcb, 0x2d, 0xaa, 0xee, 0x96, 0x4c, 0xf2, 0x68, 0x92, 0xc3, 0xfc, 0x29, 0x0f,
-	0x6b, 0x1d, 0xe6, 0x3f, 0x24, 0x7d, 0xbc, 0x4f, 0xd8, 0x60, 0xc8, 0xf1, 0x7f, 0x5d, 0x8e, 0xbb,
-	0x50, 0x8c, 0x30, 0x62, 0xc9, 0x04, 0xa9, 0x9d, 0x5e, 0x86, 0x9b, 0x78, 0x44, 0x3c, 0x1c, 0xba,
-	0x58, 0xf8, 0xbc, 0xea, 0x24, 0x7b, 0xfd, 0x43, 0xb8, 0x1d, 0xe1, 0x6f, 0x86, 0x98, 0x71, 0xec,
-	0x75, 0x23, 0x1c, 0x60, 0x6f, 0xac, 0x46, 0x67, 0x2b, 0xbb, 0xc7, 0x95, 0x76, 0x47, 0x50, 0x9d,
-	0x5b, 0x49, 0xb0, 0x04, 0x76, 0x1b, 0xb3, 0x65, 0xa8, 0x65, 0x96, 0x21, 0xe5, 0x82, 0xb9, 0x03,
-	0x77, 0x2f, 0x23, 0x49, 0x29, 0xee, 0x01, 0x78, 0x12, 0x9a, 0x36, 0xf7, 0x8a, 0x42, 0x0e, 0x3c,
-	0xf3, 0x4f, 0x0d, 0xd6, 0xc5, 0x68, 0x30, 0xda, 0x1f, 0xbd, 0x90, 0xa9, 0x97, 0x2f, 0xca, 0xcf,
-	0x5c, 0xa4, 0xbf, 0x1f, 0x1b, 0x2b, 0xac, 0x29, 0x2c, 0x6e, 0x8d, 0x0a, 0xd1, 0x0d, 0x58, 0xf6,
-	0x30, 0x47, 0xa4, 0xcf, 0x94, 0xf9, 0x93, 0xed, 0xee, 0xbb, 0xb3, 0x5e, 0x6d, 0xcd, 0x79, 0x25,
-	0xa4, 0x9f, 0xcf, 0x7c, 0x05, 0x36, 0xaf, 0x80, 0x13, 0xc7, 0xcc, 0x5f, 0xf2, 0xf0, 0x52, 0x87,
-	0xf9, 0x87, 0xb8, 0xdf, 0xff, 0x7f, 0x46, 0xbe, 0x0d, 0x45, 0xd9, 0xd8, 0xb2, 0xc7, 0xfe, 0xdd,
-	0x4c, 0xa8, 0xd0, 0xc9, 0xf8, 0x0f, 0xd0, 0x98, 0x0e, 0xf9, 0x8b, 0x8c, 0xff, 0x23, 0x91, 0x21,
-	0x1e, 0xff, 0xb7, 0x67, 0xbd, 0xac, 0x66, 0x7a, 0x39, 0x35, 0xc6, 0xfc, 0x02, 0xee, 0x5c, 0x02,
-	0x92, 0xae, 0x6b, 0x43, 0x51, 0x2a, 0xbb, 0xce, 0xd8, 0xab, 0x50, 0xf3, 0x47, 0x4d, 0x4c, 0xfb,
-	0x3e, 0xee, 0x13, 0xc6, 0xaf, 0xff, 0xb5, 0x9c, 0x5f, 0x89, 0x45, 0x27, 0x2d, 0xa5, 0xc0, 0x34,
-	0xc4, 0xa4, 0xa5, 0x90, 0xc9, 0x33, 0x37, 0xff, 0x58, 0x82, 0x42, 0x87, 0xf9, 0x3a, 0x83, 0xf5,
-	0xab, 0x9f, 0xf9, 0x7a, 0x76, 0xbb, 0x67, 0x7d, 0x95, 0xca, 0xcd, 0xc5, 0xb9, 0x89, 0xe1, 0x9f,
-	0xc3, 0xca, 0xf4, 0x13, 0x65, 0xce, 0x4d, 0x90, 0x70, 0xca, 0xf5, 0x7f, 0xe6, 0x24, 0xc9, 0x11,
-	0x94, 0xd2, 0xaf, 0xdc, 0xd7, 0xe7, 0x86, 0xa6, 0x58, 0xe5, 0xb7, 0x16, 0x61, 0x25, 0x57, 0x7c,
-	0x05, 0x6b, 0x33, 0xef, 0xa0, 0x37, 0x9f, 0xe3, 0x42, 0x9a, 0x58, 0xb6, 0x17, 0x24, 0x26, 0x77,
-	0x7d, 0x09, 0x90, 0x1a, 0xee, 0xad, 0xb9, 0xe1, 0x53, 0x52, 0xf9, 0xfe, 0x02, 0xa4, 0xb4, 0x5d,
-	0xe9, 0x9e, 0x9d, 0x6f, 0x57, 0x8a, 0xf5, 0x1c, 0xbb, 0x32, 0x7a, 0xad, 0x7c, 0xe3, 0xdb, 0x8b,
-	0xe3, 0xba, 0xd6, 0xda, 0x3f, 0x39, 0xab, 0x68, 0x4f, 0xcf, 0x2a, 0xda, 0xef, 0x67, 0x15, 0xed,
-	0x87, 0xf3, 0x4a, 0xee, 0xe9, 0x79, 0x25, 0xf7, 0xeb, 0x79, 0x25, 0xf7, 0x59, 0xdd, 0x27, 0xbc,
-	0x37, 0x3c, 0xb2, 0x5c, 0x1a, 0xd8, 0xaa, 0xa7, 0xdd, 0x1e, 0x22, 0xa1, 0xfd, 0x38, 0xdd, 0xdb,
-	0xe2, 0x1f, 0xea, 0x51, 0x51, 0xfc, 0x45, 0x7d, 0xe7, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0x65,
-	0x95, 0xb9, 0x27, 0x78, 0x0b, 0x00, 0x00,
+	// 1363 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0xcf, 0x6f, 0xd4, 0xc6,
+	0x17, 0xcf, 0x6e, 0x42, 0x42, 0x5e, 0x7e, 0x11, 0x13, 0xf8, 0x6e, 0x0c, 0x6c, 0xf6, 0x6b, 0x28,
+	0x4d, 0x97, 0xb2, 0x26, 0x29, 0x2d, 0x22, 0x3d, 0x91, 0x44, 0xa8, 0x39, 0x6c, 0x4b, 0x1d, 0xda,
+	0x43, 0xa9, 0x6a, 0x4d, 0xec, 0x91, 0x77, 0xe8, 0xda, 0xe3, 0x7a, 0x66, 0xd3, 0xec, 0xad, 0xaa,
+	0x7a, 0xea, 0xa9, 0xaa, 0xd4, 0x1e, 0x50, 0x6f, 0xbd, 0xf4, 0xc8, 0x81, 0x3f, 0x82, 0x23, 0xe5,
+	0x54, 0xf5, 0x80, 0x10, 0x1c, 0xf8, 0x03, 0xfa, 0x0f, 0x54, 0x9e, 0x99, 0xf5, 0x3a, 0x5e, 0x1b,
+	0x36, 0x21, 0x95, 0xb8, 0x44, 0x9e, 0x37, 0x9f, 0x79, 0xf3, 0x99, 0xcf, 0x7b, 0x6f, 0xe6, 0x6d,
+	0xe0, 0x1c, 0x45, 0xac, 0xeb, 0x60, 0xd3, 0x45, 0x1c, 0x45, 0xc4, 0x6b, 0x71, 0x66, 0xee, 0xae,
+	0x98, 0x7c, 0xaf, 0x11, 0x46, 0x94, 0x53, 0x6d, 0x41, 0x4e, 0x37, 0xfa, 0xd3, 0x8d, 0xdd, 0x15,
+	0xbd, 0xea, 0x50, 0xe6, 0x53, 0x66, 0xee, 0x20, 0x86, 0xcd, 0xdd, 0x95, 0x1d, 0xcc, 0xd1, 0x8a,
+	0xe9, 0x50, 0x12, 0xc8, 0x55, 0xfa, 0xff, 0xd4, 0xbc, 0xcf, 0xbc, 0xd8, 0x9b, 0xcf, 0x3c, 0x35,
+	0xb1, 0x28, 0x27, 0x6c, 0x31, 0x32, 0xe5, 0x40, 0x4d, 0x2d, 0x78, 0xd4, 0xa3, 0xd2, 0x1e, 0x7f,
+	0x29, 0xeb, 0x3c, 0xf2, 0x49, 0x40, 0x4d, 0xf1, 0x57, 0x99, 0x6a, 0xf9, 0x8c, 0xbb, 0x21, 0x56,
+	0xae, 0x8c, 0xdf, 0x47, 0x61, 0xa1, 0xc9, 0x3c, 0x0b, 0x7b, 0x84, 0x71, 0x1c, 0x6d, 0x22, 0x8e,
+	0x6e, 0x30, 0x86, 0xb9, 0xb6, 0x0a, 0x13, 0x4e, 0x84, 0x11, 0xa7, 0x51, 0xa5, 0x54, 0x2b, 0x2d,
+	0x4f, 0xae, 0x57, 0x1e, 0x3f, 0xb8, 0xbc, 0xa0, 0x68, 0xdc, 0x70, 0xdd, 0x08, 0x33, 0xb6, 0xcd,
+	0x23, 0x12, 0x78, 0x56, 0x0f, 0xa8, 0x69, 0x30, 0x16, 0x20, 0x1f, 0x57, 0xca, 0xf1, 0x02, 0x4b,
+	0x7c, 0x6b, 0x35, 0x98, 0x72, 0x31, 0x73, 0x22, 0x12, 0x72, 0x42, 0x83, 0xca, 0xa8, 0x98, 0x4a,
+	0x9b, 0xb4, 0xff, 0xc3, 0xb4, 0x43, 0x03, 0x8e, 0x03, 0x6e, 0xb7, 0x10, 0x6b, 0x55, 0xc6, 0x24,
+	0x44, 0xd9, 0x3e, 0x42, 0xac, 0xa5, 0xdd, 0x80, 0x29, 0x49, 0xdf, 0x8e, 0xb9, 0x57, 0x8e, 0xd5,
+	0x4a, 0xcb, 0xb3, 0xab, 0xb5, 0x46, 0x9e, 0xe0, 0x0d, 0x4b, 0x7c, 0xdd, 0xee, 0x86, 0xd8, 0x82,
+	0x28, 0xf9, 0x8e, 0xb9, 0x71, 0xe4, 0xb1, 0xca, 0x78, 0x6d, 0x34, 0xe6, 0x16, 0x7f, 0x6b, 0x37,
+	0x61, 0xca, 0xa1, 0xb6, 0x62, 0xcf, 0x2a, 0x13, 0xb5, 0xd1, 0xe5, 0xa9, 0xd5, 0xa5, 0x7c, 0xb7,
+	0x1b, 0x74, 0x43, 0xe2, 0xd6, 0xc7, 0x1e, 0x3e, 0x59, 0x1a, 0xb1, 0xc0, 0xe9, 0x19, 0x98, 0x76,
+	0x11, 0xe6, 0x42, 0x14, 0xc5, 0x07, 0x40, 0xb1, 0x76, 0x36, 0x71, 0x2b, 0xc7, 0xc5, 0x21, 0x66,
+	0xa4, 0x59, 0x28, 0xba, 0xe5, 0xae, 0x5d, 0xfb, 0xfe, 0xc5, 0xfd, 0x7a, 0x4f, 0xad, 0x1f, 0x5f,
+	0xdc, 0xaf, 0x5f, 0x1c, 0x8c, 0x4f, 0x5e, 0x30, 0x8c, 0xeb, 0x70, 0x36, 0xcf, 0x6e, 0x61, 0x16,
+	0xd2, 0x80, 0x61, 0x6d, 0x11, 0x8e, 0x27, 0x3b, 0x8b, 0x68, 0x59, 0x13, 0x48, 0xee, 0x69, 0xdc,
+	0x2b, 0xc3, 0x74, 0x93, 0x79, 0xeb, 0x9d, 0xee, 0x76, 0x0b, 0x45, 0x98, 0x1d, 0x2a, 0xb0, 0x69,
+	0xff, 0xe5, 0x7d, 0xfe, 0xb5, 0x6b, 0x30, 0x8e, 0x7c, 0xda, 0x09, 0xb8, 0x08, 0xed, 0xd4, 0xea,
+	0x62, 0x43, 0xb9, 0x8a, 0x13, 0xbe, 0xa1, 0x12, 0xbe, 0xb1, 0x41, 0x49, 0xa0, 0x84, 0x53, 0x70,
+	0xed, 0x53, 0x98, 0xf5, 0x49, 0x60, 0x33, 0xc1, 0xca, 0xa6, 0x1d, 0x2e, 0x03, 0xbf, 0x7e, 0xe9,
+	0xe1, 0x93, 0xa5, 0xd2, 0xdf, 0x4f, 0x96, 0x4e, 0x49, 0x3f, 0xcc, 0xfd, 0xba, 0x41, 0xa8, 0xe9,
+	0x23, 0xde, 0x6a, 0x6c, 0x05, 0xfc, 0xf1, 0x83, 0xcb, 0xa0, 0x36, 0xd8, 0x0a, 0xb8, 0x35, 0xed,
+	0x93, 0x40, 0x9e, 0xeb, 0x93, 0x0e, 0x5f, 0x33, 0xb3, 0xfa, 0x56, 0x73, 0xf5, 0x4d, 0xb4, 0x30,
+	0x02, 0x91, 0xfc, 0xc9, 0x38, 0xd1, 0xf3, 0x73, 0x38, 0xa1, 0x78, 0x85, 0x9d, 0xc8, 0x69, 0x21,
+	0x86, 0x95, 0xae, 0x82, 0xdd, 0xc8, 0xb0, 0xec, 0xe6, 0xa4, 0x93, 0x5b, 0x3d, 0x1f, 0xc6, 0xaf,
+	0x65, 0x98, 0x6d, 0x32, 0xef, 0x26, 0x69, 0xe3, 0x4d, 0xc2, 0xc2, 0x0e, 0xc7, 0x47, 0x1d, 0x8e,
+	0xd3, 0x30, 0x1e, 0x61, 0xc4, 0x92, 0x4a, 0x53, 0x23, 0x4d, 0x87, 0xe3, 0x78, 0x97, 0xb8, 0x38,
+	0x70, 0xb0, 0xd0, 0x79, 0xda, 0x4a, 0xc6, 0xda, 0xc7, 0x70, 0x22, 0xc2, 0xdf, 0x74, 0x30, 0xe3,
+	0xd8, 0xb5, 0x23, 0xec, 0x63, 0xb7, 0xab, 0x4a, 0xec, 0x7c, 0x7e, 0x2d, 0x28, 0xee, 0x96, 0x80,
+	0x5a, 0x73, 0xc9, 0x62, 0x69, 0x58, 0x5b, 0xc9, 0x86, 0xa1, 0x96, 0x1b, 0x86, 0x94, 0x0a, 0xc6,
+	0x35, 0x38, 0xbd, 0xdf, 0x92, 0x84, 0xe2, 0x1c, 0x80, 0x2b, 0x4d, 0xfd, 0xe4, 0x9e, 0x54, 0x96,
+	0x2d, 0xd7, 0xf8, 0xa7, 0x04, 0xf3, 0xa2, 0x34, 0x18, 0x6d, 0xef, 0xbe, 0x96, 0xa8, 0xfb, 0x37,
+	0x2a, 0x67, 0x36, 0xd2, 0x3e, 0x8c, 0x85, 0x15, 0xd2, 0x8c, 0x0e, 0x2f, 0x8d, 0x5a, 0xa2, 0x55,
+	0x60, 0xc2, 0xc5, 0x1c, 0x91, 0x36, 0x53, 0xe2, 0xf7, 0x86, 0x6b, 0x57, 0xb3, 0x5a, 0x9d, 0x2f,
+	0xb8, 0x12, 0xd2, 0xe7, 0x33, 0xce, 0xc0, 0xe2, 0x80, 0xb1, 0xa7, 0x98, 0xf1, 0x47, 0x19, 0x66,
+	0x9a, 0xcc, 0xdb, 0xc6, 0xed, 0xf6, 0x7f, 0x53, 0xf2, 0x1b, 0x30, 0x2e, 0x13, 0x5b, 0xe6, 0xd8,
+	0xc1, 0x6a, 0x42, 0x2d, 0xed, 0x95, 0x7f, 0x88, 0xba, 0xb4, 0xc3, 0x5f, 0xa7, 0xfc, 0x6f, 0x09,
+	0x0f, 0x71, 0xf9, 0x5f, 0xc9, 0x6a, 0xb9, 0x94, 0xab, 0x65, 0x5f, 0x18, 0xe3, 0x4b, 0x38, 0xb5,
+	0xcf, 0x90, 0x64, 0xdd, 0x06, 0x8c, 0x4b, 0x66, 0x87, 0x29, 0x7b, 0xb5, 0xd4, 0xf8, 0xb9, 0x24,
+	0xaa, 0x7d, 0x13, 0xb7, 0x09, 0xe3, 0x87, 0x7f, 0x55, 0x8b, 0x23, 0x31, 0x6c, 0xa5, 0xa5, 0x18,
+	0x18, 0x15, 0x51, 0x69, 0x29, 0x4b, 0x92, 0x37, 0xbf, 0x95, 0xe0, 0x64, 0x93, 0x79, 0x5b, 0x01,
+	0xe1, 0x04, 0x71, 0xbc, 0xdd, 0xea, 0x70, 0x97, 0x7e, 0x1b, 0x1c, 0x35, 0xe7, 0x0f, 0xb2, 0x9c,
+	0xdf, 0xca, 0xe5, 0x9c, 0xa5, 0x61, 0x9c, 0x83, 0x33, 0x39, 0xe6, 0x84, 0xfd, 0xbd, 0x12, 0x68,
+	0x4d, 0xe6, 0x6d, 0xb4, 0x11, 0xf1, 0xb7, 0x31, 0xe7, 0x6d, 0xec, 0xe3, 0xe0, 0xc8, 0x05, 0x7f,
+	0x3f, 0x4b, 0xfe, 0x42, 0x2e, 0xf9, 0x0c, 0x0b, 0x03, 0x81, 0x3e, 0x68, 0x3d, 0xda, 0x64, 0x7b,
+	0x5a, 0x16, 0x81, 0x15, 0x3d, 0x09, 0x6e, 0x12, 0x2f, 0x42, 0x71, 0x73, 0x75, 0x0b, 0xf1, 0xd6,
+	0xa1, 0x34, 0xb8, 0x08, 0x73, 0x8c, 0x76, 0x22, 0x07, 0xdb, 0x19, 0x29, 0x66, 0xa4, 0x59, 0xb5,
+	0x34, 0x31, 0x8e, 0xa3, 0xc8, 0xc3, 0xa9, 0xd6, 0x47, 0x3e, 0x3c, 0x33, 0xd2, 0xdc, 0xc3, 0xd5,
+	0x61, 0x1e, 0xef, 0x39, 0x2d, 0x14, 0x78, 0xd8, 0x8e, 0x10, 0xc7, 0xf6, 0x4e, 0x28, 0xef, 0xc2,
+	0x19, 0x6b, 0xae, 0x37, 0x61, 0x21, 0x8e, 0xd7, 0x43, 0xa6, 0xdd, 0x81, 0x93, 0x3e, 0xda, 0xb3,
+	0x7d, 0x71, 0x08, 0xec, 0xaa, 0x16, 0x41, 0x3c, 0x49, 0x07, 0x14, 0x67, 0xde, 0x47, 0x7b, 0x4d,
+	0xe5, 0x46, 0x56, 0xf8, 0xda, 0xf5, 0x6c, 0x04, 0x97, 0xf3, 0x23, 0x38, 0xa8, 0xa3, 0x51, 0x83,
+	0x6a, 0xfe, 0x4c, 0x92, 0x84, 0x7f, 0xca, 0x12, 0xda, 0x24, 0x0c, 0xed, 0xb4, 0xfb, 0x98, 0x37,
+	0x21, 0x02, 0xc3, 0xd6, 0x5d, 0x96, 0xbb, 0xaa, 0xbb, 0xac, 0x39, 0x39, 0xf2, 0x0f, 0x65, 0x80,
+	0x26, 0xf3, 0x94, 0xca, 0x6f, 0x44, 0xae, 0xf5, 0xdf, 0xa7, 0xb1, 0x43, 0xbf, 0x4f, 0x6b, 0x97,
+	0xb3, 0x72, 0x9d, 0xcd, 0x95, 0x4b, 0x9d, 0xdb, 0xb8, 0x2b, 0x6e, 0x1f, 0x35, 0x4a, 0x2a, 0xfb,
+	0x36, 0xa8, 0x16, 0xd0, 0x8e, 0xb0, 0x83, 0xc9, 0xee, 0xe1, 0xda, 0xc8, 0x59, 0xa6, 0x1e, 0x27,
+	0xe9, 0x62, 0xf5, 0x97, 0x49, 0x18, 0x6d, 0x32, 0x4f, 0x63, 0x30, 0x3f, 0xf8, 0xbb, 0xad, 0x9e,
+	0xdf, 0x97, 0xe4, 0xfd, 0x7c, 0xd0, 0x57, 0x87, 0xc7, 0x26, 0x47, 0xba, 0x03, 0x93, 0xfd, 0xdf,
+	0x12, 0x46, 0xa1, 0x83, 0x04, 0xa3, 0xd7, 0x5f, 0x8d, 0x49, 0x9c, 0x23, 0x98, 0x4a, 0xf7, 0xc6,
+	0x17, 0x0a, 0x97, 0xa6, 0x50, 0xfa, 0xbb, 0xc3, 0xa0, 0x92, 0x2d, 0xee, 0xc2, 0x6c, 0xa6, 0x59,
+	0x7c, 0xfb, 0x25, 0x2a, 0xa4, 0x81, 0xba, 0x39, 0x24, 0x30, 0xd9, 0xeb, 0x2b, 0x80, 0x54, 0x17,
+	0x76, 0xbe, 0x70, 0x79, 0x1f, 0xa4, 0x5f, 0x1a, 0x02, 0x94, 0x96, 0x2b, 0xdd, 0x5c, 0x14, 0xcb,
+	0x95, 0x42, 0xbd, 0x44, 0xae, 0x9c, 0xa6, 0x40, 0x0b, 0xe1, 0xc4, 0x40, 0x43, 0xf0, 0x4e, 0xa1,
+	0x87, 0x2c, 0x54, 0x5f, 0x19, 0x1a, 0x9a, 0xec, 0xe8, 0xc3, 0x5c, 0xf6, 0x11, 0x5f, 0x2e, 0xf4,
+	0x92, 0x41, 0xea, 0x57, 0x86, 0x45, 0x26, 0xdb, 0x75, 0xe1, 0x64, 0xde, 0x9b, 0x59, 0xac, 0x52,
+	0x0e, 0x5a, 0xbf, 0x7a, 0x10, 0x74, 0x5a, 0xdb, 0x81, 0x97, 0xa2, 0x58, 0xdb, 0x2c, 0xf4, 0x25,
+	0xda, 0x16, 0x5d, 0xd6, 0xda, 0x67, 0x30, 0xd1, 0xbb, 0xa8, 0x6b, 0x85, 0xab, 0x15, 0x42, 0x5f,
+	0x7e, 0x15, 0xa2, 0xe7, 0x56, 0x3f, 0xf6, 0xdd, 0x8b, 0xfb, 0xf5, 0xd2, 0xfa, 0xe6, 0xc3, 0x67,
+	0xd5, 0xd2, 0xa3, 0x67, 0xd5, 0xd2, 0xd3, 0x67, 0xd5, 0xd2, 0x4f, 0xcf, 0xab, 0x23, 0x8f, 0x9e,
+	0x57, 0x47, 0xfe, 0x7a, 0x5e, 0x1d, 0xf9, 0xa2, 0xee, 0x11, 0xde, 0xea, 0xec, 0x34, 0x1c, 0xea,
+	0x9b, 0xea, 0x1a, 0x75, 0x5a, 0x88, 0x04, 0xe6, 0x5e, 0xfa, 0x3a, 0x15, 0xff, 0x97, 0xda, 0x19,
+	0x17, 0xff, 0x98, 0x7a, 0xef, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xb3, 0xe7, 0x08, 0x78, 0x6e,
+	0x13, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -821,7 +1368,18 @@ type MsgClient interface {
 	// SellShares sells shares back to the bonding curve.
 	SellShares(ctx context.Context, in *MsgSellShares, opts ...grpc.CallOption) (*MsgSellSharesResponse, error)
 	// DelistAsset allows the asset owner to voluntarily delist.
+	// Deprecated: use InitiateShutdown instead.
 	DelistAsset(ctx context.Context, in *MsgDelistAsset, opts ...grpc.CallOption) (*MsgDelistAssetResponse, error)
+	// InitiateShutdown begins graceful shutdown of a data asset (owner only).
+	InitiateShutdown(ctx context.Context, in *MsgInitiateShutdown, opts ...grpc.CallOption) (*MsgInitiateShutdownResponse, error)
+	// ClaimSettlement claims pro-rata reserve payout after shutdown cooldown.
+	ClaimSettlement(ctx context.Context, in *MsgClaimSettlement, opts ...grpc.CallOption) (*MsgClaimSettlementResponse, error)
+	// CreateMigrationPath creates a migration path from source to target asset.
+	CreateMigrationPath(ctx context.Context, in *MsgCreateMigrationPath, opts ...grpc.CallOption) (*MsgCreateMigrationPathResponse, error)
+	// DisableMigration disables an active migration path (owner of target asset).
+	DisableMigration(ctx context.Context, in *MsgDisableMigration, opts ...grpc.CallOption) (*MsgDisableMigrationResponse, error)
+	// Migrate converts shares from source asset to target asset via migration path.
+	Migrate(ctx context.Context, in *MsgMigrate, opts ...grpc.CallOption) (*MsgMigrateResponse, error)
 }
 
 type msgClient struct {
@@ -886,6 +1444,51 @@ func (c *msgClient) DelistAsset(ctx context.Context, in *MsgDelistAsset, opts ..
 	return out, nil
 }
 
+func (c *msgClient) InitiateShutdown(ctx context.Context, in *MsgInitiateShutdown, opts ...grpc.CallOption) (*MsgInitiateShutdownResponse, error) {
+	out := new(MsgInitiateShutdownResponse)
+	err := c.cc.Invoke(ctx, "/oasyce.datarights.v1.Msg/InitiateShutdown", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ClaimSettlement(ctx context.Context, in *MsgClaimSettlement, opts ...grpc.CallOption) (*MsgClaimSettlementResponse, error) {
+	out := new(MsgClaimSettlementResponse)
+	err := c.cc.Invoke(ctx, "/oasyce.datarights.v1.Msg/ClaimSettlement", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CreateMigrationPath(ctx context.Context, in *MsgCreateMigrationPath, opts ...grpc.CallOption) (*MsgCreateMigrationPathResponse, error) {
+	out := new(MsgCreateMigrationPathResponse)
+	err := c.cc.Invoke(ctx, "/oasyce.datarights.v1.Msg/CreateMigrationPath", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) DisableMigration(ctx context.Context, in *MsgDisableMigration, opts ...grpc.CallOption) (*MsgDisableMigrationResponse, error) {
+	out := new(MsgDisableMigrationResponse)
+	err := c.cc.Invoke(ctx, "/oasyce.datarights.v1.Msg/DisableMigration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) Migrate(ctx context.Context, in *MsgMigrate, opts ...grpc.CallOption) (*MsgMigrateResponse, error) {
+	out := new(MsgMigrateResponse)
+	err := c.cc.Invoke(ctx, "/oasyce.datarights.v1.Msg/Migrate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// RegisterDataAsset registers a new data asset on-chain.
@@ -899,7 +1502,18 @@ type MsgServer interface {
 	// SellShares sells shares back to the bonding curve.
 	SellShares(context.Context, *MsgSellShares) (*MsgSellSharesResponse, error)
 	// DelistAsset allows the asset owner to voluntarily delist.
+	// Deprecated: use InitiateShutdown instead.
 	DelistAsset(context.Context, *MsgDelistAsset) (*MsgDelistAssetResponse, error)
+	// InitiateShutdown begins graceful shutdown of a data asset (owner only).
+	InitiateShutdown(context.Context, *MsgInitiateShutdown) (*MsgInitiateShutdownResponse, error)
+	// ClaimSettlement claims pro-rata reserve payout after shutdown cooldown.
+	ClaimSettlement(context.Context, *MsgClaimSettlement) (*MsgClaimSettlementResponse, error)
+	// CreateMigrationPath creates a migration path from source to target asset.
+	CreateMigrationPath(context.Context, *MsgCreateMigrationPath) (*MsgCreateMigrationPathResponse, error)
+	// DisableMigration disables an active migration path (owner of target asset).
+	DisableMigration(context.Context, *MsgDisableMigration) (*MsgDisableMigrationResponse, error)
+	// Migrate converts shares from source asset to target asset via migration path.
+	Migrate(context.Context, *MsgMigrate) (*MsgMigrateResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -923,6 +1537,21 @@ func (*UnimplementedMsgServer) SellShares(ctx context.Context, req *MsgSellShare
 }
 func (*UnimplementedMsgServer) DelistAsset(ctx context.Context, req *MsgDelistAsset) (*MsgDelistAssetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DelistAsset not implemented")
+}
+func (*UnimplementedMsgServer) InitiateShutdown(ctx context.Context, req *MsgInitiateShutdown) (*MsgInitiateShutdownResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitiateShutdown not implemented")
+}
+func (*UnimplementedMsgServer) ClaimSettlement(ctx context.Context, req *MsgClaimSettlement) (*MsgClaimSettlementResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClaimSettlement not implemented")
+}
+func (*UnimplementedMsgServer) CreateMigrationPath(ctx context.Context, req *MsgCreateMigrationPath) (*MsgCreateMigrationPathResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMigrationPath not implemented")
+}
+func (*UnimplementedMsgServer) DisableMigration(ctx context.Context, req *MsgDisableMigration) (*MsgDisableMigrationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DisableMigration not implemented")
+}
+func (*UnimplementedMsgServer) Migrate(ctx context.Context, req *MsgMigrate) (*MsgMigrateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Migrate not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -1037,6 +1666,96 @@ func _Msg_DelistAsset_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_InitiateShutdown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgInitiateShutdown)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).InitiateShutdown(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/oasyce.datarights.v1.Msg/InitiateShutdown",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).InitiateShutdown(ctx, req.(*MsgInitiateShutdown))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ClaimSettlement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgClaimSettlement)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ClaimSettlement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/oasyce.datarights.v1.Msg/ClaimSettlement",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ClaimSettlement(ctx, req.(*MsgClaimSettlement))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CreateMigrationPath_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateMigrationPath)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateMigrationPath(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/oasyce.datarights.v1.Msg/CreateMigrationPath",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateMigrationPath(ctx, req.(*MsgCreateMigrationPath))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_DisableMigration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgDisableMigration)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).DisableMigration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/oasyce.datarights.v1.Msg/DisableMigration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).DisableMigration(ctx, req.(*MsgDisableMigration))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_Migrate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgMigrate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Migrate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/oasyce.datarights.v1.Msg/Migrate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Migrate(ctx, req.(*MsgMigrate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "oasyce.datarights.v1.Msg",
@@ -1066,6 +1785,26 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			MethodName: "DelistAsset",
 			Handler:    _Msg_DelistAsset_Handler,
 		},
+		{
+			MethodName: "InitiateShutdown",
+			Handler:    _Msg_InitiateShutdown_Handler,
+		},
+		{
+			MethodName: "ClaimSettlement",
+			Handler:    _Msg_ClaimSettlement_Handler,
+		},
+		{
+			MethodName: "CreateMigrationPath",
+			Handler:    _Msg_CreateMigrationPath_Handler,
+		},
+		{
+			MethodName: "DisableMigration",
+			Handler:    _Msg_DisableMigration_Handler,
+		},
+		{
+			MethodName: "Migrate",
+			Handler:    _Msg_Migrate_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "oasyce/datarights/v1/tx.proto",
@@ -1091,6 +1830,13 @@ func (m *MsgRegisterDataAsset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.ParentAssetId) > 0 {
+		i -= len(m.ParentAssetId)
+		copy(dAtA[i:], m.ParentAssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ParentAssetId)))
+		i--
+		dAtA[i] = 0x42
+	}
 	if len(m.CoCreators) > 0 {
 		for iNdEx := len(m.CoCreators) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -1582,6 +2328,372 @@ func (m *MsgDelistAssetResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgInitiateShutdown) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgInitiateShutdown) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgInitiateShutdown) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.AssetId) > 0 {
+		i -= len(m.AssetId)
+		copy(dAtA[i:], m.AssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AssetId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgInitiateShutdownResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgInitiateShutdownResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgInitiateShutdownResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimSettlement) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimSettlement) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimSettlement) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.AssetId) > 0 {
+		i -= len(m.AssetId)
+		copy(dAtA[i:], m.AssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.AssetId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimSettlementResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimSettlementResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimSettlementResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Payout.Size()
+		i -= size
+		if _, err := m.Payout.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateMigrationPath) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateMigrationPath) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateMigrationPath) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.MaxMigratedShares.Size()
+		i -= size
+		if _, err := m.MaxMigratedShares.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x2a
+	if m.ExchangeRateBps != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.ExchangeRateBps))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.TargetAssetId) > 0 {
+		i -= len(m.TargetAssetId)
+		copy(dAtA[i:], m.TargetAssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.TargetAssetId)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.SourceAssetId) > 0 {
+		i -= len(m.SourceAssetId)
+		copy(dAtA[i:], m.SourceAssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.SourceAssetId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateMigrationPathResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateMigrationPathResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateMigrationPathResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgDisableMigration) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgDisableMigration) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgDisableMigration) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.TargetAssetId) > 0 {
+		i -= len(m.TargetAssetId)
+		copy(dAtA[i:], m.TargetAssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.TargetAssetId)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.SourceAssetId) > 0 {
+		i -= len(m.SourceAssetId)
+		copy(dAtA[i:], m.SourceAssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.SourceAssetId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgDisableMigrationResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgDisableMigrationResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgDisableMigrationResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgMigrate) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgMigrate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgMigrate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Shares.Size()
+		i -= size
+		if _, err := m.Shares.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x22
+	if len(m.TargetAssetId) > 0 {
+		i -= len(m.TargetAssetId)
+		copy(dAtA[i:], m.TargetAssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.TargetAssetId)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.SourceAssetId) > 0 {
+		i -= len(m.SourceAssetId)
+		copy(dAtA[i:], m.SourceAssetId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.SourceAssetId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgMigrateResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgMigrateResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgMigrateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.SharesReceived.Size()
+		i -= size
+		if _, err := m.SharesReceived.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -1629,6 +2741,10 @@ func (m *MsgRegisterDataAsset) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovTx(uint64(l))
 		}
+	}
+	l = len(m.ParentAssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
 }
@@ -1811,6 +2927,159 @@ func (m *MsgDelistAssetResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *MsgInitiateShutdown) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.AssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgInitiateShutdownResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgClaimSettlement) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.AssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgClaimSettlementResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Payout.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgCreateMigrationPath) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.SourceAssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.TargetAssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ExchangeRateBps != 0 {
+		n += 1 + sovTx(uint64(m.ExchangeRateBps))
+	}
+	l = m.MaxMigratedShares.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgCreateMigrationPathResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgDisableMigration) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.SourceAssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.TargetAssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgDisableMigrationResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgMigrate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.SourceAssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.TargetAssetId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Shares.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgMigrateResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.SharesReceived.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -2061,6 +3330,38 @@ func (m *MsgRegisterDataAsset) Unmarshal(dAtA []byte) error {
 			if err := m.CoCreators[len(m.CoCreators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ParentAssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ParentAssetId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3341,6 +4642,1077 @@ func (m *MsgDelistAssetResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgDelistAssetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgInitiateShutdown) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgInitiateShutdown: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgInitiateShutdown: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgInitiateShutdownResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgInitiateShutdownResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgInitiateShutdownResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimSettlement) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimSettlement: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimSettlement: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimSettlementResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimSettlementResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimSettlementResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Payout", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Payout.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateMigrationPath) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateMigrationPath: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateMigrationPath: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceAssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SourceAssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetAssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TargetAssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangeRateBps", wireType)
+			}
+			m.ExchangeRateBps = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ExchangeRateBps |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxMigratedShares", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MaxMigratedShares.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateMigrationPathResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateMigrationPathResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateMigrationPathResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgDisableMigration) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgDisableMigration: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgDisableMigration: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceAssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SourceAssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetAssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TargetAssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgDisableMigrationResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgDisableMigrationResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgDisableMigrationResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgMigrate) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgMigrate: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgMigrate: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceAssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SourceAssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetAssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TargetAssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Shares", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Shares.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgMigrateResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgMigrateResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgMigrateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SharesReceived", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.SharesReceived.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

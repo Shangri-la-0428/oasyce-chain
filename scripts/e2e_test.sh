@@ -121,5 +121,53 @@ echo "--- Test 8: Reputation Leaderboard ---"
 SCORES=$($OASYCED query reputation leaderboard --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('scores',[])))" 2>/dev/null)
 if [ "$SCORES" != "0" ]; then pass "Leaderboard ($SCORES entries)"; else fail "Leaderboard" "empty"; fi
 
+# --- Test 9: Sell Shares ---
+echo "--- Test 9: Sell Shares ---"
+$OASYCED tx datarights sell-shares "$ASSET_ID" 500 --from user1 $COMMON 2>/dev/null
+wait_tx
+SHARES_AFTER=$($OASYCED query datarights asset "$ASSET_ID" --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data_asset',{}).get('total_shares','0'))" 2>/dev/null)
+if [ "$SHARES_AFTER" != "$SHARES" ]; then pass "SellShares (shares=$SHARES_AFTER)"; else fail "SellShares" "shares unchanged"; fi
+
+# --- Test 10: Register Versioned Asset (fork) ---
+echo "--- Test 10: Register Versioned Asset ---"
+$OASYCED tx datarights register "e2e-fork-asset" "sha256:fork123" \
+    --description "Fork of e2e-test-asset" --rights-type derivative --tags "e2e,fork" \
+    --parent "$ASSET_ID" --from user1 $COMMON 2>/dev/null
+wait_tx
+FORK_ID=$($OASYCED query datarights list --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); assets=[a for a in d.get('data_assets',[]) if a['name']=='e2e-fork-asset']; print(assets[0]['id'] if assets else '')" 2>/dev/null)
+if [ -n "$FORK_ID" ]; then pass "RegisterVersionedAsset ($FORK_ID)"; else fail "RegisterVersionedAsset" "not found"; fi
+
+# --- Test 11: Query Asset Children ---
+echo "--- Test 11: Query Asset Children ---"
+CHILDREN=$($OASYCED query datarights children "$ASSET_ID" --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('data_assets',[])))" 2>/dev/null)
+if [ "$CHILDREN" != "0" ]; then pass "AssetChildren ($CHILDREN forks)"; else fail "AssetChildren" "empty"; fi
+
+# --- Test 12: Onboarding — PoW Self-Register ---
+echo "--- Test 12: PoW Self-Register ---"
+$OASYCED keys show user2 $KB 2>/dev/null || $OASYCED keys add user2 $KB 2>/dev/null
+USER2=$($OASYCED keys show user2 -a $KB 2>/dev/null)
+# Note: In real usage, client computes valid PoW nonce. For E2E testing,
+# genesis params should set pow_difficulty=0 to skip PoW verification.
+$OASYCED tx onboarding register 0 --from user2 $COMMON 2>/dev/null
+wait_tx
+RESULT=$(check_latest_tx)
+CODE=$(echo "$RESULT" | cut -d'|' -f1)
+if [ "$CODE" = "0" ]; then pass "SelfRegister"; else fail "SelfRegister" "$RESULT"; fi
+
+# --- Test 13: Onboarding — Repay ---
+echo "--- Test 13: Onboarding Repay ---"
+$OASYCED tx onboarding repay 20000000 --from user2 $COMMON 2>/dev/null
+wait_tx
+RESULT=$(check_latest_tx)
+CODE=$(echo "$RESULT" | cut -d'|' -f1)
+if [ "$CODE" = "0" ]; then pass "RepayDebt"; else fail "RepayDebt" "$RESULT"; fi
+
+# --- Test 15: Initiate Shutdown ---
+echo "--- Test 15: Initiate Shutdown ---"
+$OASYCED tx datarights initiate-shutdown "$ASSET_ID" --from validator $COMMON 2>/dev/null
+wait_tx
+ASSET_STATUS=$($OASYCED query datarights asset "$ASSET_ID" --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data_asset',{}).get('status',''))" 2>/dev/null)
+if [ "$ASSET_STATUS" = "ASSET_STATUS_SHUTTING_DOWN" ]; then pass "InitiateShutdown"; else fail "InitiateShutdown" "status=$ASSET_STATUS"; fi
+
 echo ""
 echo "====== E2E Complete ======"

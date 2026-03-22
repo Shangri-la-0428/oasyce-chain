@@ -19,6 +19,11 @@ var (
 	StatusResolved = DISPUTE_STATUS_RESOLVED
 	StatusRejected = DISPUTE_STATUS_REJECTED
 
+	// AssetStatus aliases.
+	StatusActive       = ASSET_STATUS_ACTIVE
+	StatusShuttingDown = ASSET_STATUS_SHUTTING_DOWN
+	StatusSettled      = ASSET_STATUS_SETTLED
+
 	// DisputeRemedy aliases.
 	RemedyNone             = DISPUTE_REMEDY_UNSPECIFIED
 	RemedyDelist           = DISPUTE_REMEDY_DELIST
@@ -51,19 +56,21 @@ func (m *Params) String() string { return proto.CompactTextString(m) }
 // DefaultParams returns the default datarights module parameters.
 func DefaultParams() Params {
 	return Params{
-		MaxCoCreators:      10,
-		DisputeDeposit:     sdk.NewCoin("uoas", math.NewInt(1000000000)), // 100 OAS
-		DisputeTimeoutDays: 30,
+		MaxCoCreators:           10,
+		DisputeDeposit:          sdk.NewCoin("uoas", math.NewInt(1000000000)), // 100 OAS
+		DisputeTimeoutDays:      30,
+		ShutdownCooldownSeconds: 604800, // 7 days
 	}
 }
 
 // DefaultGenesisState returns the default genesis state.
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		DataAssets:   []DataAsset{},
-		Shareholders: []ShareHolder{},
-		Disputes:     []Dispute{},
-		Params:       DefaultParams(),
+		DataAssets:     []DataAsset{},
+		Shareholders:   []ShareHolder{},
+		Disputes:       []Dispute{},
+		Params:         DefaultParams(),
+		MigrationPaths: []MigrationPath{},
 	}
 }
 

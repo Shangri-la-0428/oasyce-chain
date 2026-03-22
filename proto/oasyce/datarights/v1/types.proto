@@ -53,6 +53,18 @@ enum DisputeRemedy {
   DISPUTE_REMEDY_SHARE_ADJUSTMENT = 4;
 }
 
+// AssetStatus enumerates the lifecycle states of a data asset.
+enum AssetStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // ASSET_STATUS_ACTIVE is the default state — normal operation.
+  ASSET_STATUS_ACTIVE = 0;
+  // ASSET_STATUS_SHUTTING_DOWN means the owner initiated shutdown; cooldown in progress.
+  ASSET_STATUS_SHUTTING_DOWN = 1;
+  // ASSET_STATUS_SETTLED means all shares have been claimed; terminal state.
+  ASSET_STATUS_SETTLED = 2;
+}
+
 // DataAsset represents a registered data asset on-chain.
 message DataAsset {
   option (gogoproto.equal) = false;
@@ -96,8 +108,57 @@ message DataAsset {
   google.protobuf.Timestamp created_at = 11
       [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
 
-  // is_active indicates whether the data asset is currently listed.
-  bool is_active = 12;
+  // status is the lifecycle state of the data asset.
+  AssetStatus status = 12;
+
+  // shutdown_initiated_at is the timestamp when shutdown was initiated.
+  google.protobuf.Timestamp shutdown_initiated_at = 13
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+
+  // parent_asset_id links this asset to a previous version (empty for v1 assets).
+  string parent_asset_id = 14;
+
+  // version is the version number (1 for original, incremented for each successor).
+  uint32 version = 15;
+
+  // migration_enabled indicates whether shareholders of the parent can migrate shares.
+  bool migration_enabled = 16;
+}
+
+// MigrationPath represents a migration path between two asset versions.
+message MigrationPath {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // source_asset_id is the asset being migrated from.
+  string source_asset_id = 1;
+
+  // target_asset_id is the asset being migrated to.
+  string target_asset_id = 2;
+
+  // exchange_rate_bps is the share exchange rate in basis points (10000 = 1:1).
+  uint32 exchange_rate_bps = 3;
+
+  // max_migrated_shares caps the total shares that can migrate (0 = unlimited).
+  string max_migrated_shares = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // total_migrated tracks how many shares have already migrated.
+  string total_migrated = 5 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // enabled indicates whether this migration path is active.
+  bool enabled = 6;
+
+  // created_at is the timestamp when this migration path was created.
+  google.protobuf.Timestamp created_at = 7
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
 }
 
 // CoCreator represents a co-creator of a data asset with their share allocation.

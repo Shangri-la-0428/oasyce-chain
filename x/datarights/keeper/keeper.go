@@ -20,11 +20,10 @@ import (
 
 // Keeper manages the datarights module's state.
 type Keeper struct {
-	cdc              codec.BinaryCodec
-	storeKey         storetypes.StoreKey
-	bankKeeper       types.BankKeeper
-	settlementKeeper types.SettlementKeeper
-	authority        string // module authority address (arbitrator)
+	cdc        codec.BinaryCodec
+	storeKey   storetypes.StoreKey
+	bankKeeper types.BankKeeper
+	authority  string // module authority address (arbitrator)
 }
 
 // NewKeeper creates a new datarights Keeper.
@@ -32,15 +31,13 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
-	settlementKeeper types.SettlementKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:              cdc,
-		storeKey:         storeKey,
-		bankKeeper:       bankKeeper,
-		settlementKeeper: settlementKeeper,
-		authority:        authority,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		bankKeeper: bankKeeper,
+		authority:  authority,
 	}
 }
 
@@ -374,6 +371,21 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 		}
 	}
 
+	// Versioning: validate parent and compute version.
+	var parentAssetId string
+	var version uint32 = 1
+	if msg.ParentAssetId != "" {
+		parent, found := k.GetAsset(sdkCtx, msg.ParentAssetId)
+		if !found {
+			return "", types.ErrAssetNotFound.Wrapf("parent asset %s not found", msg.ParentAssetId)
+		}
+		if parent.Status != types.ASSET_STATUS_ACTIVE && parent.Status != types.ASSET_STATUS_SHUTTING_DOWN {
+			return "", types.ErrAssetDelisted.Wrap("parent asset must be active or shutting down")
+		}
+		parentAssetId = msg.ParentAssetId
+		version = parent.Version + 1
+	}
+
 	assetID := k.generateAssetID(sdkCtx, msg.ContentHash)
 
 	// Generate fingerprint from content hash.
@@ -381,18 +393,20 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 	fingerprint := hex.EncodeToString(h[:16])
 
 	asset := types.DataAsset{
-		Id:          assetID,
-		Owner:       msg.Creator,
-		Name:        msg.Name,
-		Description: msg.Description,
-		ContentHash: msg.ContentHash,
-		Fingerprint: fingerprint,
-		RightsType:  msg.RightsType,
-		Tags:        msg.Tags,
-		CoCreators:  msg.CoCreators,
-		TotalShares: math.ZeroInt(),
-		CreatedAt:   sdkCtx.BlockTime(),
-		IsActive:    true,
+		Id:            assetID,
+		Owner:         msg.Creator,
+		Name:          msg.Name,
+		Description:   msg.Description,
+		ContentHash:   msg.ContentHash,
+		Fingerprint:   fingerprint,
+		RightsType:    msg.RightsType,
+		Tags:          msg.Tags,
+		CoCreators:    msg.CoCreators,
+		TotalShares:   math.ZeroInt(),
+		CreatedAt:     sdkCtx.BlockTime(),
+		Status:        types.ASSET_STATUS_ACTIVE,
+		Version:       version,
+		ParentAssetId: parentAssetId,
 	}
 
 	if err := k.SetAsset(sdkCtx, asset); err != nil {
@@ -427,8 +441,8 @@ func (k Keeper) BuyShares(ctx context.Context, msg types.MsgBuyShares) (math.Int
 	if !found {
 		return math.Int{}, types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
 	}
-	if !asset.IsActive {
-		return math.Int{}, types.ErrAssetDelisted.Wrapf("asset %s is delisted", msg.AssetId)
+	if asset.Status != types.ASSET_STATUS_ACTIVE {
+		return math.Int{}, types.ErrAssetDelisted.Wrapf("asset %s is not active (status: %s)", msg.AssetId, asset.Status)
 	}
 
 	paymentAmount := msg.Amount.Amount
@@ -536,6 +550,18 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 	asset, found := k.GetAsset(sdkCtx, msg.AssetId)
 	if !found {
 		return math.Int{}, types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
+	}
+
+	// Block selling if asset is settled. During shutdown, allow selling only within cooldown.
+	if asset.Status == types.ASSET_STATUS_SETTLED {
+		return math.Int{}, types.ErrAssetSettled.Wrapf("asset %s is settled, use ClaimSettlement", msg.AssetId)
+	}
+	if asset.Status == types.ASSET_STATUS_SHUTTING_DOWN {
+		params := k.GetParams(sdkCtx)
+		cooldownEnd := asset.ShutdownInitiatedAt.Add(time.Duration(params.ShutdownCooldownSeconds) * time.Second)
+		if sdkCtx.BlockTime().After(cooldownEnd) || sdkCtx.BlockTime().Equal(cooldownEnd) {
+			return math.Int{}, types.ErrAssetSettled.Wrapf("cooldown elapsed for asset %s, use ClaimSettlement", msg.AssetId)
+		}
 	}
 
 	tokensToSell := msg.Shares
@@ -656,9 +682,17 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 }
 
 // DelistAsset allows an asset owner to voluntarily delist their own asset.
-// The asset remains in the store (immutable history) but IsActive is set to false,
-// preventing further share purchases.
+// Deprecated: now redirects to InitiateShutdown for graceful shutdown.
 func (k Keeper) DelistAsset(ctx context.Context, msg types.MsgDelistAsset) error {
+	return k.InitiateShutdown(ctx, types.MsgInitiateShutdown{
+		Creator: msg.Creator,
+		AssetId: msg.AssetId,
+	})
+}
+
+// InitiateShutdown begins graceful shutdown of a data asset.
+// Only the owner can initiate. Sets status to SHUTTING_DOWN and records timestamp.
+func (k Keeper) InitiateShutdown(ctx context.Context, msg types.MsgInitiateShutdown) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
@@ -670,24 +704,127 @@ func (k Keeper) DelistAsset(ctx context.Context, msg types.MsgDelistAsset) error
 		return types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
 	}
 	if asset.Owner != msg.Creator {
-		return types.ErrUnauthorized.Wrapf("only the owner can delist an asset")
+		return types.ErrUnauthorized.Wrapf("only the owner can initiate shutdown")
 	}
-	if !asset.IsActive {
-		return types.ErrAssetDelisted.Wrapf("asset %s is already delisted", msg.AssetId)
+	if asset.Status != types.ASSET_STATUS_ACTIVE {
+		return types.ErrAssetDelisted.Wrapf("asset %s is not active (status: %s)", msg.AssetId, asset.Status)
 	}
 
-	asset.IsActive = false
+	asset.Status = types.ASSET_STATUS_SHUTTING_DOWN
+	asset.ShutdownInitiatedAt = sdkCtx.BlockTime()
 	if err := k.SetAsset(sdkCtx, asset); err != nil {
 		return err
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
-		"asset_delisted",
+		"asset_shutdown_initiated",
 		sdk.NewAttribute("asset_id", msg.AssetId),
 		sdk.NewAttribute("owner", msg.Creator),
 	))
 
 	return nil
+}
+
+// ClaimSettlement claims pro-rata reserve payout after shutdown cooldown.
+// Any shareholder can call this after the cooldown period has elapsed.
+// No protocol fee is charged on settlement claims.
+func (k Keeper) ClaimSettlement(ctx context.Context, msg types.MsgClaimSettlement) (math.Int, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	claimerAddr, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return math.Int{}, types.ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+
+	asset, found := k.GetAsset(sdkCtx, msg.AssetId)
+	if !found {
+		return math.Int{}, types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
+	}
+	if asset.Status != types.ASSET_STATUS_SHUTTING_DOWN && asset.Status != types.ASSET_STATUS_SETTLED {
+		return math.Int{}, types.ErrAssetNotShuttingDown.Wrapf("asset %s is active, cannot claim settlement", msg.AssetId)
+	}
+
+	// Check cooldown has elapsed.
+	params := k.GetParams(sdkCtx)
+	cooldownEnd := asset.ShutdownInitiatedAt.Add(time.Duration(params.ShutdownCooldownSeconds) * time.Second)
+	if sdkCtx.BlockTime().Before(cooldownEnd) {
+		return math.Int{}, types.ErrCooldownNotElapsed.Wrapf("cooldown ends at %s, current time %s", cooldownEnd, sdkCtx.BlockTime())
+	}
+
+	// Get claimer's shares.
+	sh, found := k.GetShareHolder(sdkCtx, msg.AssetId, msg.Creator)
+	if !found || sh.Shares.IsZero() {
+		return math.Int{}, types.ErrNoSharesHeld.Wrapf("no shares held for asset %s", msg.AssetId)
+	}
+
+	// Pro-rata payout: payout = reserve * (claimer_shares / total_shares)
+	reserve := k.GetAssetReserve(sdkCtx, msg.AssetId)
+	if reserve.IsZero() || asset.TotalShares.IsZero() {
+		// No reserve left — just burn shares, zero payout.
+		asset.TotalShares = asset.TotalShares.Sub(sh.Shares)
+		if asset.TotalShares.IsZero() || asset.TotalShares.IsNegative() {
+			asset.Status = types.ASSET_STATUS_SETTLED
+			asset.TotalShares = math.ZeroInt()
+		}
+		if err := k.SetAsset(sdkCtx, asset); err != nil {
+			return math.Int{}, err
+		}
+		store := sdkCtx.KVStore(k.storeKey)
+		store.Delete(types.ShareHolderKey(msg.AssetId, msg.Creator))
+		store.Delete(types.ShareHolderByAssetKey(msg.AssetId, msg.Creator))
+		return math.ZeroInt(), nil
+	}
+
+	reserveDec := math.LegacyNewDecFromInt(reserve)
+	sharesDec := math.LegacyNewDecFromInt(sh.Shares)
+	totalDec := math.LegacyNewDecFromInt(asset.TotalShares)
+
+	payout := reserveDec.Mul(sharesDec).Quo(totalDec).TruncateInt()
+	if payout.IsZero() {
+		payout = math.ZeroInt()
+	}
+
+	// Send payout from module to claimer (no protocol fee on settlement).
+	if payout.IsPositive() {
+		payoutCoin := sdk.NewCoin("uoas", payout)
+		if sendErr := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, claimerAddr, sdk.NewCoins(payoutCoin)); sendErr != nil {
+			return math.Int{}, fmt.Errorf("failed to send settlement: %w", sendErr)
+		}
+	}
+
+	// Update reserve.
+	newReserve := reserve.Sub(payout)
+	if newReserve.IsNegative() {
+		newReserve = math.ZeroInt()
+	}
+	if err := k.SetAssetReserve(sdkCtx, msg.AssetId, newReserve); err != nil {
+		return math.Int{}, err
+	}
+
+	// Update asset total shares.
+	asset.TotalShares = asset.TotalShares.Sub(sh.Shares)
+	if asset.TotalShares.IsZero() || asset.TotalShares.IsNegative() {
+		asset.Status = types.ASSET_STATUS_SETTLED
+		asset.TotalShares = math.ZeroInt()
+	}
+	if err := k.SetAsset(sdkCtx, asset); err != nil {
+		return math.Int{}, err
+	}
+
+	// Remove shareholder record.
+	store := sdkCtx.KVStore(k.storeKey)
+	store.Delete(types.ShareHolderKey(msg.AssetId, msg.Creator))
+	store.Delete(types.ShareHolderByAssetKey(msg.AssetId, msg.Creator))
+
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		"settlement_claimed",
+		sdk.NewAttribute("asset_id", msg.AssetId),
+		sdk.NewAttribute("claimer", msg.Creator),
+		sdk.NewAttribute("payout", payout.String()),
+		sdk.NewAttribute("shares_burned", sh.Shares.String()),
+	))
+
+	return payout, nil
 }
 
 // FileDispute creates a new dispute against a data asset.
@@ -703,8 +840,8 @@ func (k Keeper) FileDispute(ctx context.Context, msg types.MsgFileDispute) (stri
 	if !found {
 		return "", types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
 	}
-	if !asset.IsActive {
-		return "", types.ErrAssetDelisted.Wrapf("asset %s is already delisted", msg.AssetId)
+	if asset.Status != types.ASSET_STATUS_ACTIVE {
+		return "", types.ErrAssetDelisted.Wrapf("asset %s is not active", msg.AssetId)
 	}
 
 	// Require dispute deposit.
@@ -780,7 +917,8 @@ func (k Keeper) ResolveDispute(ctx context.Context, msg types.MsgResolveDispute)
 		if !found {
 			return types.ErrAssetNotFound.Wrapf("asset %s not found", dispute.AssetId)
 		}
-		asset.IsActive = false
+		asset.Status = types.ASSET_STATUS_SHUTTING_DOWN
+		asset.ShutdownInitiatedAt = sdkCtx.BlockTime()
 		if err := k.SetAsset(sdkCtx, asset); err != nil {
 			return err
 		}
@@ -872,6 +1010,248 @@ func (k Keeper) ResolveDispute(ctx context.Context, msg types.MsgResolveDispute)
 	))
 
 	return nil
+}
+
+// deleteShareHolder removes a shareholder record and its secondary index.
+func (k Keeper) deleteShareHolder(ctx sdk.Context, assetID, address string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.ShareHolderKey(assetID, address))
+	store.Delete(types.ShareHolderByAssetKey(assetID, address))
+}
+
+// ---------------------------------------------------------------------------
+// Migration Path CRUD
+// ---------------------------------------------------------------------------
+
+// GetMigrationPath retrieves a migration path by source and target asset IDs.
+func (k Keeper) GetMigrationPath(ctx sdk.Context, sourceAssetID, targetAssetID string) (types.MigrationPath, bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.MigrationPathKey(sourceAssetID, targetAssetID))
+	if bz == nil {
+		return types.MigrationPath{}, false
+	}
+	var mp types.MigrationPath
+	if err := k.cdc.Unmarshal(bz, &mp); err != nil {
+		return types.MigrationPath{}, false
+	}
+	return mp, true
+}
+
+// SetMigrationPath persists a migration path.
+func (k Keeper) SetMigrationPath(ctx sdk.Context, mp types.MigrationPath) error {
+	bz, err := k.cdc.Marshal(&mp)
+	if err != nil {
+		return err
+	}
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.MigrationPathKey(mp.SourceAssetId, mp.TargetAssetId), bz)
+	return nil
+}
+
+// IterateAllMigrationPaths iterates over all migration paths.
+func (k Keeper) IterateAllMigrationPaths(ctx sdk.Context, cb func(mp types.MigrationPath) bool) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.MigrationPathKeyPrefix)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var mp types.MigrationPath
+		if err := k.cdc.Unmarshal(iter.Value(), &mp); err != nil {
+			continue
+		}
+		if cb(mp) {
+			break
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Migration Business Logic
+// ---------------------------------------------------------------------------
+
+// CreateMigrationPath creates a migration path from source to target asset.
+// Only the target asset owner can create a migration path.
+// The target asset must reference the source as its parent (or be a legitimate successor).
+func (k Keeper) CreateMigrationPath(ctx context.Context, msg types.MsgCreateMigrationPath) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	// Verify target asset exists and caller is its owner.
+	targetAsset, found := k.GetAsset(sdkCtx, msg.TargetAssetId)
+	if !found {
+		return types.ErrAssetNotFound.Wrapf("target asset %s not found", msg.TargetAssetId)
+	}
+	if targetAsset.Owner != msg.Creator {
+		return types.ErrUnauthorized.Wrap("only target asset owner can create migration path")
+	}
+	if targetAsset.Status != types.ASSET_STATUS_ACTIVE {
+		return types.ErrAssetDelisted.Wrap("target asset must be active")
+	}
+
+	// Verify source asset exists.
+	sourceAsset, found := k.GetAsset(sdkCtx, msg.SourceAssetId)
+	if !found {
+		return types.ErrAssetNotFound.Wrapf("source asset %s not found", msg.SourceAssetId)
+	}
+
+	// Target must declare source as parent (version chain integrity).
+	if targetAsset.ParentAssetId != sourceAsset.Id {
+		return types.ErrInvalidVersion.Wrap("target asset must reference source as parent_asset_id")
+	}
+
+	// Check no existing migration path for this pair.
+	if _, exists := k.GetMigrationPath(sdkCtx, msg.SourceAssetId, msg.TargetAssetId); exists {
+		return types.ErrMigrationExists.Wrap("migration path already exists for this pair")
+	}
+
+	mp := types.MigrationPath{
+		SourceAssetId:    msg.SourceAssetId,
+		TargetAssetId:    msg.TargetAssetId,
+		ExchangeRateBps:  msg.ExchangeRateBps,
+		MaxMigratedShares: msg.MaxMigratedShares,
+		TotalMigrated:    math.ZeroInt(),
+		Enabled:          true,
+		CreatedAt:        sdkCtx.BlockTime(),
+	}
+
+	if err := k.SetMigrationPath(sdkCtx, mp); err != nil {
+		return err
+	}
+
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		"migration_path_created",
+		sdk.NewAttribute("source_asset_id", msg.SourceAssetId),
+		sdk.NewAttribute("target_asset_id", msg.TargetAssetId),
+		sdk.NewAttribute("exchange_rate_bps", fmt.Sprintf("%d", msg.ExchangeRateBps)),
+	))
+
+	return nil
+}
+
+// DisableMigration disables an active migration path.
+// Only the target asset owner can disable it.
+func (k Keeper) DisableMigration(ctx context.Context, msg types.MsgDisableMigration) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	mp, found := k.GetMigrationPath(sdkCtx, msg.SourceAssetId, msg.TargetAssetId)
+	if !found {
+		return types.ErrMigrationNotFound.Wrapf("migration path %s->%s not found", msg.SourceAssetId, msg.TargetAssetId)
+	}
+
+	// Verify caller is target asset owner.
+	targetAsset, found := k.GetAsset(sdkCtx, msg.TargetAssetId)
+	if !found {
+		return types.ErrAssetNotFound.Wrapf("target asset %s not found", msg.TargetAssetId)
+	}
+	if targetAsset.Owner != msg.Creator {
+		return types.ErrUnauthorized.Wrap("only target asset owner can disable migration")
+	}
+
+	mp.Enabled = false
+	if err := k.SetMigrationPath(sdkCtx, mp); err != nil {
+		return err
+	}
+
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		"migration_disabled",
+		sdk.NewAttribute("source_asset_id", msg.SourceAssetId),
+		sdk.NewAttribute("target_asset_id", msg.TargetAssetId),
+	))
+
+	return nil
+}
+
+// Migrate converts shares from source asset to target asset via migration path.
+// Shares are burned from source and minted directly to target (no bonding curve).
+// This is a dilutive operation — migrated shares have no reserve backing.
+func (k Keeper) Migrate(ctx context.Context, msg types.MsgMigrate) (math.Int, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	mp, found := k.GetMigrationPath(sdkCtx, msg.SourceAssetId, msg.TargetAssetId)
+	if !found {
+		return math.Int{}, types.ErrMigrationNotFound.Wrapf("migration path %s->%s not found", msg.SourceAssetId, msg.TargetAssetId)
+	}
+	if !mp.Enabled {
+		return math.Int{}, types.ErrMigrationDisabled.Wrap("migration path is disabled")
+	}
+
+	// Verify source shareholder holds enough shares.
+	sh, found := k.GetShareHolder(sdkCtx, msg.SourceAssetId, msg.Creator)
+	if !found || sh.Shares.LT(msg.Shares) {
+		return math.Int{}, types.ErrNoSharesHeld.Wrap("insufficient shares in source asset")
+	}
+
+	// Calculate target shares: source_shares * exchange_rate_bps / 10000
+	targetShares := msg.Shares.Mul(math.NewInt(int64(mp.ExchangeRateBps))).Quo(math.NewInt(10000))
+	if targetShares.IsZero() {
+		return math.Int{}, types.ErrInvalidParams.Wrap("migration would yield zero shares")
+	}
+
+	// Check migration cap.
+	if mp.MaxMigratedShares.IsPositive() {
+		newTotal := mp.TotalMigrated.Add(msg.Shares)
+		if newTotal.GT(mp.MaxMigratedShares) {
+			return math.Int{}, types.ErrMigrationCapExceeded.Wrapf(
+				"would exceed cap: %s + %s > %s",
+				mp.TotalMigrated, msg.Shares, mp.MaxMigratedShares,
+			)
+		}
+	}
+
+	// Burn shares from source.
+	sh.Shares = sh.Shares.Sub(msg.Shares)
+	if sh.Shares.IsZero() {
+		k.deleteShareHolder(sdkCtx, msg.SourceAssetId, msg.Creator)
+	} else {
+		if err := k.SetShareHolder(sdkCtx, sh); err != nil {
+			return math.Int{}, err
+		}
+	}
+
+	// Update source asset total_shares.
+	sourceAsset, _ := k.GetAsset(sdkCtx, msg.SourceAssetId)
+	sourceAsset.TotalShares = sourceAsset.TotalShares.Sub(msg.Shares)
+	if err := k.SetAsset(sdkCtx, sourceAsset); err != nil {
+		return math.Int{}, err
+	}
+
+	// Mint shares to target.
+	targetSh, found := k.GetShareHolder(sdkCtx, msg.TargetAssetId, msg.Creator)
+	if !found {
+		targetSh = types.ShareHolder{
+			Address:     msg.Creator,
+			AssetId:     msg.TargetAssetId,
+			Shares:      math.ZeroInt(),
+			PurchasedAt: sdkCtx.BlockTime(),
+		}
+	}
+	targetSh.Shares = targetSh.Shares.Add(targetShares)
+	if err := k.SetShareHolder(sdkCtx, targetSh); err != nil {
+		return math.Int{}, err
+	}
+
+	// Update target asset total_shares.
+	targetAsset, _ := k.GetAsset(sdkCtx, msg.TargetAssetId)
+	targetAsset.TotalShares = targetAsset.TotalShares.Add(targetShares)
+	if err := k.SetAsset(sdkCtx, targetAsset); err != nil {
+		return math.Int{}, err
+	}
+
+	// Update migration path total_migrated.
+	mp.TotalMigrated = mp.TotalMigrated.Add(msg.Shares)
+	if err := k.SetMigrationPath(sdkCtx, mp); err != nil {
+		return math.Int{}, err
+	}
+
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		"shares_migrated",
+		sdk.NewAttribute("source_asset_id", msg.SourceAssetId),
+		sdk.NewAttribute("target_asset_id", msg.TargetAssetId),
+		sdk.NewAttribute("migrator", msg.Creator),
+		sdk.NewAttribute("source_shares_burned", msg.Shares.String()),
+		sdk.NewAttribute("target_shares_minted", targetShares.String()),
+	))
+
+	return targetShares, nil
 }
 
 // IterateAllAssets iterates over all data assets and calls the callback.

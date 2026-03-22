@@ -69,3 +69,45 @@ func (m msgServer) SellShares(ctx context.Context, msg *types.MsgSellShares) (*t
 	}
 	return &types.MsgSellSharesResponse{Payout: payout}, nil
 }
+
+// InitiateShutdown handles MsgInitiateShutdown.
+func (m msgServer) InitiateShutdown(ctx context.Context, msg *types.MsgInitiateShutdown) (*types.MsgInitiateShutdownResponse, error) {
+	if err := m.Keeper.InitiateShutdown(ctx, *msg); err != nil {
+		return nil, err
+	}
+	return &types.MsgInitiateShutdownResponse{}, nil
+}
+
+// ClaimSettlement handles MsgClaimSettlement.
+func (m msgServer) ClaimSettlement(ctx context.Context, msg *types.MsgClaimSettlement) (*types.MsgClaimSettlementResponse, error) {
+	payout, err := m.Keeper.ClaimSettlement(ctx, *msg)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgClaimSettlementResponse{Payout: payout}, nil
+}
+
+// CreateMigrationPath handles MsgCreateMigrationPath.
+func (m msgServer) CreateMigrationPath(ctx context.Context, msg *types.MsgCreateMigrationPath) (*types.MsgCreateMigrationPathResponse, error) {
+	if err := m.Keeper.CreateMigrationPath(ctx, *msg); err != nil {
+		return nil, err
+	}
+	return &types.MsgCreateMigrationPathResponse{}, nil
+}
+
+// DisableMigration handles MsgDisableMigration.
+func (m msgServer) DisableMigration(ctx context.Context, msg *types.MsgDisableMigration) (*types.MsgDisableMigrationResponse, error) {
+	if err := m.Keeper.DisableMigration(ctx, *msg); err != nil {
+		return nil, err
+	}
+	return &types.MsgDisableMigrationResponse{}, nil
+}
+
+// Migrate handles MsgMigrate.
+func (m msgServer) Migrate(ctx context.Context, msg *types.MsgMigrate) (*types.MsgMigrateResponse, error) {
+	sharesReceived, err := m.Keeper.Migrate(ctx, *msg)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgMigrateResponse{SharesReceived: sharesReceived}, nil
+}

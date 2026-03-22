@@ -1,7 +1,7 @@
 # Oasyce L1 Chain
 
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 5 custom modules: settlement, capability, reputation, datarights, work.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 6 custom modules: settlement, capability, reputation, datarights, work, onboarding.
 
 ## Current Status
 
@@ -11,13 +11,13 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 5 cu
 
 ### REST/gRPC Integration — COMPLETE ✅
 - REST API on :1317, gRPC on :9090
-- gRPC-Gateway routes registered for all 4 custom modules
+- gRPC-Gateway routes registered for all 6 custom modules
 - Node starts, produces blocks, persists data, restarts cleanly
 - All standard Cosmos queries (bank, auth, staking) work
 - All custom module queries work
 
 ### CLI Commands — COMPLETE ✅
-- All 4 modules have CLI tx + query commands (`x/*/cli/`)
+- All 6 modules have CLI tx + query commands (`x/*/cli/`)
 - `oasyced tx datarights register|buy-shares|file-dispute|resolve-dispute`
 - `oasyced tx settlement create-escrow|release-escrow|refund-escrow`
 - `oasyced tx oasyce_capability register|invoke`
@@ -82,14 +82,47 @@ All 4 modules verified with real transactions:
 ### Build & Test Status
 ```
 go build ./...  ✅
-go test ./...   ✅ (40+ tests across 6 suites)
+go test ./...   ✅ (50+ tests across 7 suites)
   tests/integration     — 3 tests (full capability flow, Bancor curve, escrow lifecycle)
   x/capability/keeper   — capability tests
-  x/datarights/keeper   — 12 tests (Bancor buy/sell, access gating, jury voting)
+  x/datarights/keeper   — 16 tests (Bancor buy/sell, access gating, jury voting, lifecycle, versioning, migration)
   x/reputation/keeper   — reputation tests
   x/settlement/keeper   — escrow + bonding curve tests
   x/work/keeper         — 13 tests (executor, task CRUD, commit-reveal, assignment, settlement, minority penalty)
+  x/onboarding/keeper   — 4 tests (invite+claim, repay, cancel, default settlement)
 ```
+
+### Datarights Lifecycle + Versioning + Migration — COMPLETE ✅
+- **Lifecycle State Machine**: AssetStatus enum (ACTIVE → SHUTTING_DOWN → SETTLED)
+  - `MsgInitiateShutdown` — owner triggers graceful shutdown with 7-day cooldown
+  - `MsgClaimSettlement` — pro-rata reserve payout after cooldown, no fee
+  - BuyShares blocked unless ACTIVE; SellShares blocked after cooldown
+  - Dispute DELIST remedy triggers shutdown (not instant delist)
+  - ConsensusVersion = 2
+- **Versioning**: DataAsset fields `parent_asset_id`, `version`, `migration_enabled`
+  - MsgRegisterDataAsset accepts `parent_asset_id`, auto-calculates version
+  - Any address can fork (no same-owner requirement)
+- **Migration**: MigrationPath as independent first-class object
+  - `MsgCreateMigrationPath` — target owner creates, version chain validated
+  - `MsgDisableMigration` — emergency disable
+  - `MsgMigrate` — burns source shares, mints target at exchange rate
+  - `max_migrated_shares` caps dilution; no reserve transfer (accepted dilution)
+- CLI: `initiate-shutdown`, `claim-settlement`, `create-migration`, `disable-migration`, `migrate`
+- Query: `migration-path`, `migration-paths`, `children` (asset version tree)
+- Dead code cleanup: removed unused SettlementKeeper interface from datarights module
+
+### x/onboarding Module (PoW Self-Registration) — COMPLETE ✅
+- Proof-of-Work based self-registration: anyone can join by solving a hash puzzle
+- **Flow**: Client solves sha256(address || nonce) with N leading zero bits → submits to chain → receives airdrop (minted as debt) → repays debt (burned)
+- **Anti-sybil**: PoW cost (~2-5 min CPU per registration), one-registration-per-address
+- **Debt**: Airdrop is a loan, repaid tokens are burned to maintain supply
+- 2 Msg types: SelfRegister, RepayDebt
+- 3 Query types: Registration, Debt, OnboardingParams
+- CLI: `oasyced tx onboarding register <nonce>`, `oasyced tx onboarding repay <amount>`
+- Query: `oasyced query onboarding registration|debt|params`
+- Module account permissions: Minter + Burner
+- Default params: airdrop=20 OAS, pow_difficulty=16 bits, deadline=90 days
+- ConsensusVersion = 2 (breaking change from invite-based v1)
 
 ### Protocol Constants (x/settlement/types/types.go)
 ```go
@@ -157,3 +190,21 @@ ModuleBasics.AddTxCommands panics (distr/staking need AddressCodec). Add custom 
 
 ### TX broadcast: CheckTx vs DeliverTx
 `oasyced tx ... --yes` returns CheckTx result (code 0 = accepted into mempool). Use `curl localhost:26657/block_results?height=N` to check DeliverTx code. `query tx <hash>` fails due to type URL resolution bug — use block_results instead.
+
+## TODO: Whitepaper v4 Parameter Alignment
+
+The following chain parameters diverge from Whitepaper v4.0 and need ConsensusVersion upgrades to fix:
+
+| Parameter | Current (Code) | Whitepaper v4 | File | Priority |
+|---|---|---|---|---|
+| **Connector weight F** | 0.5 | 0.35 | `x/settlement/types/types.go` ReserveRatio | High |
+| **Fee split** | 93% provider / 5% protocol / 2% burn | 60% creator / 20% validator / 15% burn / 5% treasury | `x/settlement/keeper/keeper.go` ReleaseEscrow | High |
+| **Burn rate** | 2% | 15% | `x/settlement/types/types.go` BurnRate | High |
+| **Identity cost** | PoW + 20 OAS airdrop (debt) | 100 OAS stake (burn on ban) | `x/onboarding` | Medium |
+
+### Migration plan
+1. Bump ConsensusVersion in each affected module
+2. Add state migration to update params
+3. Update unit tests to use new constants
+4. Validate on testnet before mainnet proposal
+5. Consider making F, fee split, burn rate governance-adjustable params

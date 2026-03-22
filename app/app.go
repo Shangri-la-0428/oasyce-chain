@@ -107,6 +107,9 @@ import (
 	work "github.com/oasyce/chain/x/work"
 	workkeeper "github.com/oasyce/chain/x/work/keeper"
 	worktypes "github.com/oasyce/chain/x/work/types"
+	onboarding "github.com/oasyce/chain/x/onboarding"
+	onboardingkeeper "github.com/oasyce/chain/x/onboarding/keeper"
+	onboardingtypes "github.com/oasyce/chain/x/onboarding/types"
 )
 
 const Name = "oasyce"
@@ -144,6 +147,7 @@ var (
 		reputation.AppModuleBasic{},
 		datarights.AppModuleBasic{},
 		work.AppModuleBasic{},
+		onboarding.AppModuleBasic{},
 	)
 
 	// Module account permissions.
@@ -159,6 +163,7 @@ var (
 		settlementtypes.ModuleName:     {authtypes.Burner},
 		datarightstypes.ModuleName:     {authtypes.Burner},
 		worktypes.ModuleName:           {authtypes.Burner},
+		onboardingtypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -221,6 +226,7 @@ type OasyceApp struct {
 	ReputationKeeper reputationkeeper.Keeper
 	DataRightsKeeper datarightskeeper.Keeper
 	WorkKeeper       workkeeper.Keeper
+	OnboardingKeeper onboardingkeeper.Keeper
 
 	// Module manager
 	ModuleManager *module.Manager
@@ -291,6 +297,7 @@ func NewOasyceApp(
 		reputationtypes.StoreKey,
 		datarightstypes.StoreKey,
 		worktypes.StoreKey,
+		onboardingtypes.StoreKey,
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys(ibccapabilitytypes.MemStoreKey)
@@ -525,7 +532,6 @@ func NewOasyceApp(
 		appCodec,
 		keys[datarightstypes.StoreKey],
 		app.BankKeeper,
-		app.SettlementKeeper,
 		govAuthority,
 	)
 
@@ -535,6 +541,12 @@ func NewOasyceApp(
 		app.BankKeeper,
 		app.ReputationKeeper,
 		govAuthority,
+	)
+
+	app.OnboardingKeeper = onboardingkeeper.NewKeeper(
+		appCodec,
+		keys[onboardingtypes.StoreKey],
+		app.BankKeeper,
 	)
 
 	// --- Module Manager ---
@@ -563,6 +575,7 @@ func NewOasyceApp(
 		reputation.NewAppModule(app.ReputationKeeper),
 		datarights.NewAppModule(appCodec, app.DataRightsKeeper),
 		work.NewAppModule(appCodec, app.WorkKeeper),
+		onboarding.NewAppModule(appCodec, app.OnboardingKeeper),
 	)
 
 	// Set order of module operations.
@@ -591,6 +604,7 @@ func NewOasyceApp(
 		reputationtypes.ModuleName,
 		datarightstypes.ModuleName,
 		worktypes.ModuleName,
+		onboardingtypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -618,6 +632,7 @@ func NewOasyceApp(
 		reputationtypes.ModuleName,
 		datarightstypes.ModuleName,
 		worktypes.ModuleName,
+		onboardingtypes.ModuleName,
 	)
 
 	genesisModuleOrder := []string{
@@ -645,6 +660,7 @@ func NewOasyceApp(
 		reputationtypes.ModuleName,
 		datarightstypes.ModuleName,
 		worktypes.ModuleName,
+		onboardingtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)

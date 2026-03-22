@@ -37,6 +37,24 @@ service Query {
   rpc Disputes(QueryDisputesRequest) returns (QueryDisputesResponse) {
     option (google.api.http).get = "/oasyce/datarights/v1/disputes";
   }
+
+  // MigrationPath queries a specific migration path by source and target.
+  rpc MigrationPath(QueryMigrationPathRequest) returns (QueryMigrationPathResponse) {
+    option (google.api.http).get =
+        "/oasyce/datarights/v1/migration_path/{source_asset_id}/{target_asset_id}";
+  }
+
+  // MigrationPaths queries all migration paths from a given source asset.
+  rpc MigrationPaths(QueryMigrationPathsRequest) returns (QueryMigrationPathsResponse) {
+    option (google.api.http).get =
+        "/oasyce/datarights/v1/migration_paths/{source_asset_id}";
+  }
+
+  // AssetChildren queries all assets that have a given parent_asset_id.
+  rpc AssetChildren(QueryAssetChildrenRequest) returns (QueryAssetChildrenResponse) {
+    option (google.api.http).get =
+        "/oasyce/datarights/v1/asset_children/{parent_asset_id}";
+  }
 }
 
 // QueryDataAssetRequest is the request type for the Query/DataAsset RPC.
@@ -100,4 +118,35 @@ message QueryDisputesRequest {
 message QueryDisputesResponse {
   repeated Dispute disputes = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryMigrationPathRequest is the request type for the Query/MigrationPath RPC.
+message QueryMigrationPathRequest {
+  string source_asset_id = 1;
+  string target_asset_id = 2;
+}
+
+// QueryMigrationPathResponse is the response type for the Query/MigrationPath RPC.
+message QueryMigrationPathResponse {
+  MigrationPath migration_path = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryMigrationPathsRequest is the request type for the Query/MigrationPaths RPC.
+message QueryMigrationPathsRequest {
+  string source_asset_id = 1;
+}
+
+// QueryMigrationPathsResponse is the response type for the Query/MigrationPaths RPC.
+message QueryMigrationPathsResponse {
+  repeated MigrationPath migration_paths = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryAssetChildrenRequest is the request type for the Query/AssetChildren RPC.
+message QueryAssetChildrenRequest {
+  string parent_asset_id = 1;
+}
+
+// QueryAssetChildrenResponse is the response type for the Query/AssetChildren RPC.
+message QueryAssetChildrenResponse {
+  repeated DataAsset data_assets = 1 [(gogoproto.nullable) = false];
 }

@@ -31,6 +31,11 @@ func GetTxCmd() *cobra.Command {
 		CmdDelistAsset(),
 		CmdFileDispute(),
 		CmdResolveDispute(),
+		CmdInitiateShutdown(),
+		CmdClaimSettlement(),
+		CmdCreateMigrationPath(),
+		CmdDisableMigration(),
+		CmdMigrate(),
 	)
 	return cmd
 }
@@ -72,13 +77,16 @@ func CmdRegisterDataAsset() *cobra.Command {
 				tags = strings.Split(tagsStr, ",")
 			}
 
+			parentAssetId, _ := cmd.Flags().GetString("parent")
+
 			msg := &types.MsgRegisterDataAsset{
-				Creator:     clientCtx.GetFromAddress().String(),
-				Name:        name,
-				ContentHash: contentHash,
-				RightsType:  rightsType,
-				Description: description,
-				Tags:        tags,
+				Creator:       clientCtx.GetFromAddress().String(),
+				Name:          name,
+				ContentHash:   contentHash,
+				RightsType:    rightsType,
+				Description:   description,
+				Tags:          tags,
+				ParentAssetId: parentAssetId,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -88,6 +96,7 @@ func CmdRegisterDataAsset() *cobra.Command {
 	cmd.Flags().String("description", "", "Asset description")
 	cmd.Flags().String("rights-type", "original", "Rights type: original|co_creation|licensed|collection")
 	cmd.Flags().String("tags", "", "Comma-separated tags")
+	cmd.Flags().String("parent", "", "Parent asset ID (for versioned assets)")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -237,6 +246,158 @@ func CmdFileDispute() *cobra.Command {
 	}
 
 	cmd.Flags().String("remedy", "delist", "Requested remedy: delist|transfer|rights_correction|share_adjustment")
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdInitiateShutdown creates an InitiateShutdown transaction.
+func CmdInitiateShutdown() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "initiate-shutdown [asset-id]",
+		Short: "Initiate graceful shutdown of a data asset (owner only)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgInitiateShutdown{
+				Creator: clientCtx.GetFromAddress().String(),
+				AssetId: args[0],
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdClaimSettlement creates a ClaimSettlement transaction.
+func CmdClaimSettlement() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "claim-settlement [asset-id]",
+		Short: "Claim pro-rata settlement payout after shutdown cooldown",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgClaimSettlement{
+				Creator: clientCtx.GetFromAddress().String(),
+				AssetId: args[0],
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdCreateMigrationPath creates a CreateMigrationPath transaction.
+func CmdCreateMigrationPath() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create-migration [source-asset-id] [target-asset-id] [exchange-rate-bps]",
+		Short: "Create a migration path from source to target asset",
+		Long:  "Create a migration path. exchange-rate-bps: 10000 = 1:1 ratio",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			rateBps, ok := math.NewIntFromString(args[2])
+			if !ok || !rateBps.IsPositive() {
+				return fmt.Errorf("invalid exchange-rate-bps: %s", args[2])
+			}
+
+			maxShares := math.ZeroInt()
+			maxStr, _ := cmd.Flags().GetString("max-migrated-shares")
+			if maxStr != "" {
+				ms, ok := math.NewIntFromString(maxStr)
+				if ok {
+					maxShares = ms
+				}
+			}
+
+			msg := &types.MsgCreateMigrationPath{
+				Creator:           clientCtx.GetFromAddress().String(),
+				SourceAssetId:     args[0],
+				TargetAssetId:     args[1],
+				ExchangeRateBps:   uint32(rateBps.Int64()),
+				MaxMigratedShares: maxShares,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String("max-migrated-shares", "", "Maximum shares allowed to migrate (0 = unlimited)")
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdDisableMigration creates a DisableMigration transaction.
+func CmdDisableMigration() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "disable-migration [source-asset-id] [target-asset-id]",
+		Short: "Disable a migration path (target asset owner only)",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgDisableMigration{
+				Creator:       clientCtx.GetFromAddress().String(),
+				SourceAssetId: args[0],
+				TargetAssetId: args[1],
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdMigrate creates a Migrate transaction.
+func CmdMigrate() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "migrate [source-asset-id] [target-asset-id] [shares]",
+		Short: "Migrate shares from source to target asset",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			shares, ok := math.NewIntFromString(args[2])
+			if !ok {
+				return fmt.Errorf("invalid shares amount: %s", args[2])
+			}
+
+			msg := &types.MsgMigrate{
+				Creator:       clientCtx.GetFromAddress().String(),
+				SourceAssetId: args[0],
+				TargetAssetId: args[1],
+				Shares:        shares,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

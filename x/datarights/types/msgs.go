@@ -67,3 +67,76 @@ func (msg MsgResolveDispute) ValidateBasic() error {
 	}
 	return nil
 }
+
+// ValidateBasic for MsgInitiateShutdown.
+func (msg MsgInitiateShutdown) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+	if msg.AssetId == "" {
+		return ErrInvalidParams.Wrap("asset_id must not be empty")
+	}
+	return nil
+}
+
+// ValidateBasic for MsgClaimSettlement.
+func (msg MsgClaimSettlement) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+	if msg.AssetId == "" {
+		return ErrInvalidParams.Wrap("asset_id must not be empty")
+	}
+	return nil
+}
+
+// ValidateBasic for MsgCreateMigrationPath.
+func (msg MsgCreateMigrationPath) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+	if msg.SourceAssetId == "" {
+		return ErrInvalidParams.Wrap("source_asset_id must not be empty")
+	}
+	if msg.TargetAssetId == "" {
+		return ErrInvalidParams.Wrap("target_asset_id must not be empty")
+	}
+	if msg.SourceAssetId == msg.TargetAssetId {
+		return ErrInvalidParams.Wrap("source and target asset must be different")
+	}
+	if msg.ExchangeRateBps == 0 {
+		return ErrInvalidParams.Wrap("exchange_rate_bps must be > 0")
+	}
+	return nil
+}
+
+// ValidateBasic for MsgDisableMigration.
+func (msg MsgDisableMigration) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+	if msg.SourceAssetId == "" {
+		return ErrInvalidParams.Wrap("source_asset_id must not be empty")
+	}
+	if msg.TargetAssetId == "" {
+		return ErrInvalidParams.Wrap("target_asset_id must not be empty")
+	}
+	return nil
+}
+
+// ValidateBasic for MsgMigrate.
+func (msg MsgMigrate) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+	if msg.SourceAssetId == "" {
+		return ErrInvalidParams.Wrap("source_asset_id must not be empty")
+	}
+	if msg.TargetAssetId == "" {
+		return ErrInvalidParams.Wrap("target_asset_id must not be empty")
+	}
+	if !msg.Shares.IsPositive() {
+		return ErrInvalidParams.Wrap("shares must be positive")
+	}
+	return nil
+}

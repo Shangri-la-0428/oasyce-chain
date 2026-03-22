@@ -8,7 +8,7 @@ echo "Generating protobuf code..."
 buf generate
 
 # Move generated files from github.com/oasyce/chain/x/ to x/
-for mod in settlement capability reputation datarights work; do
+for mod in settlement capability reputation datarights work onboarding; do
   src="github.com/oasyce/chain/x/$mod/types"
   dst="x/$mod/types"
   if [ -d "$src" ]; then

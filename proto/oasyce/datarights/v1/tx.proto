@@ -31,7 +31,23 @@ service Msg {
   rpc SellShares(MsgSellShares) returns (MsgSellSharesResponse);
 
   // DelistAsset allows the asset owner to voluntarily delist.
+  // Deprecated: use InitiateShutdown instead.
   rpc DelistAsset(MsgDelistAsset) returns (MsgDelistAssetResponse);
+
+  // InitiateShutdown begins graceful shutdown of a data asset (owner only).
+  rpc InitiateShutdown(MsgInitiateShutdown) returns (MsgInitiateShutdownResponse);
+
+  // ClaimSettlement claims pro-rata reserve payout after shutdown cooldown.
+  rpc ClaimSettlement(MsgClaimSettlement) returns (MsgClaimSettlementResponse);
+
+  // CreateMigrationPath creates a migration path from source to target asset.
+  rpc CreateMigrationPath(MsgCreateMigrationPath) returns (MsgCreateMigrationPathResponse);
+
+  // DisableMigration disables an active migration path (owner of target asset).
+  rpc DisableMigration(MsgDisableMigration) returns (MsgDisableMigrationResponse);
+
+  // Migrate converts shares from source asset to target asset via migration path.
+  rpc Migrate(MsgMigrate) returns (MsgMigrateResponse);
 }
 
 // MsgRegisterDataAsset registers a new data asset on-chain.
@@ -59,6 +75,9 @@ message MsgRegisterDataAsset {
 
   // co_creators is the list of co-creators and their share allocations.
   repeated CoCreator co_creators = 7 [(gogoproto.nullable) = false];
+
+  // parent_asset_id is the ID of the parent asset (empty for original v1 assets).
+  string parent_asset_id = 8;
 }
 
 // MsgRegisterDataAssetResponse is the response for MsgRegisterDataAsset.
@@ -200,3 +219,118 @@ message MsgDelistAsset {
 
 // MsgDelistAssetResponse is the response for MsgDelistAsset.
 message MsgDelistAssetResponse {}
+
+// MsgInitiateShutdown begins graceful shutdown of a data asset.
+message MsgInitiateShutdown {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgInitiateShutdown";
+
+  // creator is the address of the asset owner.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset_id is the ID of the data asset to shut down.
+  string asset_id = 2;
+}
+
+// MsgInitiateShutdownResponse is the response for MsgInitiateShutdown.
+message MsgInitiateShutdownResponse {}
+
+// MsgClaimSettlement claims pro-rata reserve payout after shutdown cooldown.
+message MsgClaimSettlement {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgClaimSettlement";
+
+  // creator is the address of the shareholder claiming settlement.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset_id is the ID of the data asset.
+  string asset_id = 2;
+}
+
+// MsgClaimSettlementResponse is the response for MsgClaimSettlement.
+message MsgClaimSettlementResponse {
+  // payout is the amount received.
+  string payout = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgCreateMigrationPath creates a migration path between two asset versions.
+message MsgCreateMigrationPath {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgCreateMigrationPath";
+
+  // creator is the address of the target asset owner.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // source_asset_id is the asset being migrated from.
+  string source_asset_id = 2;
+
+  // target_asset_id is the asset being migrated to.
+  string target_asset_id = 3;
+
+  // exchange_rate_bps is the share exchange rate in basis points (10000 = 1:1).
+  uint32 exchange_rate_bps = 4;
+
+  // max_migrated_shares caps the total shares that can migrate (0 = unlimited).
+  string max_migrated_shares = 5 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgCreateMigrationPathResponse is the response for MsgCreateMigrationPath.
+message MsgCreateMigrationPathResponse {}
+
+// MsgDisableMigration disables an active migration path.
+message MsgDisableMigration {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgDisableMigration";
+
+  // creator is the address of the target asset owner.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // source_asset_id is the source asset of the migration path.
+  string source_asset_id = 2;
+
+  // target_asset_id is the target asset of the migration path.
+  string target_asset_id = 3;
+}
+
+// MsgDisableMigrationResponse is the response for MsgDisableMigration.
+message MsgDisableMigrationResponse {}
+
+// MsgMigrate converts shares from source asset to target asset.
+message MsgMigrate {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgMigrate";
+
+  // creator is the address of the shareholder migrating.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // source_asset_id is the asset to migrate from.
+  string source_asset_id = 2;
+
+  // target_asset_id is the asset to migrate to.
+  string target_asset_id = 3;
+
+  // shares is the number of shares to migrate from source.
+  string shares = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgMigrateResponse is the response for MsgMigrate.
+message MsgMigrateResponse {
+  // shares_received is the number of shares received in the target asset.
+  string shares_received = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

@@ -15,6 +15,11 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgResolveDispute{}, "oasyce/datarights/MsgResolveDispute", nil)
 	cdc.RegisterConcrete(&MsgSellShares{}, "oasyce/datarights/MsgSellShares", nil)
 	cdc.RegisterConcrete(&MsgDelistAsset{}, "oasyce/datarights/MsgDelistAsset", nil)
+	cdc.RegisterConcrete(&MsgInitiateShutdown{}, "oasyce/datarights/MsgInitiateShutdown", nil)
+	cdc.RegisterConcrete(&MsgClaimSettlement{}, "oasyce/datarights/MsgClaimSettlement", nil)
+	cdc.RegisterConcrete(&MsgCreateMigrationPath{}, "oasyce/datarights/MsgCreateMigrationPath", nil)
+	cdc.RegisterConcrete(&MsgDisableMigration{}, "oasyce/datarights/MsgDisableMigration", nil)
+	cdc.RegisterConcrete(&MsgMigrate{}, "oasyce/datarights/MsgMigrate", nil)
 }
 
 // RegisterInterfaces registers the module's interface types with the interface registry.
@@ -26,6 +31,11 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgResolveDispute{},
 		&MsgSellShares{},
 		&MsgDelistAsset{},
+		&MsgInitiateShutdown{},
+		&MsgClaimSettlement{},
+		&MsgCreateMigrationPath{},
+		&MsgDisableMigration{},
+		&MsgMigrate{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

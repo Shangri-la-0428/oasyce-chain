@@ -224,7 +224,8 @@ func (k Keeper) ResolveByJury(ctx sdk.Context, disputeID string) error {
 		case types.DISPUTE_REMEDY_DELIST:
 			asset, found := k.GetAsset(ctx, dispute.AssetId)
 			if found {
-				asset.IsActive = false
+				asset.Status = types.ASSET_STATUS_SHUTTING_DOWN
+				asset.ShutdownInitiatedAt = ctx.BlockTime()
 				_ = k.SetAsset(ctx, asset)
 			}
 		case types.DISPUTE_REMEDY_RIGHTS_CORRECTION:
@@ -239,7 +240,8 @@ func (k Keeper) ResolveByJury(ctx sdk.Context, disputeID string) error {
 			remedy = types.DISPUTE_REMEDY_DELIST
 			asset, found := k.GetAsset(ctx, dispute.AssetId)
 			if found {
-				asset.IsActive = false
+				asset.Status = types.ASSET_STATUS_SHUTTING_DOWN
+				asset.ShutdownInitiatedAt = ctx.BlockTime()
 				_ = k.SetAsset(ctx, asset)
 			}
 		}

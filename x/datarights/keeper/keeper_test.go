@@ -19,7 +19,6 @@ import (
 
 	"github.com/oasyce/chain/x/datarights/keeper"
 	"github.com/oasyce/chain/x/datarights/types"
-	settlementtypes "github.com/oasyce/chain/x/settlement/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -83,20 +82,6 @@ func (m *mockBankKeeper) SendCoinsFromModuleToModule(_ context.Context, senderMo
 }
 
 // ---------------------------------------------------------------------------
-// Mock Settlement Keeper
-// ---------------------------------------------------------------------------
-
-type mockSettlementKeeper struct{}
-
-func (m *mockSettlementKeeper) GetBondingCurveState(_ sdk.Context, _ string) (settlementtypes.BondingCurveState, bool) {
-	return settlementtypes.BondingCurveState{}, false
-}
-
-func (m *mockSettlementKeeper) BuyShares(_ sdk.Context, _ string, _ string, _ math.Int) (math.Int, error) {
-	return math.ZeroInt(), nil
-}
-
-// ---------------------------------------------------------------------------
 // Test Setup
 // ---------------------------------------------------------------------------
 
@@ -115,9 +100,8 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context, *mockBankKeeper) {
 	cdc := codec.NewProtoCodec(registry)
 
 	bankKeeper := newMockBankKeeper()
-	settlementKeeper := &mockSettlementKeeper{}
 	authority := sdk.AccAddress([]byte("authority___________")).String()
-	k := keeper.NewKeeper(cdc, storeKey, bankKeeper, settlementKeeper, authority)
+	k := keeper.NewKeeper(cdc, storeKey, bankKeeper, authority)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{
 		Time: time.Now().UTC(),
@@ -185,7 +169,7 @@ func TestRegisterDataAssetWithCoCreators(t *testing.T) {
 	if len(asset.CoCreators) != 2 {
 		t.Fatalf("expected 2 co-creators, got %d", len(asset.CoCreators))
 	}
-	if !asset.IsActive {
+	if asset.Status != types.ASSET_STATUS_ACTIVE {
 		t.Fatal("expected asset to be active")
 	}
 	if !asset.TotalShares.IsZero() {
@@ -354,9 +338,9 @@ func TestBuySharesDelistedAsset(t *testing.T) {
 		t.Fatalf("RegisterDataAsset failed: %v", err)
 	}
 
-	// Manually delist.
+	// Manually set to shutting down.
 	asset, _ := k.GetAsset(ctx, assetID)
-	asset.IsActive = false
+	asset.Status = types.ASSET_STATUS_SHUTTING_DOWN
 	_ = k.SetAsset(ctx, asset)
 
 	bank.fundAccount(buyer, sdk.NewCoins(sdk.NewCoin("uoas", math.NewInt(100000))))
@@ -439,10 +423,10 @@ func TestDisputeAndDelistFlow(t *testing.T) {
 		t.Fatalf("expected DELIST remedy, got %s", dispute.Remedy)
 	}
 
-	// Verify asset is delisted.
+	// Verify asset is shutting down (delist triggers shutdown).
 	asset, _ := k.GetAsset(ctx, assetID)
-	if asset.IsActive {
-		t.Fatal("expected asset to be inactive after delist")
+	if asset.Status == types.ASSET_STATUS_ACTIVE {
+		t.Fatal("expected asset to not be active after delist")
 	}
 }
 
@@ -960,10 +944,10 @@ func TestJuryVoting(t *testing.T) {
 		t.Fatalf("expected arbitrator='jury', got %s", dispute.Arbitrator)
 	}
 
-	// Verify asset is delisted.
+	// Verify asset is shutting down after jury uphold.
 	asset, _ := k.GetAsset(ctx, assetID)
-	if asset.IsActive {
-		t.Fatal("expected asset to be delisted after jury uphold")
+	if asset.Status == types.ASSET_STATUS_ACTIVE {
+		t.Fatal("expected asset to not be active after jury uphold")
 	}
 }
 
@@ -1055,7 +1039,7 @@ func TestJuryVotingReject(t *testing.T) {
 
 	// Asset should still be active after dispute rejection.
 	asset, _ := k.GetAsset(ctx, assetID)
-	if !asset.IsActive {
+	if asset.Status != types.ASSET_STATUS_ACTIVE {
 		t.Fatal("expected asset to remain active after jury reject")
 	}
 }
@@ -1184,7 +1168,7 @@ func TestDelistAsset(t *testing.T) {
 
 	// Verify asset is active.
 	asset, found := k.GetAsset(sdk.UnwrapSDKContext(ctx), assetID)
-	if !found || !asset.IsActive {
+	if !found || asset.Status != types.ASSET_STATUS_ACTIVE {
 		t.Fatal("expected active asset")
 	}
 
@@ -1203,13 +1187,337 @@ func TestDelistAsset(t *testing.T) {
 
 	// Verify asset is now inactive.
 	asset, found = k.GetAsset(sdk.UnwrapSDKContext(ctx), assetID)
-	if !found || asset.IsActive {
-		t.Fatal("expected delisted asset")
+	if !found || asset.Status == types.ASSET_STATUS_ACTIVE {
+		t.Fatal("expected non-active asset after delist")
 	}
 
 	// Double delist should fail.
 	err = k.DelistAsset(ctx, types.MsgDelistAsset{Creator: owner, AssetId: assetID})
 	if err == nil {
 		t.Fatal("expected error for double delist")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1: Lifecycle State Machine Tests
+// ---------------------------------------------------------------------------
+
+func TestInitiateShutdown(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+	owner := sdk.AccAddress([]byte("owner_______________")).String()
+	nonOwner := sdk.AccAddress([]byte("nonowner____________")).String()
+
+	assetID, err := k.RegisterDataAsset(ctx, types.MsgRegisterDataAsset{
+		Creator:     owner,
+		Name:        "Shutdown Test",
+		ContentHash: "shutdown_hash_001",
+		RightsType:  types.RIGHTS_TYPE_ORIGINAL,
+	})
+	if err != nil {
+		t.Fatalf("RegisterDataAsset failed: %v", err)
+	}
+
+	// Non-owner cannot initiate shutdown.
+	err = k.InitiateShutdown(ctx, types.MsgInitiateShutdown{Creator: nonOwner, AssetId: assetID})
+	if err == nil {
+		t.Fatal("expected error for non-owner shutdown")
+	}
+
+	// Owner initiates shutdown.
+	err = k.InitiateShutdown(ctx, types.MsgInitiateShutdown{Creator: owner, AssetId: assetID})
+	if err != nil {
+		t.Fatalf("InitiateShutdown failed: %v", err)
+	}
+
+	// Verify status.
+	asset, _ := k.GetAsset(sdk.UnwrapSDKContext(ctx), assetID)
+	if asset.Status != types.ASSET_STATUS_SHUTTING_DOWN {
+		t.Fatalf("expected SHUTTING_DOWN, got %s", asset.Status)
+	}
+	if asset.ShutdownInitiatedAt.IsZero() {
+		t.Fatal("expected non-zero shutdown_initiated_at")
+	}
+
+	// Cannot shutdown again.
+	err = k.InitiateShutdown(ctx, types.MsgInitiateShutdown{Creator: owner, AssetId: assetID})
+	if err == nil {
+		t.Fatal("expected error for double shutdown")
+	}
+
+	// Cannot buy shares on shutting down asset.
+	buyer := sdk.AccAddress([]byte("buyer_______________")).String()
+	_, err = k.BuyShares(ctx, types.MsgBuyShares{
+		Creator: buyer,
+		AssetId: assetID,
+		Amount:  sdk.NewCoin("uoas", math.NewInt(100)),
+	})
+	if err == nil {
+		t.Fatal("expected error buying shares on shutting down asset")
+	}
+}
+
+func TestClaimSettlement(t *testing.T) {
+	k, sdkCtx, bank := setupKeeper(t)
+	ctx := sdk.WrapSDKContext(sdkCtx)
+	owner := sdk.AccAddress([]byte("owner_______________")).String()
+	buyer := sdk.AccAddress([]byte("buyer_______________")).String()
+
+	// Register and buy shares.
+	assetID, err := k.RegisterDataAsset(ctx, types.MsgRegisterDataAsset{
+		Creator:     owner,
+		Name:        "Settlement Test",
+		ContentHash: "settle_hash_001",
+		RightsType:  types.RIGHTS_TYPE_ORIGINAL,
+	})
+	if err != nil {
+		t.Fatalf("RegisterDataAsset failed: %v", err)
+	}
+
+	bank.fundAccount(buyer, sdk.NewCoins(sdk.NewCoin("uoas", math.NewInt(1000))))
+	_, err = k.BuyShares(ctx, types.MsgBuyShares{
+		Creator: buyer,
+		AssetId: assetID,
+		Amount:  sdk.NewCoin("uoas", math.NewInt(1000)),
+	})
+	if err != nil {
+		t.Fatalf("BuyShares failed: %v", err)
+	}
+
+	// Initiate shutdown.
+	err = k.InitiateShutdown(ctx, types.MsgInitiateShutdown{Creator: owner, AssetId: assetID})
+	if err != nil {
+		t.Fatalf("InitiateShutdown failed: %v", err)
+	}
+
+	// Claim before cooldown should fail.
+	_, err = k.ClaimSettlement(ctx, types.MsgClaimSettlement{Creator: buyer, AssetId: assetID})
+	if err == nil {
+		t.Fatal("expected error claiming before cooldown")
+	}
+
+	// Advance time past cooldown (7 days + 1 second).
+	params := k.GetParams(sdkCtx)
+	newCtx := sdkCtx.WithBlockTime(sdkCtx.BlockTime().Add(time.Duration(params.ShutdownCooldownSeconds+1) * time.Second))
+	ctx = sdk.WrapSDKContext(newCtx)
+
+	// Claim settlement.
+	payout, err := k.ClaimSettlement(ctx, types.MsgClaimSettlement{Creator: buyer, AssetId: assetID})
+	if err != nil {
+		t.Fatalf("ClaimSettlement failed: %v", err)
+	}
+	if !payout.IsPositive() {
+		t.Fatalf("expected positive payout, got %s", payout)
+	}
+
+	// Asset should be SETTLED (only shareholder claimed).
+	asset, _ := k.GetAsset(newCtx, assetID)
+	if asset.Status != types.ASSET_STATUS_SETTLED {
+		t.Fatalf("expected SETTLED, got %s", asset.Status)
+	}
+
+	// Double claim should fail.
+	_, err = k.ClaimSettlement(ctx, types.MsgClaimSettlement{Creator: buyer, AssetId: assetID})
+	if err == nil {
+		t.Fatal("expected error for double claim")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: Versioning Tests
+// ---------------------------------------------------------------------------
+
+func TestVersionedAssetRegistration(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+	creator := sdk.AccAddress([]byte("creator_____________")).String()
+	otherCreator := sdk.AccAddress([]byte("other_______________")).String()
+
+	// Register v1 asset.
+	v1ID, err := k.RegisterDataAsset(ctx, types.MsgRegisterDataAsset{
+		Creator:     creator,
+		Name:        "Original",
+		ContentHash: "v1_hash_001",
+		RightsType:  types.RIGHTS_TYPE_ORIGINAL,
+	})
+	if err != nil {
+		t.Fatalf("v1 registration failed: %v", err)
+	}
+
+	v1, _ := k.GetAsset(sdk.UnwrapSDKContext(ctx), v1ID)
+	if v1.Version != 1 {
+		t.Fatalf("expected version 1, got %d", v1.Version)
+	}
+	if v1.ParentAssetId != "" {
+		t.Fatalf("expected empty parent_asset_id, got %s", v1.ParentAssetId)
+	}
+
+	// Register v2 with parent = v1 (different owner — allowed).
+	v2ID, err := k.RegisterDataAsset(ctx, types.MsgRegisterDataAsset{
+		Creator:       otherCreator,
+		Name:          "Fork V2",
+		ContentHash:   "v2_hash_001",
+		RightsType:    types.RIGHTS_TYPE_ORIGINAL,
+		ParentAssetId: v1ID,
+	})
+	if err != nil {
+		t.Fatalf("v2 registration failed: %v", err)
+	}
+
+	v2, _ := k.GetAsset(sdk.UnwrapSDKContext(ctx), v2ID)
+	if v2.Version != 2 {
+		t.Fatalf("expected version 2, got %d", v2.Version)
+	}
+	if v2.ParentAssetId != v1ID {
+		t.Fatalf("expected parent_asset_id %s, got %s", v1ID, v2.ParentAssetId)
+	}
+
+	// Register with non-existent parent should fail.
+	_, err = k.RegisterDataAsset(ctx, types.MsgRegisterDataAsset{
+		Creator:       creator,
+		Name:          "Bad Parent",
+		ContentHash:   "v3_hash_001",
+		RightsType:    types.RIGHTS_TYPE_ORIGINAL,
+		ParentAssetId: "NONEXISTENT",
+	})
+	if err == nil {
+		t.Fatal("expected error for non-existent parent")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3: Migration Tests
+// ---------------------------------------------------------------------------
+
+func TestMigrationFullFlow(t *testing.T) {
+	k, sdkCtx, bank := setupKeeper(t)
+	ctx := sdk.WrapSDKContext(sdkCtx)
+	owner := sdk.AccAddress([]byte("owner_______________")).String()
+	v2Owner := sdk.AccAddress([]byte("v2owner_____________")).String()
+	shareholder := sdk.AccAddress([]byte("holder______________")).String()
+
+	// Register v1 and buy shares.
+	v1ID, err := k.RegisterDataAsset(ctx, types.MsgRegisterDataAsset{
+		Creator:     owner,
+		Name:        "V1 Asset",
+		ContentHash: "migration_v1_hash",
+		RightsType:  types.RIGHTS_TYPE_ORIGINAL,
+	})
+	if err != nil {
+		t.Fatalf("v1 registration failed: %v", err)
+	}
+
+	bank.fundAccount(shareholder, sdk.NewCoins(sdk.NewCoin("uoas", math.NewInt(10000))))
+	_, err = k.BuyShares(ctx, types.MsgBuyShares{
+		Creator: shareholder,
+		AssetId: v1ID,
+		Amount:  sdk.NewCoin("uoas", math.NewInt(1000)),
+	})
+	if err != nil {
+		t.Fatalf("BuyShares v1 failed: %v", err)
+	}
+
+	// Register v2 with parent = v1.
+	v2ID, err := k.RegisterDataAsset(ctx, types.MsgRegisterDataAsset{
+		Creator:       v2Owner,
+		Name:          "V2 Asset",
+		ContentHash:   "migration_v2_hash",
+		RightsType:    types.RIGHTS_TYPE_ORIGINAL,
+		ParentAssetId: v1ID,
+	})
+	if err != nil {
+		t.Fatalf("v2 registration failed: %v", err)
+	}
+
+	// Non-owner cannot create migration path.
+	err = k.CreateMigrationPath(ctx, types.MsgCreateMigrationPath{
+		Creator:           owner, // v1 owner, not v2 owner
+		SourceAssetId:     v1ID,
+		TargetAssetId:     v2ID,
+		ExchangeRateBps:   10000, // 1:1
+		MaxMigratedShares: math.NewInt(500),
+	})
+	if err == nil {
+		t.Fatal("expected error: non-target-owner creating migration")
+	}
+
+	// v2 owner creates migration path.
+	err = k.CreateMigrationPath(ctx, types.MsgCreateMigrationPath{
+		Creator:           v2Owner,
+		SourceAssetId:     v1ID,
+		TargetAssetId:     v2ID,
+		ExchangeRateBps:   8000, // 0.8:1
+		MaxMigratedShares: math.NewInt(500),
+	})
+	if err != nil {
+		t.Fatalf("CreateMigrationPath failed: %v", err)
+	}
+
+	// Get shareholder's v1 shares before migration.
+	shBefore, _ := k.GetShareHolder(sdkCtx, v1ID, shareholder)
+
+	// Migrate 100 shares from v1 to v2.
+	sharesReceived, err := k.Migrate(ctx, types.MsgMigrate{
+		Creator:       shareholder,
+		SourceAssetId: v1ID,
+		TargetAssetId: v2ID,
+		Shares:        math.NewInt(100),
+	})
+	if err != nil {
+		t.Fatalf("Migrate failed: %v", err)
+	}
+
+	// Expected: 100 * 8000 / 10000 = 80 target shares.
+	expectedShares := math.NewInt(80)
+	if !sharesReceived.Equal(expectedShares) {
+		t.Fatalf("expected %s target shares, got %s", expectedShares, sharesReceived)
+	}
+
+	// Verify v1 shares decreased.
+	shAfter, _ := k.GetShareHolder(sdkCtx, v1ID, shareholder)
+	if !shAfter.Shares.Equal(shBefore.Shares.Sub(math.NewInt(100))) {
+		t.Fatalf("v1 shares not reduced correctly: before=%s after=%s", shBefore.Shares, shAfter.Shares)
+	}
+
+	// Verify v2 shares created.
+	v2Sh, found := k.GetShareHolder(sdkCtx, v2ID, shareholder)
+	if !found || !v2Sh.Shares.Equal(expectedShares) {
+		t.Fatalf("v2 shares incorrect: found=%v shares=%s", found, v2Sh.Shares)
+	}
+
+	// Verify migration path total_migrated updated.
+	mp, _ := k.GetMigrationPath(sdkCtx, v1ID, v2ID)
+	if !mp.TotalMigrated.Equal(math.NewInt(100)) {
+		t.Fatalf("total_migrated incorrect: %s", mp.TotalMigrated)
+	}
+
+	// Exceed cap should fail.
+	_, err = k.Migrate(ctx, types.MsgMigrate{
+		Creator:       shareholder,
+		SourceAssetId: v1ID,
+		TargetAssetId: v2ID,
+		Shares:        math.NewInt(500), // cap is 500, already migrated 100
+	})
+	if err == nil {
+		t.Fatal("expected error for exceeding migration cap")
+	}
+
+	// Disable migration.
+	err = k.DisableMigration(ctx, types.MsgDisableMigration{
+		Creator:       v2Owner,
+		SourceAssetId: v1ID,
+		TargetAssetId: v2ID,
+	})
+	if err != nil {
+		t.Fatalf("DisableMigration failed: %v", err)
+	}
+
+	// Migrate after disable should fail.
+	_, err = k.Migrate(ctx, types.MsgMigrate{
+		Creator:       shareholder,
+		SourceAssetId: v1ID,
+		TargetAssetId: v2ID,
+		Shares:        math.NewInt(10),
+	})
+	if err == nil {
+		t.Fatal("expected error for migration after disable")
 	}
 }
