@@ -208,3 +208,38 @@ The following chain parameters diverge from Whitepaper v4.0 and need ConsensusVe
 3. Update unit tests to use new constants
 4. Validate on testnet before mainnet proposal
 5. Consider making F, fee split, burn rate governance-adjustable params
+
+## TODO: Halving Economics (Deflationary Progression)
+
+Current airdrop, PoW difficulty, and block rewards are static. Should introduce Bitcoin-style halving to create increasing scarcity as the network matures.
+
+### Airdrop Halving
+
+| Epoch | Cumulative Registrations | Airdrop | PoW Difficulty (leading zero bits) |
+|-------|--------------------------|---------|-------------------------------------|
+| 0 | 0 – 10,000 | 20 OAS | 16 (~2-5 min) |
+| 1 | 10,001 – 50,000 | 10 OAS | 18 (~10-20 min) |
+| 2 | 50,001 – 200,000 | 5 OAS | 20 (~1 hour) |
+| 3 | 200,001+ | 2.5 OAS | 22 (~4 hours) |
+
+Formula: `airdrop = BASE_AIRDROP / 2^(epoch)`, `difficulty = BASE_DIFFICULTY + 2 * epoch`
+
+Rationale: Early adopters get more starter capital at lower cost. As the network grows, registration becomes more expensive (both in CPU time and in lower airdrop), creating natural Sybil resistance that scales with network value.
+
+### Block Reward Halving
+
+| Block Range | Reward |
+|-------------|--------|
+| 0 – 10,000,000 | 4 OAS/block |
+| 10,000,001 – 20,000,000 | 2 OAS/block |
+| 20,000,001 – 30,000,000 | 1 OAS/block |
+| 30,000,001+ | 0.5 OAS/block |
+
+Combined with the 15% burn rate (whitepaper target), this creates a supply curve that peaks and then contracts — stronger deflationary pressure than Bitcoin (which only halves issuance but never burns).
+
+### Implementation
+
+- `x/onboarding`: Add `total_registrations` counter to module state. `AirdropAmount` and `PowDifficulty` become functions of this counter, not static params.
+- `x/settlement` or mint module: Add `halving_interval` and `current_epoch` to block reward logic.
+- All halving params should be governance-adjustable via `MsgUpdateParams`.
+- ConsensusVersion bump required for both modules.
