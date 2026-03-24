@@ -26,7 +26,7 @@ CHAIN_ID="${CHAIN_ID:-oasyce-testnet-1}"
 MONIKER="${MONIKER:-oasyce-node-$(openssl rand -hex 3)}"
 SEED_NODE="${SEED_NODE:-}"       # e.g., "abc123@1.2.3.4:26656"
 GENESIS_URL="${GENESIS_URL:-}"   # e.g., "https://github.com/.../genesis.json"
-IMAGE="oasyce/chain:latest"
+IMAGE="${IMAGE:-ghcr.io/shangri-la-0428/oasyce-chain:latest}"
 DATA_DIR="$HOME/.oasyce-docker"
 
 echo "============================================"
@@ -55,13 +55,18 @@ if ! docker info &>/dev/null; then
     exit 1
 fi
 
-# ── Build image if not present ──
+# ── Get image: pull first, build as fallback ──
 if ! docker image inspect "$IMAGE" &>/dev/null; then
-    echo "==> Building Docker image (first time only)..."
-    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    REPO_DIR="$(dirname "$SCRIPT_DIR")"
-    docker build -t "$IMAGE" "$REPO_DIR"
-    echo "    Image built."
+    echo "==> Pulling Docker image..."
+    if docker pull "$IMAGE" 2>/dev/null; then
+        echo "    Image pulled."
+    else
+        echo "    Pull failed, building locally..."
+        SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+        REPO_DIR="$(dirname "$SCRIPT_DIR")"
+        docker build -t "$IMAGE" "$REPO_DIR"
+        echo "    Image built."
+    fi
 else
     echo "==> Docker image found."
 fi
