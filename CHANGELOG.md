@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] - 2026-03-25
+
+### Changed (Economic Model Review)
+
+- **Fee split unified** — Settlement and Work both now use 90/5/2/3 (provider 90%, protocol 5%, burn 2%, treasury 3%). Was 93/3/2/2 for settlement.
+- **Slashing relaxed** — Downtime penalty 0.01% (was 1%, 100x too harsh), SignedBlocksWindow 10000 (was 100), MinSignedPerWindow 5% (was 50%)
+- **Governance lowered** — MinDeposit 100 OAS (was 1000), Quorum 25% (was 40%) to encourage early participation
+- **Reputation cooldown** — FeedbackCooldownSeconds 3600 (was 60) to prevent rating spam
+- **Settlement ProtocolFeeRate** — 5% (was 3%), TreasuryRate 3% (was 2%), aligned with Work module
+- **All tests updated** — 50+ tests passing with new parameters
+
 ## [0.3.0] - 2026-03-24
 
 ### Added

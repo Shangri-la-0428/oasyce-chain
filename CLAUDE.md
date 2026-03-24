@@ -138,11 +138,11 @@ ReserveRatio       = 0.5   // Bancor connector weight
 InitialPrice       = 1.0   // 1 uoas per token at bootstrap
 ReserveSolvencyCap = 0.95  // Max 95% reserve payout on sell
 BurnRate           = 0.02  // 2% burn on escrow release
-TreasuryRate       = 0.02  // 2% treasury on escrow release
-ProtocolFeeRate    = 0.03  // 3% validator fee (DefaultParams)
+TreasuryRate       = 0.03  // 3% treasury on escrow release
+ProtocolFeeRate    = 0.05  // 5% protocol fee (DefaultParams)
 ```
-Fee split on escrow release: 93% creator, 3% validator, 2% burn, 2% treasury.
-Sell fee: 3% protocol fee deducted from bonding curve payout.
+Fee split on escrow release: 90% provider, 5% protocol, 2% burn, 3% treasury.
+Sell fee: 5% protocol fee deducted from bonding curve payout.
 
 ### Validator Incentives (app/genesis.go)
 
@@ -157,17 +157,17 @@ Validators earn from three sources:
    - Collected in `fee_collector`, distributed proportionally to stake
 
 3. **Protocol Fees** — Custom module fees routed to `fee_collector`
-   - Settlement escrow release: 3% validator + 2% treasury → fee_collector
-   - Datarights sell: 3% protocol fee → fee_collector
+   - Settlement escrow release: 5% protocol + 3% treasury → fee_collector
+   - Datarights sell: 5% protocol fee → fee_collector
    - Work task settlement: 5% protocol share → fee_collector
 
 **Staking**: `BondDenom = "uoas"`, `MaxValidators = 100`, `UnbondingTime = 21 days`
 
-**Slashing**: `SignedBlocksWindow = 100`, `MinSignedPerWindow = 50%`
-- Downtime: 1% slash
+**Slashing**: `SignedBlocksWindow = 10000`, `MinSignedPerWindow = 5%`
+- Downtime: 0.01% slash
 - Double-sign: 5% slash
 
-**Governance**: `MinDeposit = 1000 OAS`, `VotingPeriod = 7 days`, `Quorum = 40%`, `Threshold = 66.7%`
+**Governance**: `MinDeposit = 100 OAS`, `VotingPeriod = 7 days`, `Quorum = 25%`, `Threshold = 66.7%`
 
 ### Critical: goleveldb replace directive
 The go.mod MUST include this replace (same as SDK v0.50.10):
@@ -228,14 +228,16 @@ ModuleBasics.AddTxCommands panics (distr/staking need AddressCodec). Add custom 
 ### TX broadcast: CheckTx vs DeliverTx
 `oasyced tx ... --yes` returns CheckTx result (code 0 = accepted into mempool). Use `curl localhost:26657/block_results?height=N` to check DeliverTx code. `query tx <hash>` fails due to type URL resolution bug — use block_results instead.
 
-## DONE: Parameter Alignment (2026-03-24)
+## DONE: Economic Model Review (2026-03-25)
 
-Parameters aligned to production spec (Python + Go in sync):
-- Fee split: 93% creator, 3% validator, 2% burn, 2% treasury ✅
-- CW = 0.50, ReserveSolvencyCap = 0.95 ✅
-- ProtocolFeeRate = 0.03 (sell fee) ✅
-- Round-trip cost reduced from ~28% to ~12% ✅
-- All Go + Python tests updated and passing ✅
+Comprehensive economic model audit and parameter adjustments:
+- Fee split unified: 90% provider, 5% protocol, 2% burn, 3% treasury (settlement + work aligned) ✅
+- Slashing relaxed: 0.01% downtime (was 1%), 10000 block window (was 100) ✅
+- Governance lowered: 100 OAS deposit (was 1000), 25% quorum (was 40%) ✅
+- Reputation cooldown: 3600s (was 60s) ✅
+- ProtocolFeeRate = 0.05 (was 0.03), TreasuryRate = 0.03 (was 0.02) ✅
+- Bonding curve slippage protection already exists (min_shares_out / min_payout_out) ✅
+- All 50+ tests updated and passing ✅
 
 ## DONE: Airdrop Halving Economics (2026-03-24)
 

@@ -283,8 +283,8 @@ func TestCooldown(t *testing.T) {
 		t.Fatal("expected cooldown error")
 	}
 
-	// Advance time past cooldown (default 60s).
-	futureCtx := ctx.WithBlockTime(ctx.BlockTime().Add(61 * time.Second))
+	// Advance time past cooldown (default 3600s).
+	futureCtx := ctx.WithBlockTime(ctx.BlockTime().Add(3601 * time.Second))
 	_, err = k.SubmitFeedback(futureCtx, consumer, "INV_002", 300, "meh")
 	if err != nil {
 		t.Fatalf("unexpected error after cooldown: %v", err)

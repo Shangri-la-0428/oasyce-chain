@@ -323,16 +323,16 @@ func TestFullCapabilityInvocationFlow(t *testing.T) {
 		t.Fatalf("expected RELEASED escrow, got %s", escrow.Status)
 	}
 
-	// Provider should receive 93 (93% of 100: 3% validator + 2% burn + 2% treasury).
+	// Provider should receive 90 (90% of 100: 5% protocol + 2% burn + 3% treasury).
 	provBal := s.bank.balanceOf(prov, "uoas")
-	if !provBal.Equal(math.NewInt(93)) {
-		t.Fatalf("expected provider balance 93, got %s", provBal)
+	if !provBal.Equal(math.NewInt(90)) {
+		t.Fatalf("expected provider balance 90, got %s", provBal)
 	}
 
-	// Protocol fee collector should have 5 (3% validator + 2% treasury).
+	// Protocol fee collector should have 8 (5% protocol + 3% treasury).
 	feeBal := s.bank.moduleBalances["fee_collector"].AmountOf("uoas")
-	if !feeBal.Equal(math.NewInt(5)) {
-		t.Fatalf("expected fee_collector balance 5, got %s", feeBal)
+	if !feeBal.Equal(math.NewInt(8)) {
+		t.Fatalf("expected fee_collector balance 8, got %s", feeBal)
 	}
 
 	// 2 uoas burned (removed from circulation).

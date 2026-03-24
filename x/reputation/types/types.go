@@ -14,7 +14,7 @@ func DefaultParams() Params {
 	return Params{
 		MinRating:               0,
 		MaxRating:               500,
-		FeedbackCooldownSeconds: 60,
+		FeedbackCooldownSeconds: 3600,
 		VerifiedWeight:          math.LegacyNewDec(1),                    // 1.0
 		UnverifiedWeight:        math.LegacyNewDecWithPrec(1, 1),        // 0.1
 	}

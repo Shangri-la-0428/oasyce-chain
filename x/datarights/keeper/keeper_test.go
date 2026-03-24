@@ -617,7 +617,7 @@ func TestSellShares(t *testing.T) {
 	ratio := math.LegacyOneDec().Sub(soldDec.Quo(supplyDec))
 	ratioSq := ratio.Mul(ratio)
 	grossDec := reserveDec.Mul(math.LegacyOneDec().Sub(ratioSq))
-	netDec := grossDec.Mul(math.LegacyNewDecWithPrec(97, 2)) // 0.97 after 3% fee
+	netDec := grossDec.Mul(math.LegacyNewDecWithPrec(95, 2)) // 0.95 after 5% fee
 	expectedPayout := netDec.TruncateInt()
 	if !payout.Equal(expectedPayout) {
 		t.Fatalf("expected Bancor-derived payout %s, got %s", expectedPayout, payout)

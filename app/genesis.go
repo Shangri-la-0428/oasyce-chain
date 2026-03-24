@@ -66,18 +66,18 @@ func patchGovGenesis(cdc codec.JSONCodec, genesis map[string]json.RawMessage) {
 	var gs govtypesv1.GenesisState
 	cdc.MustUnmarshalJSON(genesis["gov"], &gs)
 
-	// min_deposit: 1000 OAS = 1000 * 10^8 uoas = 100_000_000_000
-	gs.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(oasyceparams.BondDenom, math.NewInt(100_000_000_000)))
-	// expedited_min_deposit must be > min_deposit
-	gs.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(oasyceparams.BondDenom, math.NewInt(500_000_000_000)))
+	// min_deposit: 100 OAS (lowered from 1000 to encourage early governance)
+	gs.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(oasyceparams.BondDenom, math.NewInt(100_000_000)))
+	// expedited_min_deposit must be > min_deposit: 500 OAS
+	gs.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(oasyceparams.BondDenom, math.NewInt(500_000_000)))
 	// Voting period: 7 days
 	votingPeriod := 7 * 24 * time.Hour
 	gs.Params.VotingPeriod = &votingPeriod
 	// Expedited voting: 1 day
 	expeditedVotingPeriod := 24 * time.Hour
 	gs.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
-	// Quorum: 0.4 (40%)
-	gs.Params.Quorum = "0.400000000000000000"
+	// Quorum: 0.25 (25% — lowered from 40% for early-stage participation)
+	gs.Params.Quorum = "0.250000000000000000"
 	// Threshold: 0.667
 	gs.Params.Threshold = "0.667000000000000000"
 	// Expedited threshold must be > regular threshold
@@ -101,9 +101,9 @@ func patchSlashingGenesis(cdc codec.JSONCodec, genesis map[string]json.RawMessag
 	var gs slashingtypes.GenesisState
 	cdc.MustUnmarshalJSON(genesis[slashingtypes.ModuleName], &gs)
 
-	gs.Params.SignedBlocksWindow = 100
-	gs.Params.MinSignedPerWindow = math.LegacyNewDecWithPrec(5, 1)      // 0.5
-	gs.Params.SlashFractionDowntime = math.LegacyNewDecWithPrec(1, 2)   // 0.01
+	gs.Params.SignedBlocksWindow = 10000
+	gs.Params.MinSignedPerWindow = math.LegacyNewDecWithPrec(5, 2)      // 0.05
+	gs.Params.SlashFractionDowntime = math.LegacyNewDecWithPrec(1, 4)   // 0.0001
 	gs.Params.SlashFractionDoubleSign = math.LegacyNewDecWithPrec(5, 2) // 0.05
 
 	genesis[slashingtypes.ModuleName] = cdc.MustMarshalJSON(&gs)
