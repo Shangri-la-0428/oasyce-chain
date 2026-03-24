@@ -22,7 +22,7 @@
   --green-bg: #f0f7f2;
   --red: #a33;
   --red-bg: #fdf4f4;
-  --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --mono: 'Geist Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif;
   --max-w: 960px;
   --space-xs: 0.25rem;
@@ -40,7 +40,9 @@ a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; 
 a:hover { color: var(--text-secondary); }
 
 code, pre { font-family: var(--mono); font-size: 0.875rem; }
-pre { background: var(--accent); color: #e0e0e0; padding: var(--space-lg); border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+pre { background: var(--accent); color: #e0e0e0; padding: 2.75rem var(--space-lg) var(--space-lg); border-radius: 8px; overflow-x: auto; line-height: 1.5; position: relative; }
+pre::before { content: ''; position: absolute; top: 14px; left: var(--space-lg); width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); box-shadow: 14px 0 0 rgba(255,255,255,0.15), 28px 0 0 rgba(255,255,255,0.15); }
+pre::after { content: ''; position: absolute; top: 34px; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.06); }
 pre code { color: inherit; }
 
 /* ── Layout ── */
@@ -49,14 +51,14 @@ section { padding: var(--space-2xl) 0; }
 section + section { border-top: 1px solid var(--border); }
 
 /* ── Typography ── */
-h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+h1 { font-size: 2.75rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
 h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--space-lg); }
 h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: var(--space-sm); }
 p { color: var(--text-secondary); max-width: 600px; }
-.lead { font-size: 1.125rem; line-height: 1.7; }
+.lead { font-size: 1.125rem; line-height: 1.75; max-width: 540px; }
 
 /* ── Hero ── */
-.hero { padding: var(--space-2xl) 0 var(--space-xl); text-align: left; }
+.hero { padding: var(--space-2xl) 0 var(--space-xl); text-align: left; position: relative; }
 .hero h1 { margin-bottom: var(--space-md); }
 .hero p { margin-bottom: var(--space-lg); }
 .hero-actions { display: flex; gap: var(--space-md); flex-wrap: wrap; }
@@ -64,11 +66,13 @@ p { color: var(--text-secondary); max-width: 600px; }
 .btn {
   display: inline-flex; align-items: center; gap: var(--space-sm);
   padding: 0.625rem 1.25rem; border-radius: 6px; font-size: 0.9375rem;
-  font-weight: 500; text-decoration: none; transition: opacity 0.15s;
+  font-weight: 500; text-decoration: none;
+  transition: transform 0.15s cubic-bezier(0.25,1,0.5,1), box-shadow 0.15s, border-color 0.15s;
 }
-.btn:hover { opacity: 0.8; }
 .btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--text-tertiary); transform: translateY(-1px); }
 
 /* ── Comparison Table ── */
 .comparison { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: 0.9375rem; }
@@ -81,13 +85,13 @@ p { color: var(--text-secondary); max-width: 600px; }
 /* ── Module Grid ── */
 .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg); margin-top: var(--space-lg); }
 .module { padding: var(--space-lg); border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); }
-.module h3 { font-family: var(--mono); font-size: 0.875rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-xs); }
+.module h3 { display: inline-block; font-family: var(--mono); font-size: 0.75rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-sm); padding: 2px 8px; background: var(--accent-subtle); border-radius: 4px; letter-spacing: 0.01em; }
 .module .name { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: var(--space-sm); }
 .module p { font-size: 0.875rem; color: var(--text-secondary); }
 
 /* ── Stats ── */
 .stats { display: flex; gap: var(--space-xl); flex-wrap: wrap; margin: var(--space-lg) 0; }
-.stat .number { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+.stat .number { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text); }
 .stat .label { font-size: 0.875rem; color: var(--text-tertiary); }
 
 /* ── Code Example ── */
@@ -95,8 +99,9 @@ p { color: var(--text-secondary); max-width: 600px; }
 .code-tab {
   padding: var(--space-sm) var(--space-md); font-size: 0.8125rem; font-weight: 500;
   border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card);
-  cursor: pointer; color: var(--text-secondary);
+  cursor: pointer; color: var(--text-secondary); transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
+.code-tab:hover:not(.active) { border-color: var(--text-tertiary); color: var(--text); }
 .code-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* ── Halving ── */
@@ -104,26 +109,147 @@ p { color: var(--text-secondary); max-width: 600px; }
 .halving th, .halving td { padding: 0.5rem 1rem; text-align: right; border-bottom: 1px solid var(--border); }
 .halving th { font-weight: 400; color: var(--text-tertiary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sans); }
 .halving td:first-child { text-align: left; }
+.halving tbody tr { transition: background 0.12s; }
+.halving tbody tr:hover { background: var(--accent-subtle); }
 
 /* ── Footer ── */
 footer { padding: var(--space-xl) 0; border-top: 1px solid var(--border); }
 footer p { font-size: 0.875rem; color: var(--text-tertiary); }
 .footer-links { display: flex; gap: var(--space-lg); margin-bottom: var(--space-md); }
-.footer-links a { font-size: 0.9375rem; color: var(--text-secondary); }
+.footer-links a { font-size: 0.9375rem; color: var(--text-secondary); transition: color 0.12s; }
+.footer-links a:hover { color: var(--text); }
+
+/* ── Scroll-reveal entrance ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Hero entrance ── */
+.hero h1, .hero p, .hero .hero-actions {
+  opacity: 0;
+  transform: translateY(16px) scale(0.98);
+  animation: hero-in 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+.hero h1 { animation-delay: 0.05s; }
+.hero p { animation-delay: 0.15s; }
+.hero .hero-actions { animation-delay: 0.25s; }
+
+@keyframes hero-in {
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Stagger children (modules, stats) ── */
+.stagger > * {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.stagger.visible > * { opacity: 1; transform: translateY(0); }
+.stagger.visible > *:nth-child(1) { transition-delay: 0s; }
+.stagger.visible > *:nth-child(2) { transition-delay: 0.06s; }
+.stagger.visible > *:nth-child(3) { transition-delay: 0.12s; }
+.stagger.visible > *:nth-child(4) { transition-delay: 0.18s; }
+.stagger.visible > *:nth-child(5) { transition-delay: 0.24s; }
+.stagger.visible > *:nth-child(6) { transition-delay: 0.30s; }
+
+/* ── Module hover ── */
+.module { transition: border-color 0.15s, transform 0.15s cubic-bezier(0.25, 1, 0.5, 1); }
+.module:hover { border-color: var(--text-tertiary); transform: translateY(-2px); }
+
+/* ── Comparison row hover ── */
+.comparison tbody tr { transition: background 0.12s; }
+.comparison tbody tr:hover { background: var(--accent-subtle); }
+
+/* ── Button press ── */
+.btn:active { transform: translateY(1px); }
+
+/* ── Nav scroll state ── */
+nav { position: sticky; top: 0; z-index: 100; background: var(--bg); transition: box-shadow 0.3s, background 0.3s; }
+nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,250,0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+
+/* ── Copy feedback ── */
+.copy-flash {
+  animation: flash-green 0.4s ease;
+}
+@keyframes flash-green {
+  0% { color: var(--green); }
+  100% { color: inherit; }
+}
+
+/* ── A: Agent network canvas ── */
+.hero > .container { position: relative; }
+#net { position: absolute; inset: 0; pointer-events: none; }
+
+/* ── B: Scroll progress ── */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  transform: scaleX(0);
+  z-index: 1000;
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: scroll-fill linear both;
+    animation-timeline: scroll();
+  }
+}
+@keyframes scroll-fill {
+  to { transform: scaleX(1); }
+}
+
+/* ── C: Typewriter ── */
+.typewriter-cursor {
+  display: inline;
+  animation: cursor-blink 0.7s step-end infinite;
+}
+@keyframes cursor-blink {
+  50% { opacity: 0; }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .stagger > *, .hero h1, .hero p, .hero .hero-actions {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .module, .btn, .comparison tbody tr, .halving tbody tr {
+    transition: none !important;
+  }
+  nav { transition: none !important; }
+  #net { display: none; }
+  .scroll-progress { display: none; }
+  .typewriter-cursor { animation: none !important; display: none; }
+}
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
-  h1 { font-size: 1.75rem; }
+  h1 { font-size: 1.875rem; }
   h2 { font-size: 1.25rem; }
+  .stat .number { font-size: 1.75rem; }
   .stats { gap: var(--space-lg); }
   section { padding: var(--space-xl) 0; }
   .hero { padding: var(--space-xl) 0 var(--space-lg); }
-  pre { padding: var(--space-md); font-size: 0.8125rem; }
+  pre { padding: 2.5rem var(--space-md) var(--space-md); font-size: 0.8125rem; }
   .comparison th, .comparison td { padding: 0.5rem; font-size: 0.8125rem; }
 }
 </style>
 </head>
 <body>
+<div class="scroll-progress" aria-hidden="true"></div>
 
 <!-- ── Nav ── -->
 <nav style="padding: var(--space-md) 0; border-bottom: 1px solid var(--border);">
@@ -141,6 +267,7 @@ footer p { font-size: 0.875rem; color: var(--text-tertiary); }
 
 <!-- ── Hero ── -->
 <section class="hero">
+  <canvas id="net" aria-hidden="true"></canvas>
   <div class="container">
     <h1>Where agents pay agents.</h1>
     <p class="lead">
@@ -154,7 +281,7 @@ footer p { font-size: 0.875rem; color: var(--text-tertiary); }
 </section>
 
 <!-- ── Why Not Stripe ── -->
-<section>
+<section class="reveal">
   <div class="container">
     <h2>Why not Stripe?</h2>
     <p>When agents vastly outnumber humans, transact far more frequently, and deal in amounts far smaller than humans do, Stripe's model breaks down.</p>
@@ -199,30 +326,30 @@ footer p { font-size: 0.875rem; color: var(--text-tertiary); }
 </section>
 
 <!-- ── Stats ── -->
-<section>
+<section class="reveal">
   <div class="container">
     <h2>Protocol at a glance</h2>
-    <div class="stats">
+    <div class="stats stagger">
       <div class="stat">
-        <div class="number">28</div>
+        <div class="number" data-count="28">0</div>
         <div class="label">Transaction types</div>
       </div>
       <div class="stat">
-        <div class="number">29</div>
+        <div class="number" data-count="29">0</div>
         <div class="label">Query endpoints</div>
       </div>
       <div class="stat">
-        <div class="number">7</div>
+        <div class="number" data-count="7">0</div>
         <div class="label">Custom modules</div>
       </div>
       <div class="stat">
-        <div class="number">~5s</div>
+        <div class="number" data-static>~5s</div>
         <div class="label">Block time</div>
       </div>
     </div>
 
     <!-- Modules -->
-    <div class="modules">
+    <div class="modules stagger">
       <div class="module">
         <h3>x/settlement</h3>
         <div class="name">Escrow + Bonding Curve</div>
@@ -258,7 +385,7 @@ footer p { font-size: 0.875rem; color: var(--text-tertiary); }
 </section>
 
 <!-- ── Economics ── -->
-<section>
+<section class="reveal">
   <div class="container">
     <h2>Token economics</h2>
     <p>Fixed block rewards with Bitcoin-style halving. Combined with 2% burn on every escrow release, supply peaks then contracts.</p>
@@ -280,14 +407,16 @@ footer p { font-size: 0.875rem; color: var(--text-tertiary); }
 </section>
 
 <!-- ── For Developers ── -->
-<section>
+<section class="reveal">
   <div class="container">
     <h2>Built for agents, not humans</h2>
     <p style="margin-bottom: var(--space-lg);">REST API, gRPC, and CLI with JSON output. Every endpoint is machine-readable. <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> for LLM-native documentation.</p>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
-      <div>
-        <h3 style="font-family: var(--mono); font-size: 0.8125rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-sm);">Python (REST API)</h3>
+    <div class="code-header" role="tablist" aria-label="Code examples">
+      <button class="code-tab active" role="tab" aria-selected="true" aria-controls="code-python" data-code="python">Python</button>
+      <button class="code-tab" role="tab" aria-selected="false" aria-controls="code-cli" data-code="cli">CLI</button>
+    </div>
+    <div id="code-python" role="tabpanel" class="code-panel">
 <pre><code>import requests
 
 BASE = "http://localhost:1317"
@@ -306,9 +435,8 @@ bal = requests.get(
 rep = requests.get(
   f"{BASE}/oasyce/reputation/v1/reputation/{addr}"
 ).json()</code></pre>
-      </div>
-      <div>
-        <h3 style="font-family: var(--mono); font-size: 0.8125rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-sm);">CLI + JSON</h3>
+    </div>
+    <div id="code-cli" role="tabpanel" class="code-panel" hidden>
 <pre><code># Register capability
 oasyced tx oasyce_capability register \
   --name "Translation API" \
@@ -325,13 +453,12 @@ oasyced tx oasyce_capability invoke \
 # Query as JSON
 oasyced query settlement escrow \
   ESC001 --output json</code></pre>
-      </div>
     </div>
   </div>
 </section>
 
 <!-- ── Quick Start ── -->
-<section>
+<section class="reveal">
   <div class="container">
     <h2>Quick start</h2>
 <pre><code># Build
@@ -348,7 +475,7 @@ bash scripts/start_testnet.sh
 </section>
 
 <!-- ── Ecosystem ── -->
-<section>
+<section class="reveal">
   <div class="container">
     <h2>Ecosystem</h2>
     <table class="comparison" style="max-width: 700px;">
@@ -394,6 +521,217 @@ bash scripts/start_testnet.sh
     <p>Apache 2.0 License. Built with Cosmos SDK v0.50.</p>
   </div>
 </footer>
+
+<script>
+(function () {
+  var prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Scroll-reveal ── */
+  var reveals = document.querySelectorAll('.reveal, .stagger');
+  if (!prefersReduced && reveals.length) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15 });
+    reveals.forEach(function (el) { io.observe(el); });
+  } else {
+    reveals.forEach(function (el) { el.classList.add('visible'); });
+  }
+
+  /* ── Stat counters ── */
+  var counters = document.querySelectorAll('[data-count]');
+  if (!prefersReduced && counters.length) {
+    var cio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var el = e.target, target = parseInt(el.dataset.count, 10), start = performance.now();
+        (function tick(now) {
+          var t = Math.min((now - start) / 600, 1);
+          el.textContent = Math.round((1 - Math.pow(1 - t, 4)) * target);
+          if (t < 1) requestAnimationFrame(tick);
+        })(performance.now());
+        cio.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(function (el) { cio.observe(el); });
+  } else {
+    counters.forEach(function (el) { el.textContent = el.dataset.count; });
+  }
+
+  /* ── C: Typewriter ── */
+  var typedSet = new Set();
+  document.querySelectorAll('.code-panel code').forEach(function (c) { c._full = c.textContent; });
+
+  function typeCode(code) {
+    if (!code || typedSet.has(code) || !code._full) return;
+    typedSet.add(code);
+    var pre = code.parentElement;
+    pre.style.minHeight = pre.offsetHeight + 'px';
+    var full = code._full;
+    code.textContent = '';
+    var cur = document.createElement('span');
+    cur.className = 'typewriter-cursor';
+    cur.textContent = '\u2588';
+    code.appendChild(cur);
+    var i = 0;
+    (function tick() {
+      if (i < full.length) {
+        cur.before(document.createTextNode(full[i]));
+        i++;
+        setTimeout(tick, full[i - 1] === '\n' ? 50 : 12);
+      } else {
+        setTimeout(function () { cur.style.transition = 'opacity 0.4s'; cur.style.opacity = '0'; }, 1500);
+      }
+    })();
+  }
+
+  if (!prefersReduced) {
+    var vp = document.querySelector('.code-panel:not([hidden])');
+    if (vp) {
+      var tio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          typeCode(e.target.querySelector('code'));
+          tio.unobserve(e.target);
+        });
+      }, { threshold: 0.3 });
+      tio.observe(vp);
+    }
+  }
+
+  /* ── Code tabs ── */
+  document.querySelectorAll('.code-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var id = 'code-' + this.dataset.code;
+      document.querySelectorAll('.code-tab').forEach(function (t) {
+        t.classList.remove('active'); t.setAttribute('aria-selected', 'false');
+      });
+      this.classList.add('active'); this.setAttribute('aria-selected', 'true');
+      document.querySelectorAll('.code-panel').forEach(function (p) { p.hidden = p.id !== id; });
+      if (!prefersReduced) {
+        var panel = document.getElementById(id);
+        if (panel) typeCode(panel.querySelector('code'));
+      }
+    });
+  });
+
+  /* ── Nav scroll shadow ── */
+  var nav = document.querySelector('nav');
+  if (nav) {
+    var wasScrolled = false;
+    window.addEventListener('scroll', function () {
+      var s = window.scrollY > 8;
+      if (s !== wasScrolled) { wasScrolled = s; nav.classList.toggle('scrolled', s); }
+    }, { passive: true });
+  }
+
+  /* ── B: Scroll progress fallback ── */
+  var bar = document.querySelector('.scroll-progress');
+  if (bar && !CSS.supports('animation-timeline', 'scroll()')) {
+    window.addEventListener('scroll', function () {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.transform = 'scaleX(' + (h > 0 ? window.scrollY / h : 0) + ')';
+    }, { passive: true });
+  }
+
+  /* ── A: Agent network pulse ── */
+  var canvas = document.getElementById('net');
+  var hero = canvas && canvas.closest('.hero');
+  if (canvas && hero && !prefersReduced) {
+    var ctx = canvas.getContext('2d');
+    var nodes = [], mouse = { x: -9e3, y: -9e3 }, animating = true;
+    var LINK = 110, HOVER = 150;
+
+    function resize() { canvas.width = hero.offsetWidth; canvas.height = hero.offsetHeight; }
+
+    function seed() {
+      resize();
+      nodes = [];
+      var N = Math.round(hero.offsetWidth / 24);
+      for (var i = 0; i < N; i++) {
+        nodes.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.25,
+          vy: (Math.random() - 0.5) * 0.25,
+          r: 1.2 + Math.random() * 0.8
+        });
+      }
+    }
+
+    function draw() {
+      if (!animating) return;
+      var w = canvas.width, h = canvas.height, N = nodes.length;
+      ctx.clearRect(0, 0, w, h);
+
+      for (var i = 0; i < N; i++) {
+        var n = nodes[i];
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < 0 || n.x > w) n.vx *= -1;
+        if (n.y < 0 || n.y > h) n.vy *= -1;
+      }
+
+      /* ambient connections */
+      ctx.lineWidth = 0.5;
+      for (var i = 0; i < N; i++) {
+        for (var j = i + 1; j < N; j++) {
+          var dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          if (d < LINK) {
+            ctx.strokeStyle = 'rgba(0,0,0,' + ((1 - d / LINK) * 0.1) + ')';
+            ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
+          }
+        }
+      }
+
+      /* nodes + mouse glow */
+      for (var i = 0; i < N; i++) {
+        var n = nodes[i];
+        var dx = n.x - mouse.x, dy = n.y - mouse.y;
+        var md = Math.sqrt(dx * dx + dy * dy);
+        var glow = md < HOVER ? 1 - md / HOVER : 0;
+
+        ctx.fillStyle = 'rgba(0,0,0,' + (0.12 + glow * 0.5) + ')';
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + glow * 1.5, 0, 6.283); ctx.fill();
+
+        /* bright connections near cursor */
+        if (glow > 0.15) {
+          ctx.lineWidth = 0.8;
+          for (var j = i + 1; j < N; j++) {
+            var dx2 = nodes[j].x - mouse.x, dy2 = nodes[j].y - mouse.y;
+            if (Math.sqrt(dx2 * dx2 + dy2 * dy2) < HOVER) {
+              var dx3 = nodes[i].x - nodes[j].x, dy3 = nodes[i].y - nodes[j].y;
+              if (Math.sqrt(dx3 * dx3 + dy3 * dy3) < HOVER) {
+                ctx.strokeStyle = 'rgba(0,0,0,' + (glow * 0.25) + ')';
+                ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
+              }
+            }
+          }
+          ctx.lineWidth = 0.5;
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
+    hero.addEventListener('mousemove', function (e) {
+      var r = hero.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+    });
+    hero.addEventListener('mouseleave', function () { mouse.x = mouse.y = -9e3; });
+
+    /* pause when off-screen */
+    new IntersectionObserver(function (entries) {
+      var v = entries[0].isIntersecting;
+      if (v && !animating) { animating = true; requestAnimationFrame(draw); }
+      if (!v) animating = false;
+    }).observe(hero);
+
+    window.addEventListener('resize', seed);
+    seed();
+    requestAnimationFrame(draw);
+  }
+})();
+</script>
 
 </body>
 </html>
