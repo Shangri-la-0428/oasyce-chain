@@ -36,10 +36,6 @@ func newMockBankKeeper() *mockBankKeeper {
 	}
 }
 
-func (m *mockBankKeeper) fundAccount(addr string, coins sdk.Coins) {
-	m.balances[addr] = m.balances[addr].Add(coins...)
-}
-
 func (m *mockBankKeeper) SendCoinsFromAccountToModule(_ context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
 	from := senderAddr.String()
 	if !m.balances[from].IsAllGTE(amt) {
@@ -142,7 +138,7 @@ func TestVerifyPoW(t *testing.T) {
 
 func TestSelfRegisterAndRepay(t *testing.T) {
 	k, sdkCtx, bank := setupKeeper(t)
-	ctx := sdk.WrapSDKContext(sdkCtx)
+	ctx := sdkCtx
 	user := sdk.AccAddress([]byte("user____________________")).String()
 
 	params := k.GetParams(sdkCtx)
@@ -225,7 +221,7 @@ func TestSelfRegisterAndRepay(t *testing.T) {
 
 func TestSelfRegisterInvalidPoW(t *testing.T) {
 	k, sdkCtx, _ := setupKeeper(t)
-	ctx := sdk.WrapSDKContext(sdkCtx)
+	ctx := sdkCtx
 	user := sdk.AccAddress([]byte("user____________________")).String()
 
 	// Default difficulty is 16 — random nonce will almost certainly fail.
@@ -323,7 +319,7 @@ func TestTotalRegistrationsCounter(t *testing.T) {
 
 func TestSelfRegisterIncrementsCounter(t *testing.T) {
 	k, sdkCtx, _ := setupKeeper(t)
-	ctx := sdk.WrapSDKContext(sdkCtx)
+	ctx := sdkCtx
 
 	// Register two users, verify counter increments.
 	for i, name := range []string{"userAAAAAAAAAAAAAAAAAAAA", "userBBBBBBBBBBBBBBBBBBBB"} {
@@ -343,7 +339,7 @@ func TestSelfRegisterIncrementsCounter(t *testing.T) {
 func TestGenesisRoundTrip(t *testing.T) {
 	// --- Phase 1: Populate state in keeper A ---
 	kA, sdkCtxA, _ := setupKeeper(t)
-	ctxA := sdk.WrapSDKContext(sdkCtxA)
+	ctxA := sdkCtxA
 
 	// Use custom params to verify they survive the round-trip.
 	customParams := types.Params{

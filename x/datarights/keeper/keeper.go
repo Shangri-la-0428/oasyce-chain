@@ -684,10 +684,7 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 // DelistAsset allows an asset owner to voluntarily delist their own asset.
 // Deprecated: now redirects to InitiateShutdown for graceful shutdown.
 func (k Keeper) DelistAsset(ctx context.Context, msg types.MsgDelistAsset) error {
-	return k.InitiateShutdown(ctx, types.MsgInitiateShutdown{
-		Creator: msg.Creator,
-		AssetId: msg.AssetId,
-	})
+	return k.InitiateShutdown(ctx, types.MsgInitiateShutdown(msg))
 }
 
 // InitiateShutdown begins graceful shutdown of a data asset.

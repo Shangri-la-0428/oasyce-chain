@@ -257,6 +257,7 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
     <strong style="font-size: 1.125rem; letter-spacing: -0.02em;">Oasyce</strong>
     <div style="display: flex; gap: var(--space-lg); font-size: 0.9375rem;">
       <a href="https://github.com/Shangri-la-0428/oasyce-chain">GitHub</a>
+      <a href="#testnet">Testnet</a>
       <a href="docs.html">Docs</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml">API</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a>
@@ -274,8 +275,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
       Purpose-built L1 for the AI agent economy. Every capability invocation and data access between agents is automatically priced, escrowed, and settled on-chain. No KYC. No credit cards. No human approval.
     </p>
     <div class="hero-actions">
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain" class="btn btn-primary">View on GitHub</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt" class="btn btn-secondary">Read llms.txt</a>
+      <a href="#testnet" class="btn btn-primary">Join Testnet</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain" class="btn btn-secondary">View on GitHub</a>
     </div>
   </div>
 </section>
@@ -453,6 +454,28 @@ oasyced tx oasyce_capability invoke \
 # Query as JSON
 oasyced query settlement escrow \
   ESC001 --output json</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── Public Testnet ── -->
+<section class="reveal" id="testnet">
+  <div class="container">
+    <h2>Public Testnet</h2>
+    <p style="margin-bottom: var(--space-lg);">Testnet-1 is live. Join as a validator or start building.</p>
+    <table class="comparison" style="max-width: 640px;">
+      <tbody>
+        <tr><td>Chain ID</td><td><code>oasyce-testnet-1</code></td></tr>
+        <tr><td>Seed Node</td><td><code style="font-size:0.75rem">390f9b...06186@47.93.32.88:26656</code></td></tr>
+        <tr><td>RPC</td><td><code>47.93.32.88:26657</code></td></tr>
+        <tr><td>REST API</td><td><code>47.93.32.88:1317</code></td></tr>
+        <tr><td>Faucet</td><td><code>47.93.32.88:8080/faucet?address=...</code></td></tr>
+        <tr><td>Binary</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0">v0.4.0 Release</a></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top: var(--space-lg);">
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" class="btn btn-primary">Validator Guide</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0" class="btn btn-secondary" style="margin-left: var(--space-sm);">Download Binary</a>
     </div>
   </div>
 </section>

@@ -1259,7 +1259,7 @@ func TestInitiateShutdown(t *testing.T) {
 
 func TestClaimSettlement(t *testing.T) {
 	k, sdkCtx, bank := setupKeeper(t)
-	ctx := sdk.WrapSDKContext(sdkCtx)
+	ctx := sdkCtx
 	owner := sdk.AccAddress([]byte("owner_______________")).String()
 	buyer := sdk.AccAddress([]byte("buyer_______________")).String()
 
@@ -1299,7 +1299,7 @@ func TestClaimSettlement(t *testing.T) {
 	// Advance time past cooldown (7 days + 1 second).
 	params := k.GetParams(sdkCtx)
 	newCtx := sdkCtx.WithBlockTime(sdkCtx.BlockTime().Add(time.Duration(params.ShutdownCooldownSeconds+1) * time.Second))
-	ctx = sdk.WrapSDKContext(newCtx)
+	ctx = newCtx
 
 	// Claim settlement.
 	payout, err := k.ClaimSettlement(ctx, types.MsgClaimSettlement{Creator: buyer, AssetId: assetID})
@@ -1390,7 +1390,7 @@ func TestVersionedAssetRegistration(t *testing.T) {
 
 func TestMigrationFullFlow(t *testing.T) {
 	k, sdkCtx, bank := setupKeeper(t)
-	ctx := sdk.WrapSDKContext(sdkCtx)
+	ctx := sdkCtx
 	owner := sdk.AccAddress([]byte("owner_______________")).String()
 	v2Owner := sdk.AccAddress([]byte("v2owner_____________")).String()
 	shareholder := sdk.AccAddress([]byte("holder______________")).String()

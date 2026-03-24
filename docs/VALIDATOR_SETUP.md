@@ -7,32 +7,63 @@
 | Parameter | Value |
 |-----------|-------|
 | Chain ID | `oasyce-testnet-1` |
-| Genesis | GitHub Release (see below) |
-| Min hardware | 4 CPU, 8 GB RAM, 100 GB SSD |
-| Seed node | Published in [Discord #announcements](https://discord.gg/tfrCn54yZW) |
-| Faucet | Discord bot or `scripts/faucet.sh` |
+| Genesis | [GitHub Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/testnet-1) |
+| Genesis SHA256 | `dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739` |
+| Min hardware | 2 CPU, 2 GB RAM, 40 GB SSD |
+| Seed node | `390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656` |
+| Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
+| RPC | `http://47.93.32.88:26657` |
+| REST API | `http://47.93.32.88:1317` |
+| Binary downloads | [GitHub Releases](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0) |
+
+### Option A: Download Pre-built Binary (Recommended)
 
 ```bash
-# 1. Build
-git clone https://github.com/Shangri-la-0428/oasyce-chain.git && cd oasyce-chain
-CGO_ENABLED=0 make build
+# 1. Download binary for your platform
+# Linux:
+curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.4.0/oasyced-linux-amd64
+# macOS (Apple Silicon):
+curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.4.0/oasyced-darwin-arm64
+# macOS (Intel):
+curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.4.0/oasyced-darwin-amd64
+
+chmod +x oasyced && sudo mv oasyced /usr/local/bin/
 
 # 2. Init
-./build/oasyced init <your-moniker> --chain-id oasyce-testnet-1
+oasyced init <your-moniker> --chain-id oasyce-testnet-1
 
-# 3. Genesis (verify SHA256 from Discord)
+# 3. Genesis
 curl -L -o ~/.oasyced/config/genesis.json \
   https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json
 
-# 4. Configure peers (replace with actual seed node address from Discord)
-sed -i.bak 's/persistent_peers = ""/persistent_peers = "<node-id>@<seed-ip>:26656"/' \
+# Verify checksum
+echo "dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739  $HOME/.oasyced/config/genesis.json" | sha256sum -c
+
+# 4. Configure seed peer
+sed -i.bak 's/persistent_peers = ""/persistent_peers = "390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656"/' \
   ~/.oasyced/config/config.toml
 
 # 5. Enable API
 sed -i.bak 's/enable = false/enable = true/' ~/.oasyced/config/app.toml
 
 # 6. Start
-./build/oasyced start --minimum-gas-prices 0.025uoas
+oasyced start --minimum-gas-prices 0uoas
+```
+
+### Option B: Build from Source
+
+```bash
+# Requires Go 1.22+
+git clone https://github.com/Shangri-la-0428/oasyce-chain.git && cd oasyce-chain
+CGO_ENABLED=0 make build
+# Then follow steps 2-6 above, replacing oasyced with ./build/oasyced
+```
+
+### Get Test Tokens
+
+```bash
+curl "http://47.93.32.88:8080/faucet?address=$(oasyced keys show validator -a --keyring-backend test)"
+# Returns 100 OAS per request, rate limited to 1 per hour per address
 ```
 
 ---
@@ -73,9 +104,9 @@ Unique to Oasyce — validators earn a cut of all economic activity on the chain
 
 | Source | Fee | Validator Share |
 |--------|-----|-----------------|
-| **Escrow release** (capability/settlement) | 3% of amount | 3% → fee_collector → validators |
-| **Treasury fee** on escrow | 2% of amount | 2% → fee_collector → validators |
-| **Data share sell** | 3% protocol fee | 3% → fee_collector → validators |
+| **Escrow release** (capability/settlement) | 5% of amount | 5% → fee_collector → validators |
+| **Treasury fee** on escrow | 3% of amount | 3% → fee_collector → validators |
+| **Data share sell** | 5% protocol fee | 5% → fee_collector → validators |
 | **Work task settlement** | 5% protocol share | 5% → fee_collector → validators |
 
 **Example**: If 100 agents make 1000 capability invocations/day at 10 OAS each:
@@ -87,7 +118,7 @@ Unique to Oasyce — validators earn a cut of all economic activity on the chain
 
 | Violation | Penalty |
 |-----------|---------|
-| Downtime (missed >50% of last 100 blocks) | 1% stake slashed |
+| Downtime (missed >95% of last 10,000 blocks) | 0.01% stake slashed |
 | Double-signing | 5% stake slashed + tombstoned |
 
 ### Staking Parameters
@@ -98,8 +129,8 @@ Unique to Oasyce — validators earn a cut of all economic activity on the chain
 | Max validators | 100 |
 | Unbonding period | 21 days |
 | Min self-delegation | 1 OAS |
-| Signed blocks window | 100 blocks |
-| Min signed per window | 50% |
+| Signed blocks window | 10,000 blocks (~14 hours) |
+| Min signed per window | 5% |
 
 ---
 
@@ -135,12 +166,12 @@ oasyced keys add validator --keyring-backend file
 For **public testnet** (`oasyce-testnet-1`):
 
 ```bash
-# Download genesis (verify SHA256 checksum after download)
+# Download genesis
 curl -L -o ~/.oasyced/config/genesis.json \
   https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json
 
-# Verify checksum (value published in Discord #announcements)
-sha256sum ~/.oasyced/config/genesis.json
+# Verify checksum
+echo "dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739  $HOME/.oasyced/config/genesis.json" | sha256sum -c
 ```
 
 For **local development**, generate genesis:
@@ -185,8 +216,8 @@ sed -i.bak 's/minimum-gas-prices = ""/minimum-gas-prices = "0.025uoas"/' ~/.oasy
 ### config.toml
 
 ```bash
-# Add persistent peers (replace with actual peer addresses)
-sed -i.bak 's/persistent_peers = ""/persistent_peers = "<node-id>@<ip>:26656"/' ~/.oasyced/config/config.toml
+# Add persistent peers
+sed -i.bak 's/persistent_peers = ""/persistent_peers = "390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656"/' ~/.oasyced/config/config.toml
 
 # Optional: enable Prometheus metrics
 sed -i.bak 's/prometheus = false/prometheus = true/' ~/.oasyced/config/config.toml
