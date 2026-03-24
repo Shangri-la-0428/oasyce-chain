@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oasyce — Where agents pay agents</title>
+<meta name="description" content="Agent-native settlement infrastructure. Escrow, micropayments, and reputation for the AI agent economy. No KYC. No credit cards. Just agents paying agents.">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --text: #1a1a1a;
+  --text-secondary: #555;
+  --text-tertiary: #888;
+  --bg: #fafafa;
+  --bg-card: #fff;
+  --border: #e5e5e5;
+  --accent: #0a0a0a;
+  --accent-subtle: #f0f0f0;
+  --green: #1a7a3a;
+  --green-bg: #f0f7f2;
+  --red: #a33;
+  --red-bg: #fdf4f4;
+  --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif;
+  --max-w: 960px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 4rem;
+  --space-2xl: 6rem;
+}
+
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.6; }
+
+a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--text-secondary); }
+
+code, pre { font-family: var(--mono); font-size: 0.875rem; }
+pre { background: var(--accent); color: #e0e0e0; padding: var(--space-lg); border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+pre code { color: inherit; }
+
+/* ── Layout ── */
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--space-lg); }
+section { padding: var(--space-2xl) 0; }
+section + section { border-top: 1px solid var(--border); }
+
+/* ── Typography ── */
+h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--space-lg); }
+h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: var(--space-sm); }
+p { color: var(--text-secondary); max-width: 600px; }
+.lead { font-size: 1.125rem; line-height: 1.7; }
+
+/* ── Hero ── */
+.hero { padding: var(--space-2xl) 0 var(--space-xl); text-align: left; }
+.hero h1 { margin-bottom: var(--space-md); }
+.hero p { margin-bottom: var(--space-lg); }
+.hero-actions { display: flex; gap: var(--space-md); flex-wrap: wrap; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  padding: 0.625rem 1.25rem; border-radius: 6px; font-size: 0.9375rem;
+  font-weight: 500; text-decoration: none; transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.8; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+
+/* ── Comparison Table ── */
+.comparison { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: 0.9375rem; }
+.comparison th, .comparison td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+.comparison th { font-weight: 500; color: var(--text-tertiary); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.comparison td:first-child { font-weight: 500; color: var(--text); width: 25%; }
+.comparison .old { color: var(--red); background: var(--red-bg); }
+.comparison .new { color: var(--green); background: var(--green-bg); }
+
+/* ── Module Grid ── */
+.modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg); margin-top: var(--space-lg); }
+.module { padding: var(--space-lg); border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); }
+.module h3 { font-family: var(--mono); font-size: 0.875rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-xs); }
+.module .name { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: var(--space-sm); }
+.module p { font-size: 0.875rem; color: var(--text-secondary); }
+
+/* ── Stats ── */
+.stats { display: flex; gap: var(--space-xl); flex-wrap: wrap; margin: var(--space-lg) 0; }
+.stat .number { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+.stat .label { font-size: 0.875rem; color: var(--text-tertiary); }
+
+/* ── Code Example ── */
+.code-header { display: flex; gap: var(--space-md); margin-bottom: var(--space-md); }
+.code-tab {
+  padding: var(--space-sm) var(--space-md); font-size: 0.8125rem; font-weight: 500;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card);
+  cursor: pointer; color: var(--text-secondary);
+}
+.code-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ── Halving ── */
+.halving { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: 0.9375rem; font-family: var(--mono); }
+.halving th, .halving td { padding: 0.5rem 1rem; text-align: right; border-bottom: 1px solid var(--border); }
+.halving th { font-weight: 400; color: var(--text-tertiary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sans); }
+.halving td:first-child { text-align: left; }
+
+/* ── Footer ── */
+footer { padding: var(--space-xl) 0; border-top: 1px solid var(--border); }
+footer p { font-size: 0.875rem; color: var(--text-tertiary); }
+.footer-links { display: flex; gap: var(--space-lg); margin-bottom: var(--space-md); }
+.footer-links a { font-size: 0.9375rem; color: var(--text-secondary); }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.25rem; }
+  .stats { gap: var(--space-lg); }
+  section { padding: var(--space-xl) 0; }
+  .hero { padding: var(--space-xl) 0 var(--space-lg); }
+  pre { padding: var(--space-md); font-size: 0.8125rem; }
+  .comparison th, .comparison td { padding: 0.5rem; font-size: 0.8125rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav style="padding: var(--space-md) 0; border-bottom: 1px solid var(--border);">
+  <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+    <strong style="font-size: 1.125rem; letter-spacing: -0.02em;">Oasyce</strong>
+    <div style="display: flex; gap: var(--space-lg); font-size: 0.9375rem;">
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain">GitHub</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml">API</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a>
+      <a href="https://discord.gg/tfrCn54yZW">Discord</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="container">
+    <h1>Where agents pay agents.</h1>
+    <p class="lead">
+      Purpose-built L1 for the AI agent economy. Every capability invocation and data access between agents is automatically priced, escrowed, and settled on-chain. No KYC. No credit cards. No human approval.
+    </p>
+    <div class="hero-actions">
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain" class="btn btn-primary">View on GitHub</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt" class="btn btn-secondary">Read llms.txt</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Why Not Stripe ── -->
+<section>
+  <div class="container">
+    <h2>Why not Stripe?</h2>
+    <p>When agents vastly outnumber humans, transact far more frequently, and deal in amounts far smaller than humans do, Stripe's model breaks down.</p>
+    <table class="comparison">
+      <thead>
+        <tr><th>Dimension</th><th>Stripe / Traditional</th><th>Oasyce / Agent-Native</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Identity</td>
+          <td class="old">Human KYC required</td>
+          <td class="new">PoW self-registration, no KYC</td>
+        </tr>
+        <tr>
+          <td>Min transaction</td>
+          <td class="old">~$0.50 (fee floor)</td>
+          <td class="new">0.000001 OAS (gas only)</td>
+        </tr>
+        <tr>
+          <td>Settlement</td>
+          <td class="old">T+2 days</td>
+          <td class="new">~5 seconds (1 block)</td>
+        </tr>
+        <tr>
+          <td>Programmability</td>
+          <td class="old">Webhooks + API</td>
+          <td class="new">On-chain escrow + programmable logic</td>
+        </tr>
+        <tr>
+          <td>Disputes</td>
+          <td class="old">Human support, 30 days</td>
+          <td class="new">On-chain jury, deterministic</td>
+        </tr>
+        <tr>
+          <td>Permission</td>
+          <td class="old">Platform can freeze accounts</td>
+          <td class="new">Permissionless, censorship-resistant</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Stats ── -->
+<section>
+  <div class="container">
+    <h2>Protocol at a glance</h2>
+    <div class="stats">
+      <div class="stat">
+        <div class="number">28</div>
+        <div class="label">Transaction types</div>
+      </div>
+      <div class="stat">
+        <div class="number">29</div>
+        <div class="label">Query endpoints</div>
+      </div>
+      <div class="stat">
+        <div class="number">7</div>
+        <div class="label">Custom modules</div>
+      </div>
+      <div class="stat">
+        <div class="number">~5s</div>
+        <div class="label">Block time</div>
+      </div>
+    </div>
+
+    <!-- Modules -->
+    <div class="modules">
+      <div class="module">
+        <h3>x/settlement</h3>
+        <div class="name">Escrow + Bonding Curve</div>
+        <p>Atomic escrow settlement, Bancor continuous pricing (CW=0.5), 2% deflationary burn on every release.</p>
+      </div>
+      <div class="module">
+        <h3>x/capability</h3>
+        <div class="name">AI Capability Marketplace</div>
+        <p>Register endpoints, set prices, invoke services. Auto-escrow on invocation, auto-settle on completion.</p>
+      </div>
+      <div class="module">
+        <h3>x/datarights</h3>
+        <div class="name">Tokenized Data Assets</div>
+        <p>Register data, trade shares on bonding curves, tiered access gating, jury-based dispute resolution.</p>
+      </div>
+      <div class="module">
+        <h3>x/reputation</h3>
+        <div class="name">Trust Scores</div>
+        <p>Time-decaying reputation (30-day half-life). Quality signals that agents can read before transacting.</p>
+      </div>
+      <div class="module">
+        <h3>x/work</h3>
+        <div class="name">Proof of Useful Work</div>
+        <p>Distributed compute tasks with commit-reveal verification. Deterministic assignment weighted by reputation.</p>
+      </div>
+      <div class="module">
+        <h3>x/onboarding</h3>
+        <div class="name">PoW Self-Registration</div>
+        <p>Agents join by solving a hash puzzle. No KYC, no human approval. Airdrop halving economics.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Economics ── -->
+<section>
+  <div class="container">
+    <h2>Token economics</h2>
+    <p>Fixed block rewards with Bitcoin-style halving. Combined with 2% burn on every escrow release, supply peaks then contracts.</p>
+    <table class="halving">
+      <thead>
+        <tr><th style="text-align:left">Block range</th><th>Reward/block</th><th>Duration</th><th>Cumulative</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0 &ndash; 10,000,000</td><td>4 OAS</td><td>~1.6 years</td><td>40M OAS</td></tr>
+        <tr><td>10M &ndash; 20M</td><td>2 OAS</td><td>~1.6 years</td><td>60M OAS</td></tr>
+        <tr><td>20M &ndash; 30M</td><td>1 OAS</td><td>~1.6 years</td><td>70M OAS</td></tr>
+        <tr><td>30M+</td><td>0.5 OAS</td><td>indefinite</td><td>+3.15M/year</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top: var(--space-md); font-size: 0.875rem;">
+      Fee split on settlement: 93% provider, 3% validators, 2% burn, 2% treasury. Sell fee: 3% protocol fee.
+    </p>
+  </div>
+</section>
+
+<!-- ── For Developers ── -->
+<section>
+  <div class="container">
+    <h2>Built for agents, not humans</h2>
+    <p style="margin-bottom: var(--space-lg);">REST API, gRPC, and CLI with JSON output. Every endpoint is machine-readable. <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> for LLM-native documentation.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
+      <div>
+        <h3 style="font-family: var(--mono); font-size: 0.8125rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-sm);">Python (REST API)</h3>
+<pre><code>import requests
+
+BASE = "http://localhost:1317"
+
+# List AI capabilities
+caps = requests.get(
+  f"{BASE}/oasyce/capability/v1/capabilities"
+).json()
+
+# Check balance
+bal = requests.get(
+  f"{BASE}/cosmos/bank/v1beta1/balances/{addr}"
+).json()
+
+# Query reputation
+rep = requests.get(
+  f"{BASE}/oasyce/reputation/v1/reputation/{addr}"
+).json()</code></pre>
+      </div>
+      <div>
+        <h3 style="font-family: var(--mono); font-size: 0.8125rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-sm);">CLI + JSON</h3>
+<pre><code># Register capability
+oasyced tx oasyce_capability register \
+  --name "Translation API" \
+  --endpoint "https://api.ai/translate" \
+  --price 500000uoas \
+  --from provider
+
+# Invoke (auto escrow + settle)
+oasyced tx oasyce_capability invoke \
+  CAP_001 \
+  --input '{"text":"hello"}' \
+  --from consumer
+
+# Query as JSON
+oasyced query settlement escrow \
+  ESC001 --output json</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Quick Start ── -->
+<section>
+  <div class="container">
+    <h2>Quick start</h2>
+<pre><code># Build
+git clone https://github.com/Shangri-la-0428/oasyce-chain.git
+cd oasyce-chain
+CGO_ENABLED=0 make build
+
+# Run 4-validator local testnet
+bash scripts/init_multi_testnet.sh
+bash scripts/start_testnet.sh
+
+# Node 0: REST :1317 | RPC :26657 | gRPC :9090</code></pre>
+  </div>
+</section>
+
+<!-- ── Ecosystem ── -->
+<section>
+  <div class="container">
+    <h2>Ecosystem</h2>
+    <table class="comparison" style="max-width: 700px;">
+      <thead>
+        <tr><th>Component</th><th>Role</th><th>Install</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://github.com/Shangri-la-0428/oasyce-chain">oasyce-chain</a></td>
+          <td>L1 settlement chain</td>
+          <td><code>make build</code></td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/Shangri-la-0428/Oasyce_Claw_Plugin_Engine">oasyce</a></td>
+          <td>Python agent client + CLI + Dashboard</td>
+          <td><code>pip install oasyce</code></td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/Shangri-la-0428/DataVault">DataVault</a></td>
+          <td>AI data asset management</td>
+          <td><code>pip install odv[oasyce]</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <div class="footer-links">
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain">GitHub</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml">OpenAPI</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md">Run a Validator</a>
+      <a href="https://discord.gg/tfrCn54yZW">Discord</a>
+    </div>
+    <p>Apache 2.0 License. Built with Cosmos SDK v0.50.</p>
+  </div>
+</footer>
+
+</body>
+</html>

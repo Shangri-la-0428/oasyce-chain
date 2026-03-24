@@ -538,7 +538,7 @@ func (k Keeper) BuyShares(ctx context.Context, msg types.MsgBuyShares) (math.Int
 // SellShares sells tokens back to the bonding curve using the inverse Bancor formula.
 // Formula: payout = reserve × (1 − (1 − tokens/supply)²)
 // Capped at 95% of reserve (RESERVE_SOLVENCY_CAP).
-// Protocol fee (5%) is deducted from the gross payout.
+// Protocol fee (3%) is deducted from the gross payout.
 func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.Int, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -602,7 +602,7 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 		}
 	}
 
-	// Deduct protocol fee (5%).
+	// Deduct protocol fee (3%).
 	protocolFeeDec := grossPayout.Mul(settlementtypes.DefaultParams().ProtocolFeeRate)
 	feeAmount := protocolFeeDec.TruncateInt()
 	// Guard against fee truncation to 0 on small sells — minimum 1 uoas fee.

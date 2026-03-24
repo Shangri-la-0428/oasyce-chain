@@ -57,7 +57,7 @@ func (m *Params) String() string { return proto.CompactTextString(m) }
 func DefaultParams() Params {
 	return Params{
 		MaxCoCreators:           10,
-		DisputeDeposit:          sdk.NewCoin("uoas", math.NewInt(1000000000)), // 100 OAS
+		DisputeDeposit:          sdk.NewCoin("uoas", math.NewInt(10000000)), // 10 OAS
 		DisputeTimeoutDays:      30,
 		ShutdownCooldownSeconds: 604800, // 7 days
 	}

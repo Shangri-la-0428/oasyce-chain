@@ -52,8 +52,8 @@ for i in $(seq 0 $((NUM_VALIDATORS - 1))); do
   # Recover key into test keyring
   echo "$MNEMONIC" | $BINARY keys add "val${i}" --recover --keyring-backend test --home "$NODE_HOME" 2>/dev/null
 
-  # Capture the node ID (from CometBFT)
-  NODE_ID=$($BINARY comet show-node-id --home "$NODE_HOME")
+  # Capture the node ID (CometBFT outputs to stderr, need 2>&1)
+  NODE_ID=$($BINARY comet show-node-id --home "$NODE_HOME" 2>&1)
 
   NODE_IDS+=("$NODE_ID")
   VAL_ADDRS+=("$ADDR")
@@ -145,8 +145,23 @@ for i in $(seq 0 $((NUM_VALIDATORS - 1))); do
   sed -i.bak "s|laddr = \"tcp://0.0.0.0:26656\"|laddr = \"tcp://0.0.0.0:${P2P_PORT}\"|" "$CONFIG_FILE"
   # RPC listen address
   sed -i.bak "s|laddr = \"tcp://127.0.0.1:26657\"|laddr = \"tcp://127.0.0.1:${RPC_PORT}\"|" "$CONFIG_FILE"
-  # Persistent peers
-  sed -i.bak "s|persistent_peers = \"\"|persistent_peers = \"${NODE_PEERS}\"|" "$CONFIG_FILE"
+  # Persistent peers (use python3 — collect-gentxs may pre-populate this field)
+  python3 -c "
+import re, pathlib
+cfg = pathlib.Path('$CONFIG_FILE')
+txt = cfg.read_text()
+txt = re.sub(r'^persistent_peers = \".*?\"', 'persistent_peers = \"${NODE_PEERS}\"', txt, flags=re.MULTILINE)
+cfg.write_text(txt)
+"
+  # Allow multiple nodes on same IP (required for localhost multi-node)
+  python3 -c "
+import re, pathlib
+cfg = pathlib.Path('$CONFIG_FILE')
+txt = cfg.read_text()
+txt = re.sub(r'^allow_duplicate_ip = false', 'allow_duplicate_ip = true', txt, flags=re.MULTILINE)
+txt = re.sub(r'^addr_book_strict = true', 'addr_book_strict = false', txt, flags=re.MULTILINE)
+cfg.write_text(txt)
+"
   # pprof listen address (avoid conflict, offset by node index)
   PPROF_PORT=$((6060 + i))
   sed -i.bak "s|pprof_laddr = \"localhost:6060\"|pprof_laddr = \"localhost:${PPROF_PORT}\"|" "$CONFIG_FILE"
@@ -155,12 +170,23 @@ for i in $(seq 0 $((NUM_VALIDATORS - 1))); do
   sed -i.bak "s|prometheus_listen_addr = \":26660\"|prometheus_listen_addr = \":${PROMETHEUS_PORT}\"|" "$CONFIG_FILE"
 
   # -- app.toml --
+  # Enable REST API (required for agent access)
+  python3 -c "
+import re, pathlib
+cfg = pathlib.Path('$APP_CONFIG')
+txt = cfg.read_text()
+# Enable API in the [api] section (first 'enable = false' after [api])
+txt = re.sub(r'(\[api\][^\[]*?)enable = false', r'\1enable = true', txt, count=1, flags=re.DOTALL)
+cfg.write_text(txt)
+"
   # API server address
   sed -i.bak "s|address = \"tcp://localhost:1317\"|address = \"tcp://localhost:${API_PORT}\"|" "$APP_CONFIG"
   # gRPC server address
   sed -i.bak "s|address = \"localhost:9090\"|address = \"localhost:${GRPC_PORT}\"|" "$APP_CONFIG"
   # gRPC-web server address
   sed -i.bak "s|address = \"localhost:9091\"|address = \"localhost:${GRPC_WEB_PORT}\"|" "$APP_CONFIG"
+  # Set minimum gas prices (anti-spam)
+  sed -i.bak 's|minimum-gas-prices = ""|minimum-gas-prices = "0.025uoas"|' "$APP_CONFIG"
 
   # Clean up backup files from macOS sed -i
   rm -f "$CONFIG_FILE.bak" "$APP_CONFIG.bak"

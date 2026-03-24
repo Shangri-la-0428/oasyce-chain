@@ -146,8 +146,8 @@ if [ "$CHILDREN" != "0" ]; then pass "AssetChildren ($CHILDREN forks)"; else fai
 echo "--- Test 12: PoW Self-Register ---"
 $OASYCED keys show user2 $KB 2>/dev/null || $OASYCED keys add user2 $KB 2>/dev/null
 USER2=$($OASYCED keys show user2 -a $KB 2>/dev/null)
-# Note: In real usage, client computes valid PoW nonce. For E2E testing,
-# genesis params should set pow_difficulty=0 to skip PoW verification.
+# Note: Halving economics enforces min difficulty=16 at epoch 0, regardless of params.
+# For E2E testing, genesis must set pow_difficulty=0 AND supply a valid nonce for the address.
 $OASYCED tx onboarding register 0 --from user2 $COMMON 2>/dev/null
 wait_tx
 RESULT=$(check_latest_tx)

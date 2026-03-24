@@ -175,7 +175,7 @@ func TestCreateEscrowAndRelease(t *testing.T) {
 		t.Fatalf("expected RELEASED, got %s", escrow.Status)
 	}
 
-	// Verify fee split: provider gets 93%, protocol 5%, burn 2%.
+	// Verify fee split: provider gets 93%, validator 3%, burn 2%, treasury 2%.
 	providerBal := bank.balances[provider]
 	expectedProvider := sdk.NewCoin("uoas", math.NewInt(930000)) // 93% of 1000000
 	if !providerBal.Equal(sdk.NewCoins(expectedProvider)) {
@@ -183,7 +183,7 @@ func TestCreateEscrowAndRelease(t *testing.T) {
 	}
 
 	feeCollectorBal := bank.moduleBalances["fee_collector"]
-	expectedFee := sdk.NewCoin("uoas", math.NewInt(50000)) // 5% of 1000000
+	expectedFee := sdk.NewCoin("uoas", math.NewInt(50000)) // 3% + 2% = 5% of 1000000
 	if !feeCollectorBal.Equal(sdk.NewCoins(expectedFee)) {
 		t.Fatalf("expected fee_collector balance %s, got %s", expectedFee, feeCollectorBal)
 	}

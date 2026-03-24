@@ -53,11 +53,11 @@ func patchSettlementGenesis(genesis map[string]json.RawMessage) {
 }
 
 // patchCapabilityGenesis configures capability module defaults.
-// min_provider_stake = 100 OAS = 10_000_000_000 uoas.
+// min_provider_stake = 0 (no minimum for testnet).
 func patchCapabilityGenesis(genesis map[string]json.RawMessage) {
 	gs := capabilitytypes.GenesisState{
 		Params: capabilitytypes.Params{
-			MinProviderStake: sdk.NewCoin("uoas", math.NewInt(10_000_000_000)),
+			MinProviderStake: sdk.NewCoin("uoas", math.NewInt(0)),
 			MaxRateLimit:     1000,
 			ProtocolFeeRate:  500, // 5% in basis points
 		},

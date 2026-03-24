@@ -24,6 +24,7 @@ func IsEscrowTerminal(status EscrowStatus) bool {
 }
 
 // Protocol-level constants for bonding curve math.
+// Fee split: 93% creator, 3% validator, 2% burn, 2% treasury.
 var (
 	// ReserveRatio is the Bancor connector weight (CW = 0.5).
 	ReserveRatio = math.LegacyNewDecWithPrec(5, 1) // 0.5
@@ -36,13 +37,16 @@ var (
 
 	// BurnRate is the fraction of settlement burned permanently (2%).
 	BurnRate = math.LegacyNewDecWithPrec(2, 2) // 0.02
+
+	// TreasuryRate is the fraction of settlement sent to protocol treasury (2%).
+	TreasuryRate = math.LegacyNewDecWithPrec(2, 2) // 0.02
 )
 
 // DefaultParams returns the default settlement module parameters.
 func DefaultParams() Params {
 	return Params{
 		EscrowTimeoutSeconds: 300, // 5 minutes
-		ProtocolFeeRate:      math.LegacyNewDecWithPrec(5, 2), // 5% = 0.05
+		ProtocolFeeRate:      math.LegacyNewDecWithPrec(3, 2), // 3% = 0.03 (validator fee)
 	}
 }
 

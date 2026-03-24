@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -609,14 +610,14 @@ func TestSellShares(t *testing.T) {
 	}
 
 	// Verify inverse Bancor formula: gross_payout = reserve * (1 - (1 - sold/supply)^2).
-	// With 5% protocol fee: net = gross * 0.95.
+	// With 3% protocol fee: net = gross * 0.97.
 	supplyDec := math.LegacyNewDecFromInt(assetBefore.TotalShares)
 	reserveDec := math.LegacyNewDecFromInt(reserveBefore)
 	soldDec := math.LegacyNewDecFromInt(sharesToSell)
 	ratio := math.LegacyOneDec().Sub(soldDec.Quo(supplyDec))
 	ratioSq := ratio.Mul(ratio)
 	grossDec := reserveDec.Mul(math.LegacyOneDec().Sub(ratioSq))
-	netDec := grossDec.Mul(math.LegacyNewDecWithPrec(95, 2)) // 0.95 after 5% fee
+	netDec := grossDec.Mul(math.LegacyNewDecWithPrec(97, 2)) // 0.97 after 3% fee
 	expectedPayout := netDec.TruncateInt()
 	if !payout.Equal(expectedPayout) {
 		t.Fatalf("expected Bancor-derived payout %s, got %s", expectedPayout, payout)
@@ -1519,5 +1520,170 @@ func TestMigrationFullFlow(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected error for migration after disable")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Dispute Resolution — All Remedy Types
+// ---------------------------------------------------------------------------
+
+// helperFileDispute registers an asset, funds a plaintiff, files a dispute,
+// and returns the assetID and disputeID.
+func helperFileDispute(t *testing.T, k keeper.Keeper, ctx sdk.Context, bank *mockBankKeeper) (string, string) {
+	t.Helper()
+	creator, _, _ := testAddresses()
+	plaintiff := sdk.AccAddress([]byte("plaintiff___________")).String()
+
+	regMsg := types.MsgRegisterDataAsset{
+		Creator:     creator,
+		Name:        "Remedy Test Asset",
+		Description: "Asset for remedy tests",
+		ContentHash: fmt.Sprintf("remedyhash_%d", time.Now().UnixNano()),
+		RightsType:  types.RightsOriginal,
+	}
+	assetID, err := k.RegisterDataAsset(ctx, regMsg)
+	if err != nil {
+		t.Fatalf("RegisterDataAsset failed: %v", err)
+	}
+
+	params := k.GetParams(ctx)
+	bank.fundAccount(plaintiff, sdk.NewCoins(params.DisputeDeposit))
+
+	disputeMsg := types.MsgFileDispute{
+		Creator:  plaintiff,
+		AssetId:  assetID,
+		Reason:   "Remedy test dispute",
+		Evidence: []byte("evidence"),
+	}
+	disputeID, err := k.FileDispute(ctx, disputeMsg)
+	if err != nil {
+		t.Fatalf("FileDispute failed: %v", err)
+	}
+	return assetID, disputeID
+}
+
+func TestResolveDisputeTransferRemedy(t *testing.T) {
+	k, ctx, bank := setupKeeper(t)
+	_, _, arbitrator := testAddresses()
+	newOwner := sdk.AccAddress([]byte("newowner____________")).String()
+
+	assetID, disputeID := helperFileDispute(t, k, ctx, bank)
+
+	// Resolve with transfer remedy — Details contains new owner address.
+	resolveMsg := types.MsgResolveDispute{
+		Creator:   arbitrator,
+		DisputeId: disputeID,
+		Remedy:    types.RemedyTransfer,
+		Details:   []byte(newOwner),
+	}
+	if err := k.ResolveDispute(ctx, resolveMsg); err != nil {
+		t.Fatalf("ResolveDispute (transfer) failed: %v", err)
+	}
+
+	// Verify dispute is resolved with the correct remedy.
+	dispute, found := k.GetDispute(ctx, disputeID)
+	if !found {
+		t.Fatal("dispute not found after resolve")
+	}
+	if dispute.Status != types.StatusResolved {
+		t.Fatalf("expected RESOLVED, got %s", dispute.Status)
+	}
+	if dispute.Remedy != types.RemedyTransfer {
+		t.Fatalf("expected TRANSFER remedy, got %s", dispute.Remedy)
+	}
+
+	// Verify asset owner changed.
+	asset, _ := k.GetAsset(ctx, assetID)
+	if asset.Owner != newOwner {
+		t.Fatalf("expected owner %s, got %s", newOwner, asset.Owner)
+	}
+}
+
+func TestResolveDisputeRightsCorrectionRemedy(t *testing.T) {
+	k, ctx, bank := setupKeeper(t)
+	_, _, arbitrator := testAddresses()
+
+	assetID, disputeID := helperFileDispute(t, k, ctx, bank)
+
+	// Verify asset starts as RIGHTS_TYPE_ORIGINAL (1).
+	assetBefore, _ := k.GetAsset(ctx, assetID)
+	if assetBefore.RightsType != types.RightsOriginal {
+		t.Fatalf("expected ORIGINAL rights, got %v", assetBefore.RightsType)
+	}
+
+	// Resolve with rights_correction — change to LICENSED (3).
+	resolveMsg := types.MsgResolveDispute{
+		Creator:   arbitrator,
+		DisputeId: disputeID,
+		Remedy:    types.RemedyRightsCorrection,
+		Details:   []byte{byte(types.RIGHTS_TYPE_LICENSED)},
+	}
+	if err := k.ResolveDispute(ctx, resolveMsg); err != nil {
+		t.Fatalf("ResolveDispute (rights_correction) failed: %v", err)
+	}
+
+	// Verify dispute is resolved.
+	dispute, _ := k.GetDispute(ctx, disputeID)
+	if dispute.Status != types.StatusResolved {
+		t.Fatalf("expected RESOLVED, got %s", dispute.Status)
+	}
+	if dispute.Remedy != types.RemedyRightsCorrection {
+		t.Fatalf("expected RIGHTS_CORRECTION remedy, got %s", dispute.Remedy)
+	}
+
+	// Verify rights type changed.
+	asset, _ := k.GetAsset(ctx, assetID)
+	if asset.RightsType != types.RightsLicensed {
+		t.Fatalf("expected LICENSED rights, got %v", asset.RightsType)
+	}
+}
+
+func TestResolveDisputeShareAdjustmentRemedy(t *testing.T) {
+	k, ctx, bank := setupKeeper(t)
+	_, _, arbitrator := testAddresses()
+	coCreatorA := sdk.AccAddress([]byte("cocreatorA__________")).String()
+	coCreatorB := sdk.AccAddress([]byte("cocreatorB__________")).String()
+
+	assetID, disputeID := helperFileDispute(t, k, ctx, bank)
+
+	// Build co-creator JSON.
+	coCreators := []types.CoCreator{
+		{Address: coCreatorA, ShareBps: 7000},
+		{Address: coCreatorB, ShareBps: 3000},
+	}
+	details, err := json.Marshal(coCreators)
+	if err != nil {
+		t.Fatalf("json.Marshal co-creators failed: %v", err)
+	}
+
+	resolveMsg := types.MsgResolveDispute{
+		Creator:   arbitrator,
+		DisputeId: disputeID,
+		Remedy:    types.RemedyShareAdjustment,
+		Details:   details,
+	}
+	if err := k.ResolveDispute(ctx, resolveMsg); err != nil {
+		t.Fatalf("ResolveDispute (share_adjustment) failed: %v", err)
+	}
+
+	// Verify dispute is resolved.
+	dispute, _ := k.GetDispute(ctx, disputeID)
+	if dispute.Status != types.StatusResolved {
+		t.Fatalf("expected RESOLVED, got %s", dispute.Status)
+	}
+	if dispute.Remedy != types.RemedyShareAdjustment {
+		t.Fatalf("expected SHARE_ADJUSTMENT remedy, got %s", dispute.Remedy)
+	}
+
+	// Verify co-creators updated on the asset.
+	asset, _ := k.GetAsset(ctx, assetID)
+	if len(asset.CoCreators) != 2 {
+		t.Fatalf("expected 2 co-creators, got %d", len(asset.CoCreators))
+	}
+	if asset.CoCreators[0].Address != coCreatorA || asset.CoCreators[0].ShareBps != 7000 {
+		t.Fatalf("co-creator A mismatch: %+v", asset.CoCreators[0])
+	}
+	if asset.CoCreators[1].Address != coCreatorB || asset.CoCreators[1].ShareBps != 3000 {
+		t.Fatalf("co-creator B mismatch: %+v", asset.CoCreators[1])
 	}
 }

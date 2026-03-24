@@ -1,0 +1,31 @@
+syntax = "proto3";
+package oasyce.onboarding.v1;
+
+option go_package = "github.com/oasyce/chain/x/onboarding/types";
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "oasyce/onboarding/v1/types.proto";
+
+// GenesisState defines the onboarding module's genesis state.
+message GenesisState {
+  // registrations is the list of all registrations at genesis.
+  repeated Registration registrations = 1 [(gogoproto.nullable) = false];
+
+  // params defines the module parameters at genesis.
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+// Params defines the parameters for the onboarding module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // airdrop_amount is the amount of tokens given to each new user.
+  cosmos.base.v1beta1.Coin airdrop_amount = 1 [(gogoproto.nullable) = false];
+
+  // pow_difficulty is the number of leading zero bits required in the PoW hash.
+  uint32 pow_difficulty = 2;
+
+  // repayment_deadline_days is the number of days the user has to repay.
+  uint32 repayment_deadline_days = 3;
+}

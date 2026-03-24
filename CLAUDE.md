@@ -1,7 +1,7 @@
 # Oasyce L1 Chain
 
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 6 custom modules: settlement, capability, reputation, datarights, work, onboarding.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 7 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving.
 
 ## Current Status
 
@@ -82,7 +82,7 @@ All 4 modules verified with real transactions:
 ### Build & Test Status
 ```
 go build ./...  ✅
-go test ./...   ✅ (50+ tests across 7 suites)
+go test ./...   ✅ (50+ tests across 8 suites)
   tests/integration     — 3 tests (full capability flow, Bancor curve, escrow lifecycle)
   x/capability/keeper   — capability tests
   x/datarights/keeper   — 16 tests (Bancor buy/sell, access gating, jury voting, lifecycle, versioning, migration)
@@ -90,6 +90,7 @@ go test ./...   ✅ (50+ tests across 7 suites)
   x/settlement/keeper   — escrow + bonding curve tests
   x/work/keeper         — 13 tests (executor, task CRUD, commit-reveal, assignment, settlement, minority penalty)
   x/onboarding/keeper   — 4 tests (invite+claim, repay, cancel, default settlement)
+  x/halving/keeper      — 13 tests (block reward boundaries, halving transitions, cumulative supply)
 ```
 
 ### Datarights Lifecycle + Versioning + Migration — COMPLETE ✅
@@ -122,7 +123,14 @@ go test ./...   ✅ (50+ tests across 7 suites)
 - Query: `oasyced query onboarding registration|debt|params`
 - Module account permissions: Minter + Burner
 - Default params: airdrop=20 OAS, pow_difficulty=16 bits, deadline=90 days
-- ConsensusVersion = 2 (breaking change from invite-based v1)
+- **Halving Economics** (keeper.go): Airdrop and difficulty scale with total registrations
+  - Epoch 0 (0–10K): 20 OAS airdrop, 16-bit PoW
+  - Epoch 1 (10K–50K): 10 OAS, 18-bit PoW
+  - Epoch 2 (50K–200K): 5 OAS, 20-bit PoW
+  - Epoch 3 (200K+): 2.5 OAS, 22-bit PoW
+  - `total_registrations` counter stored at `TotalRegistrationsKey = 0x03`
+  - Effective difficulty = max(params, halving); effective airdrop = min(params, halving)
+- ConsensusVersion = 3
 
 ### Protocol Constants (x/settlement/types/types.go)
 ```go
@@ -130,7 +138,36 @@ ReserveRatio       = 0.5   // Bancor connector weight
 InitialPrice       = 1.0   // 1 uoas per token at bootstrap
 ReserveSolvencyCap = 0.95  // Max 95% reserve payout on sell
 BurnRate           = 0.02  // 2% burn on escrow release
+TreasuryRate       = 0.02  // 2% treasury on escrow release
+ProtocolFeeRate    = 0.03  // 3% validator fee (DefaultParams)
 ```
+Fee split on escrow release: 93% creator, 3% validator, 2% burn, 2% treasury.
+Sell fee: 3% protocol fee deducted from bonding curve payout.
+
+### Validator Incentives (app/genesis.go)
+
+Validators earn from three sources:
+
+1. **Block Rewards** — Custom x/halving module with height-based halving
+   - Standard mint module disabled (inflation = 0%)
+   - Halving mints fixed reward → `fee_collector` → distribution module → validators + delegators
+   - Schedule: 4 OAS/block (0–10M) → 2 (10M–20M) → 1 (20M–30M) → 0.5 (30M+)
+
+2. **Transaction Fees** — Gas fees from all chain transactions
+   - Collected in `fee_collector`, distributed proportionally to stake
+
+3. **Protocol Fees** — Custom module fees routed to `fee_collector`
+   - Settlement escrow release: 3% validator + 2% treasury → fee_collector
+   - Datarights sell: 3% protocol fee → fee_collector
+   - Work task settlement: 5% protocol share → fee_collector
+
+**Staking**: `BondDenom = "uoas"`, `MaxValidators = 100`, `UnbondingTime = 21 days`
+
+**Slashing**: `SignedBlocksWindow = 100`, `MinSignedPerWindow = 50%`
+- Downtime: 1% slash
+- Double-sign: 5% slash
+
+**Governance**: `MinDeposit = 1000 OAS`, `VotingPeriod = 7 days`, `Quorum = 40%`, `Threshold = 66.7%`
 
 ### Critical: goleveldb replace directive
 The go.mod MUST include this replace (same as SDK v0.50.10):
@@ -191,55 +228,47 @@ ModuleBasics.AddTxCommands panics (distr/staking need AddressCodec). Add custom 
 ### TX broadcast: CheckTx vs DeliverTx
 `oasyced tx ... --yes` returns CheckTx result (code 0 = accepted into mempool). Use `curl localhost:26657/block_results?height=N` to check DeliverTx code. `query tx <hash>` fails due to type URL resolution bug — use block_results instead.
 
-## TODO: Whitepaper v4 Parameter Alignment
+## DONE: Parameter Alignment (2026-03-24)
 
-The following chain parameters diverge from Whitepaper v4.0 and need ConsensusVersion upgrades to fix:
+Parameters aligned to production spec (Python + Go in sync):
+- Fee split: 93% creator, 3% validator, 2% burn, 2% treasury ✅
+- CW = 0.50, ReserveSolvencyCap = 0.95 ✅
+- ProtocolFeeRate = 0.03 (sell fee) ✅
+- Round-trip cost reduced from ~28% to ~12% ✅
+- All Go + Python tests updated and passing ✅
 
-| Parameter | Current (Code) | Whitepaper v4 | File | Priority |
-|---|---|---|---|---|
-| **Connector weight F** | 0.5 | 0.35 | `x/settlement/types/types.go` ReserveRatio | High |
-| **Fee split** | 93% provider / 5% protocol / 2% burn | 60% creator / 20% validator / 15% burn / 5% treasury | `x/settlement/keeper/keeper.go` ReleaseEscrow | High |
-| **Burn rate** | 2% | 15% | `x/settlement/types/types.go` BurnRate | High |
-| **Identity cost** | PoW + 20 OAS airdrop (debt) | 100 OAS stake (burn on ban) | `x/onboarding` | Medium |
+## DONE: Airdrop Halving Economics (2026-03-24)
 
-### Migration plan
-1. Bump ConsensusVersion in each affected module
-2. Add state migration to update params
-3. Update unit tests to use new constants
-4. Validate on testnet before mainnet proposal
-5. Consider making F, fee split, burn rate governance-adjustable params
+Airdrop and PoW difficulty now scale with total registrations (x/onboarding/keeper/keeper.go):
 
-## TODO: Halving Economics (Deflationary Progression)
+| Epoch | Cumulative Registrations | Airdrop | PoW Difficulty |
+|-------|--------------------------|---------|----------------|
+| 0 | 0 – 10,000 | 20 OAS | 16 bits |
+| 1 | 10,001 – 50,000 | 10 OAS | 18 bits |
+| 2 | 50,001 – 200,000 | 5 OAS | 20 bits |
+| 3 | 200,001+ | 2.5 OAS | 22 bits |
 
-Current airdrop, PoW difficulty, and block rewards are static. Should introduce Bitcoin-style halving to create increasing scarcity as the network matures.
+- `total_registrations` counter at `TotalRegistrationsKey = 0x03`
+- Effective difficulty = max(params, HalvingDifficulty(epoch))
+- Effective airdrop = min(params, HalvingAirdrop(epoch))
+- ConsensusVersion bumped to 3
 
-### Airdrop Halving
+## DONE: Block Reward Halving (2026-03-24)
 
-| Epoch | Cumulative Registrations | Airdrop | PoW Difficulty (leading zero bits) |
-|-------|--------------------------|---------|-------------------------------------|
-| 0 | 0 – 10,000 | 20 OAS | 16 (~2-5 min) |
-| 1 | 10,001 – 50,000 | 10 OAS | 18 (~10-20 min) |
-| 2 | 50,001 – 200,000 | 5 OAS | 20 (~1 hour) |
-| 3 | 200,001+ | 2.5 OAS | 22 (~4 hours) |
+Replaced standard Cosmos SDK 5% inflation with custom x/halving module. Standard mint module inflation set to 0%.
 
-Formula: `airdrop = BASE_AIRDROP / 2^(epoch)`, `difficulty = BASE_DIFFICULTY + 2 * epoch`
+| Block Range | Reward | Cumulative Supply |
+|-------------|--------|-------------------|
+| 0 – 10,000,000 | 4 OAS/block | 40M OAS |
+| 10,000,001 – 20,000,000 | 2 OAS/block | 60M OAS |
+| 20,000,001 – 30,000,000 | 1 OAS/block | 70M OAS |
+| 30,000,001+ | 0.5 OAS/block | +~3.15M/year |
 
-Rationale: Early adopters get more starter capital at lower cost. As the network grows, registration becomes more expensive (both in CPU time and in lower airdrop), creating natural Sybil resistance that scales with network value.
+Combined with the 2% burn rate, this creates a supply curve that peaks and then contracts.
 
-### Block Reward Halving
-
-| Block Range | Reward |
-|-------------|--------|
-| 0 – 10,000,000 | 4 OAS/block |
-| 10,000,001 – 20,000,000 | 2 OAS/block |
-| 20,000,001 – 30,000,000 | 1 OAS/block |
-| 30,000,001+ | 0.5 OAS/block |
-
-Combined with the 15% burn rate (whitepaper target), this creates a supply curve that peaks and then contracts — stronger deflationary pressure than Bitcoin (which only halves issuance but never burns).
-
-### Implementation
-
-- `x/onboarding`: Add `total_registrations` counter to module state. `AirdropAmount` and `PowDifficulty` become functions of this counter, not static params.
-- `x/settlement` or mint module: Add `halving_interval` and `current_epoch` to block reward logic.
-- All halving params should be governance-adjustable via `MsgUpdateParams`.
-- ConsensusVersion bump required for both modules.
+- Module: `x/halving/` (no proto, no store, no CLI — purely deterministic from block height)
+- `keeper.BlockReward(height)` returns uoas reward for any block height
+- BeginBlocker: mint → halving module account → fee_collector → distribution → validators
+- Runs after standard mint (which mints 0) and before distribution module
+- Module account has `Minter` permission
+- 13 tests (boundary conditions, halving transitions, cumulative supply)

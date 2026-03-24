@@ -210,7 +210,7 @@ func (k Keeper) CreateEscrow(ctx sdk.Context, creator, provider string, amount s
 }
 
 // ReleaseEscrow releases escrowed funds to the provider.
-// Fee split: provider gets 95%, protocol treasury (fee collector) gets 5%.
+// Fee split: 93% creator/provider, 3% validator, 2% burn, 2% treasury.
 //
 // This method signature matches the SettlementKeeper interface expected by the
 // capability module.
@@ -233,16 +233,18 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 		return types.ErrInvalidAddress.Wrapf("invalid provider: %s", err)
 	}
 
-	// Calculate fee split per spec:
-	//   protocol_fee = 5% (to fee_collector)
-	//   burn         = 2% (permanently destroyed)
-	//   provider     = 93% (remaining)
+	// Calculate fee split per spec (93/3/2/2):
+	//   creator/provider = 93% (remaining after fees)
+	//   validator_fee    = 3% (to fee_collector for validator rewards)
+	//   burn             = 2% (permanently destroyed)
+	//   treasury         = 2% (to fee_collector for protocol treasury)
 	totalAmount := escrow.Amount.Amount
-	protocolFee := totalAmount.Mul(math.NewInt(500)).Quo(math.NewInt(10000))   // 5%
-	burnAmount := totalAmount.Mul(math.NewInt(200)).Quo(math.NewInt(10000))    // 2%
-	providerAmount := totalAmount.Sub(protocolFee).Sub(burnAmount)             // 93%
+	validatorFee := totalAmount.Mul(math.NewInt(300)).Quo(math.NewInt(10000))   // 3%
+	burnAmount := totalAmount.Mul(math.NewInt(200)).Quo(math.NewInt(10000))     // 2%
+	treasuryAmount := totalAmount.Mul(math.NewInt(200)).Quo(math.NewInt(10000)) // 2%
+	providerAmount := totalAmount.Sub(validatorFee).Sub(burnAmount).Sub(treasuryAmount) // 93%
 
-	// Send provider share from module to provider.
+	// Send provider/creator share from module to provider.
 	if providerAmount.IsPositive() {
 		providerCoin := sdk.NewCoin(escrow.Amount.Denom, providerAmount)
 		if err := k.bankKeeper.SendCoinsFromModuleToAccount(
@@ -252,7 +254,8 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 		}
 	}
 
-	// Send protocol fee to fee collector (protocol treasury).
+	// Send validator fee to fee collector (distributed to validators).
+	protocolFee := validatorFee.Add(treasuryAmount) // combined for fee_collector
 	if protocolFee.IsPositive() {
 		protocolCoin := sdk.NewCoin(escrow.Amount.Denom, protocolFee)
 		if err := k.bankKeeper.SendCoinsFromModuleToModule(
@@ -282,8 +285,9 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 		"escrow_released",
 		sdk.NewAttribute("escrow_id", escrowID),
 		sdk.NewAttribute("provider_amount", sdk.NewCoin(escrow.Amount.Denom, providerAmount).String()),
-		sdk.NewAttribute("protocol_fee", sdk.NewCoin(escrow.Amount.Denom, protocolFee).String()),
+		sdk.NewAttribute("validator_fee", sdk.NewCoin(escrow.Amount.Denom, validatorFee).String()),
 		sdk.NewAttribute("burn_amount", sdk.NewCoin(escrow.Amount.Denom, burnAmount).String()),
+		sdk.NewAttribute("treasury_amount", sdk.NewCoin(escrow.Amount.Denom, treasuryAmount).String()),
 	))
 
 	return nil

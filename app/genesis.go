@@ -44,19 +44,19 @@ func patchStakingGenesis(cdc codec.JSONCodec, genesis map[string]json.RawMessage
 	genesis[stakingtypes.ModuleName] = cdc.MustMarshalJSON(&gs)
 }
 
-// patchMintGenesis sets mint_denom to "uoas" and configures inflation.
+// patchMintGenesis sets mint_denom to "uoas" and disables standard inflation.
+// Block rewards are handled by the x/halving module with height-based halving.
 func patchMintGenesis(cdc codec.JSONCodec, genesis map[string]json.RawMessage) {
 	var gs minttypes.GenesisState
 	cdc.MustUnmarshalJSON(genesis[minttypes.ModuleName], &gs)
 
 	gs.Params.MintDenom = oasyceparams.BondDenom
-	gs.Params.InflationMax = math.LegacyNewDecWithPrec(5, 2)    // 0.05
-	gs.Params.InflationMin = math.LegacyNewDecWithPrec(5, 2)    // 0.05
+	gs.Params.InflationMax = math.LegacyZeroDec()           // 0% — halving module handles rewards
+	gs.Params.InflationMin = math.LegacyZeroDec()           // 0%
 	gs.Params.InflationRateChange = math.LegacyZeroDec()
-	gs.Params.GoalBonded = math.LegacyNewDecWithPrec(67, 2)     // 0.67
-	// blocks_per_year based on 5s block time: 365.25*24*3600/5 = 6,311,520
-	gs.Params.BlocksPerYear = 6_311_520
-	gs.Minter.Inflation = math.LegacyNewDecWithPrec(5, 2) // 0.05
+	gs.Params.GoalBonded = math.LegacyNewDecWithPrec(67, 2) // 0.67
+	gs.Params.BlocksPerYear = 6_311_520                      // 5s block time
+	gs.Minter.Inflation = math.LegacyZeroDec()              // 0%
 
 	genesis[minttypes.ModuleName] = cdc.MustMarshalJSON(&gs)
 }

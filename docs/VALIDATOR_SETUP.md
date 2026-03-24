@@ -1,6 +1,72 @@
 # Validator Setup Guide
 
-> Run an Oasyce Chain validator node
+> Run an Oasyce Chain validator node — and earn from three revenue streams.
+
+## Why Run an Oasyce Validator?
+
+Validators earn OAS from **three independent revenue streams**:
+
+### 1. Block Rewards (Halving Schedule)
+
+Fixed per-block rewards with Bitcoin-style halving, distributed to validators proportional to their stake.
+
+| Block Range | Reward | Duration (~5s blocks) |
+|-------------|--------|-----------------------|
+| 0 – 10,000,000 | 4 OAS/block | ~1.6 years |
+| 10,000,001 – 20,000,000 | 2 OAS/block | ~1.6 years |
+| 20,000,001 – 30,000,000 | 1 OAS/block | ~1.6 years |
+| 30,000,001+ | 0.5 OAS/block | indefinite |
+
+**Example** (Epoch 0, 100 validators, equal stake): 4 OAS/block × 6.3M blocks/year ÷ 100 = **~252,000 OAS/year each**.
+
+Block rewards flow: Halving module → `fee_collector` → Distribution module → validators + delegators.
+
+### 2. Transaction Fees (Gas)
+
+Every on-chain transaction pays gas fees. As agent activity grows, gas revenue grows.
+
+| Transaction Type | Typical Gas |
+|-----------------|-------------|
+| Capability invoke | ~200K gas |
+| Data shares buy/sell | ~150K gas |
+| Work task submit | ~180K gas |
+| Escrow create/release | ~120K gas |
+
+### 3. Protocol Fees (Oasyce-Specific)
+
+Unique to Oasyce — validators earn a cut of all economic activity on the chain:
+
+| Source | Fee | Validator Share |
+|--------|-----|-----------------|
+| **Escrow release** (capability/settlement) | 3% of amount | 3% → fee_collector → validators |
+| **Treasury fee** on escrow | 2% of amount | 2% → fee_collector → validators |
+| **Data share sell** | 3% protocol fee | 3% → fee_collector → validators |
+| **Work task settlement** | 5% protocol share | 5% → fee_collector → validators |
+
+**Example**: If 100 agents make 1000 capability invocations/day at 10 OAS each:
+- Daily volume = 10,000 OAS
+- Protocol fees = 5% = 500 OAS/day to fee_collector
+- With 10 validators, equal stake: ~50 OAS/day each = **~18,250 OAS/year per validator**
+
+### Slashing (Risk)
+
+| Violation | Penalty |
+|-----------|---------|
+| Downtime (missed >50% of last 100 blocks) | 1% stake slashed |
+| Double-signing | 5% stake slashed + tombstoned |
+
+### Staking Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| Bond denom | uoas |
+| Max validators | 100 |
+| Unbonding period | 21 days |
+| Min self-delegation | 1 OAS |
+| Signed blocks window | 100 blocks |
+| Min signed per window | 50% |
+
+---
 
 ## Prerequisites
 

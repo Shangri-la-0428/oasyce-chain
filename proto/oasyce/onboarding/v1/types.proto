@@ -1,0 +1,57 @@
+syntax = "proto3";
+package oasyce.onboarding.v1;
+
+option go_package = "github.com/oasyce/chain/x/onboarding/types";
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// RegistrationStatus enumerates the lifecycle states of a registration.
+enum RegistrationStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // REGISTRATION_STATUS_ACTIVE means the user has outstanding debt.
+  REGISTRATION_STATUS_ACTIVE = 0;
+  // REGISTRATION_STATUS_REPAID means the user fully repaid the debt.
+  REGISTRATION_STATUS_REPAID = 1;
+  // REGISTRATION_STATUS_DEFAULTED means the deadline passed without full repayment.
+  REGISTRATION_STATUS_DEFAULTED = 2;
+}
+
+// Registration represents a user's onboarding record.
+message Registration {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // address is the registered user's address.
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // airdrop_amount is the initial credit granted (in base denom).
+  string airdrop_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // repaid_amount tracks how much debt has been repaid so far.
+  string repaid_amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // status is the current lifecycle state.
+  RegistrationStatus status = 4;
+
+  // registered_at is the timestamp when the user registered.
+  google.protobuf.Timestamp registered_at = 5
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+
+  // deadline is the repayment deadline.
+  google.protobuf.Timestamp deadline = 6
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+
+  // pow_nonce is the nonce used for proof-of-work verification.
+  uint64 pow_nonce = 7;
+}

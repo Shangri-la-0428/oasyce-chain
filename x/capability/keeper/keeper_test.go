@@ -389,3 +389,61 @@ func TestRateLimitExceeded(t *testing.T) {
 		t.Error("expected rate limit exceeded error")
 	}
 }
+
+func TestListCapabilitiesByTag(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+
+	provider := "oasyce1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tp3"
+
+	// Register 3 capabilities with different tags.
+	caps := []struct {
+		name string
+		tags []string
+	}{
+		{"Translation API", []string{"nlp", "translation"}},
+		{"Image Classifier", []string{"vision", "ml"}},
+		{"Summarizer", []string{"nlp", "summarization"}},
+	}
+
+	for _, c := range caps {
+		msg := &types.MsgRegisterCapability{
+			Creator:      provider,
+			Name:         c.name,
+			Description:  "Test capability",
+			EndpointUrl:  "https://api.test.com/" + c.name,
+			PricePerCall: sdk.NewInt64Coin("uoas", 100000),
+			Tags:         c.tags,
+			RateLimit:    60,
+		}
+		if _, err := k.RegisterCapability(ctx, msg); err != nil {
+			t.Fatalf("RegisterCapability(%s) failed: %v", c.name, err)
+		}
+	}
+
+	// Filter by "nlp" — should return 2 (Translation API + Summarizer).
+	nlpCaps := k.ListCapabilities(ctx, "nlp")
+	if len(nlpCaps) != 2 {
+		t.Fatalf("ListCapabilities(nlp): expected 2, got %d", len(nlpCaps))
+	}
+
+	// Filter by "vision" — should return 1 (Image Classifier).
+	visionCaps := k.ListCapabilities(ctx, "vision")
+	if len(visionCaps) != 1 {
+		t.Fatalf("ListCapabilities(vision): expected 1, got %d", len(visionCaps))
+	}
+	if visionCaps[0].Name != "Image Classifier" {
+		t.Fatalf("expected 'Image Classifier', got '%s'", visionCaps[0].Name)
+	}
+
+	// Empty tag — should return all 3.
+	allCaps := k.ListCapabilities(ctx, "")
+	if len(allCaps) != 3 {
+		t.Fatalf("ListCapabilities(''): expected 3, got %d", len(allCaps))
+	}
+
+	// Non-existent tag — should return 0.
+	noneCaps := k.ListCapabilities(ctx, "nonexistent")
+	if len(noneCaps) != 0 {
+		t.Fatalf("ListCapabilities(nonexistent): expected 0, got %d", len(noneCaps))
+	}
+}

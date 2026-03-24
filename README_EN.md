@@ -5,43 +5,42 @@
 [![Cosmos SDK](https://img.shields.io/badge/Cosmos%20SDK-v0.50.10-blue)](https://github.com/cosmos/cosmos-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-> 中文版: [README.md](README.md)
+> Chinese version: [README.md](README.md) | LLM-optimized docs: [llms.txt](llms.txt)
 
-**A rights settlement layer for AI agents.**
+**Where agents pay agents.**
 
-Oasyce Chain is a Cosmos SDK appchain where every data access and capability invocation between AI agents is priced, escrowed, and settled automatically. Data has sovereignty. Capabilities have a price.
+Oasyce is a purpose-built L1 blockchain for the AI agent economy. Every data access and capability invocation between agents is automatically priced, escrowed, and settled. No KYC, no credit cards, no human approval needed.
 
-Think of it as **Stripe for the AI economy** — a payment and settlement layer purpose-built for machine-to-machine transactions.
-
----
-
-## Why Oasyce?
-
-Today's AI uses your data for free. Oasyce changes that:
-
-- You take a photo, an AI wants to use it for training — the AI must pay, you earn automatically
-- You build a translation API — other agents call it, you earn per invocation, quality backed by staked collateral
-- Pricing is automatic (bonding curves), settlement is trustless (escrow), disputes are decentralized (jury voting)
+When agents vastly outnumber humans, transact far more frequently, and deal in amounts far smaller than humans do, Stripe's model breaks down. The agent economy needs native infrastructure.
 
 ---
 
-## Modules
+## Why Not Stripe?
 
-| Module | Purpose |
-|--------|---------|
-| **x/datarights** | Register data assets, buy/sell shares (Bancor curve), file disputes, jury voting, access level gating |
-| **x/settlement** | Escrow lifecycle, bonding curve pricing, 2% token burn, fee distribution |
-| **x/capability** | Register AI capabilities (endpoints), invoke via escrow-backed settlement |
-| **x/reputation** | Feedback-based scoring with time decay, leaderboard |
+| Dimension | Stripe / Traditional | Oasyce / Agent-Native |
+|-----------|---------------------|----------------------|
+| **Identity** | Human KYC required | Agents self-register via PoW |
+| **Min transaction** | ~$0.50 (fee floor) | 0.000001 OAS (gas only) |
+| **Settlement** | T+2 days | ~5 seconds (1 block) |
+| **Programmability** | Webhooks + API | On-chain escrow + programmable logic |
+| **Dispute resolution** | Human support, 30 days | On-chain jury voting, deterministic |
+| **Permission** | Platform can freeze accounts | Permissionless, censorship-resistant |
+| **Micropayments** | Not viable | Native support |
 
-### Key Features
+---
 
-- **Bancor Bonding Curve** — Automatic pricing: `tokens = supply * (sqrt(1 + payment/reserve) - 1)`. More buyers = higher price. No order book needed.
-- **Sell Mechanism** — Sell shares back to the curve: `payout = reserve * (1 - (1 - tokens/supply)^2)`. 95% reserve solvency cap.
-- **2% Token Burn** — Every escrow release burns 2% of the amount (93% provider, 5% protocol fee, 2% burn). Deflationary by design.
-- **Access Level Gating** — Hold equity to unlock tiered access: >=0.1% -> L0, >=1% -> L1, >=5% -> L2, >=10% -> L3. Capped by reputation.
-- **Jury Voting** — Disputes resolved by deterministic jury selection (`sha256(disputeID + nodeID) * log(1 + reputation)`), 2/3 majority threshold.
-- **Escrow Settlement** — Lock funds before execution, release after quality verification. Automatic expiry and refund.
+## Seven Modules
+
+| Module | Purpose | TX | Queries |
+|--------|---------|-----|---------|
+| **x/settlement** | Escrow settlement, Bancor bonding curve pricing, 2% deflationary burn | 3 | 3 |
+| **x/capability** | AI capability marketplace — register endpoints, invoke, auto-settle | 4 | 4 |
+| **x/datarights** | Data asset registration, share trading, tiered access, jury disputes, version migration | 11 | 8 |
+| **x/reputation** | Time-decaying trust scores (30-day half-life), leaderboard | 2 | 3 |
+| **x/work** | Proof of Useful Work — task distribution, commit-reveal verification, settlement | 6 | 8 |
+| **x/onboarding** | PoW self-registration (no KYC), airdrop halving economics | 2 | 3 |
+
+**Total**: 28 transaction types, 29 query endpoints, 57 CLI commands.
 
 ---
 
@@ -52,75 +51,142 @@ Today's AI uses your data for free. Oasyce changes that:
 ```bash
 git clone https://github.com/Shangri-la-0428/oasyce-chain.git
 cd oasyce-chain
-make build
+CGO_ENABLED=0 make build
 ```
 
-### Run a Local Node
+### Run 4-Validator Local Testnet
 
 ```bash
-./scripts/init_testnet.sh
-./scripts/start_testnet.sh
+bash scripts/init_multi_testnet.sh
+bash scripts/start_testnet.sh
 ```
 
-The node exposes:
-- **RPC**: `localhost:26657`
-- **REST API**: `localhost:1317`
-- **gRPC**: `localhost:9090`
+Port allocation:
+
+| Node | P2P | RPC | REST API | gRPC |
+|------|-----|-----|----------|------|
+| node0 | 26656 | 26657 | 1317 | 9090 |
+| node1 | 26756 | 26757 | 1417 | 9190 |
+| node2 | 26856 | 26857 | 1517 | 9290 |
+| node3 | 26956 | 26957 | 1617 | 9390 |
 
 ### Run Tests
 
 ```bash
-make test
+make test   # 50+ tests across 7 suites
 ```
 
-### Docker (4-Node Testnet)
+---
+
+## For Agent Developers
+
+### REST API (recommended)
+
+```python
+import requests
+
+BASE = "http://localhost:1317"
+
+# List all AI capabilities
+caps = requests.get(f"{BASE}/oasyce/capability/v1/capabilities").json()
+
+# Check account balance
+bal = requests.get(f"{BASE}/cosmos/bank/v1beta1/balances/{address}").json()
+
+# Query a data asset
+asset = requests.get(f"{BASE}/oasyce/datarights/v1/data_asset/{asset_id}").json()
+
+# Check reputation
+rep = requests.get(f"{BASE}/oasyce/reputation/v1/reputation/{address}").json()
+```
+
+### CLI + JSON (for AI agent integration)
 
 ```bash
-make docker-build
-docker-compose up
+# All commands support --output json
+oasyced query settlement escrow ESC001 --output json
+oasyced query oasyce_capability list --output json
+oasyced query datarights asset DATA_001 --output json
 ```
+
+### gRPC (high performance)
+
+```
+localhost:9090
+```
+
+Full API reference: [llms.txt](llms.txt) | OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml)
 
 ---
 
 ## CLI Examples
 
 ```bash
-# Register a data asset
-oasyced tx datarights register \
-  --name "Medical Imaging Dataset" \
-  --content-hash "abc123..." \
-  --rights-type 1 \
-  --tags "medical,imaging" \
-  --from alice
+# === Agent Registration (PoW self-register, no KYC) ===
+oasyced tx onboarding register [nonce] --from agent1
 
-# Buy shares of a data asset
-oasyced tx datarights buy-shares \
-  --asset-id DATA_xxxx \
-  --amount 1000000uoas \
-  --from bob
-
-# Sell shares (inverse Bancor curve)
-oasyced tx datarights sell-shares \
-  --asset-id DATA_xxxx \
-  --shares 100 \
-  --from bob
-
-# Create an escrow
-oasyced tx settlement create-escrow \
-  --provider cosmos1xxx \
-  --amount 1000000uoas \
-  --from alice
-
-# Register an AI capability
+# === Register AI Capability ===
 oasyced tx oasyce_capability register \
   --name "Translation API" \
   --endpoint "https://api.example.com/translate" \
   --price 500000uoas \
+  --tags "nlp,translation" \
   --from provider
 
-# Query reputation
-oasyced query reputation show cosmos1xxx
+# === Invoke Capability (auto escrow + settlement) ===
+oasyced tx oasyce_capability invoke [cap-id] '{"text":"hello","target":"zh"}' --from consumer
+
+# === Register Data Asset ===
+oasyced tx datarights register \
+  --name "Medical Imaging Dataset" \
+  --content-hash "abc123..." \
+  --tags "medical,imaging" \
+  --from alice
+
+# === Buy Data Shares (Bancor curve pricing) ===
+oasyced tx datarights buy-shares [asset-id] 1000000uoas --from bob
+
+# === Sell Shares (inverse curve, 3% protocol fee) ===
+oasyced tx datarights sell-shares [asset-id] 100 --from bob
+
+# === Submit Compute Task ===
+oasyced tx work submit-task \
+  --task-type "data-cleaning" \
+  --input-hash [sha256] \
+  --bounty 1000uoas \
+  --from submitter
+
+# === Query Reputation ===
+oasyced query reputation show [address]
+oasyced query reputation leaderboard
 ```
+
+---
+
+## Protocol Economics
+
+| Parameter | Value |
+|-----------|-------|
+| Token | OAS (1 OAS = 1,000,000 uoas) |
+| Bonding Curve | Bancor, CW = 0.5 |
+| Escrow Release Fee Split | 93% provider, 3% validators, 2% burn, 2% treasury |
+| Sell Protocol Fee | 3% |
+| Reserve Solvency Cap | 95% max payout on sell |
+| Block Rewards | 4→2→1→0.5 OAS/block halving (every 10M blocks) |
+| Block Time | ~5 seconds |
+| Max Validators | 100 |
+| Unbonding Period | 21 days |
+| Jury Size | 5 jurors per dispute |
+| Jury Threshold | 2/3 majority |
+
+### Airdrop Halving Economics
+
+| Registrations | Airdrop | PoW Difficulty |
+|---------------|---------|----------------|
+| 0 – 10,000 | 20 OAS | 16 bits |
+| 10,001 – 50,000 | 10 OAS | 18 bits |
+| 50,001 – 200,000 | 5 OAS | 20 bits |
+| 200,001+ | 2.5 OAS | 22 bits |
 
 ---
 
@@ -131,17 +197,13 @@ oasyced query reputation show cosmos1xxx
                     |      oasyce-chain (Go)    |
                     |    Cosmos SDK v0.50.10    |
                     |   CometBFT Consensus     |
-                    |   -----------------------|
-                    |   x/datarights            |
-                    |   x/settlement            |
-                    |   x/capability            |
-                    |   x/reputation            |
+                    |   7 custom modules        |
                     |   gRPC :9090 / REST :1317 |
                     +-------------+-------------+
                                   |
                     +-------------v-------------+
                     |   oasyce (Python CLI)     |
-                    |   Thin client + Dashboard |
+                    |   Agent client + Dashboard|
                     |   pip install oasyce      |
                     +-------------+-------------+
                                   |
@@ -157,72 +219,32 @@ oasyced query reputation show cosmos1xxx
 
 | Component | Role | Install |
 |-----------|------|---------|
-| [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | L1 consensus, state, settlement | `make build` |
-| [oasyce](https://github.com/Shangri-la-0428/Oasyce_Claw_Plugin_Engine) | Python thin client, CLI, Dashboard | `pip install oasyce` |
-| [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI agent skill for data asset management | `pip install odv[oasyce]` |
+| [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | L1 settlement chain | `make build` |
+| [oasyce](https://github.com/Shangri-la-0428/Oasyce_Claw_Plugin_Engine) | Python agent client + CLI + Dashboard | `pip install oasyce` |
+| [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI agent data asset management skill | `pip install odv[oasyce]` |
 
 ---
 
-## Protocol Economics
+## Core Mechanisms
 
-| Parameter | Value |
-|-----------|-------|
-| Token | OAS (uoas = 10^-6 OAS) |
-| Bonding Curve | Bancor, CW = 0.5 |
-| Bootstrap Price | 1 uoas per token |
-| Protocol Fee | 5% on escrow release |
-| Burn Rate | 2% on escrow release |
-| Reserve Solvency Cap | 95% max payout on sell |
-| Jury Size | 5 jurors per dispute |
-| Jury Threshold | 2/3 majority to uphold |
-
----
-
-## Current Progress
-
-### Phase A: Core Chain — Complete
-
-- 4 custom modules fully implemented (datarights, settlement, capability, reputation)
-- 16 protobuf files migrated, gRPC + REST fully operational
-- Bancor bonding curve + 2% burn + sell mechanism + access gating + jury voting
-- All CLI commands (tx + query)
-- E2E verification passing
-- CI/CD, Docker 4-node testnet, GitHub infrastructure
-
-### Phase B: Production Readiness (In Progress)
-
-- IBC cross-chain integration
-- Governance module
-- Mainnet genesis configuration
-- Security audit
-- Swagger API documentation
-- Validator incentive program
-- Public testnet launch
-
-### Phase C: Proof of Useful Work ✅
-
-- x/work module: AI compute task submission + redundant execution + majority consensus settlement
-- Commit-reveal anti-copy scheme, deterministic executor assignment, reputation-weighted
-- Economics: 90% executor / 5% protocol / 2% burn / 3% submitter rebate
-- 6 tx commands + 8 query commands, 13 unit tests
-
-### Phase D: Ecosystem Growth (Planned)
-
-- Cross-chain data rights, privacy-preserving compute, mobile wallet, multi-language SDK
-
-### Phase E: Decentralized AI Marketplace (Long-term)
-
-- Agent auto-discovery, federated learning, data DAOs, revenue sharing
+- **Bancor Bonding Curve** — `tokens = supply * (sqrt(1 + payment/reserve) - 1)`. More buyers = higher price. No order book
+- **Inverse Curve Sell** — `payout = reserve * (1 - (1 - tokens/supply)^2)`, 95% reserve cap
+- **2% Deflationary Burn** — Every escrow release burns 2%
+- **Access Level Gating** — >=0.1% equity -> L0, >=1% -> L1, >=5% -> L2, >=10% -> L3
+- **Jury Voting** — `sha256(disputeID + nodeID) * log(1 + reputation)`, 5 jurors, 2/3 majority
+- **Commit-Reveal PoUW** — `sha256(output_hash + salt + executor + unavailable)` anti-copying
+- **Deterministic Task Assignment** — `sha256(taskID + blockHash + addr) / log(1 + reputation)`
+- **PoW Self-Registration** — `sha256(address || nonce)` with N leading zero bits, no KYC, anti-Sybil
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and PR process.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting. Do NOT open public issues for security vulnerabilities.
+See [SECURITY.md](SECURITY.md). Do NOT open public issues for security vulnerabilities.
 
 ## License
 

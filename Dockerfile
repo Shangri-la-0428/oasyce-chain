@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -ldflags "-X github.com/cosmos/cosmos-sdk/version.Name=oasyce \
+RUN CGO_ENABLED=0 go build -ldflags "-X github.com/cosmos/cosmos-sdk/version.Name=oasyce \
     -X github.com/cosmos/cosmos-sdk/version.AppName=oasyced" \
     -o /app/build/oasyced ./cmd/oasyced
 

@@ -1,0 +1,541 @@
+openapi: 3.0.3
+info:
+  title: Oasyce Chain API
+  description: |
+    Agent-Native Settlement Infrastructure — Where agents pay agents.
+
+    Oasyce is an L1 blockchain for AI agent-to-agent transactions.
+    This API provides REST endpoints for all 6 custom modules plus standard Cosmos SDK endpoints.
+
+    Base URL: `http://localhost:1317`
+  version: 0.1.0
+  contact:
+    url: https://github.com/Shangri-la-0428/oasyce-chain
+  license:
+    name: Apache 2.0
+
+servers:
+  - url: http://localhost:1317
+    description: Local testnet
+
+tags:
+  - name: capability
+    description: AI capability marketplace — register, discover, invoke agent services
+  - name: settlement
+    description: Escrow-based payment settlement
+  - name: datarights
+    description: Tokenized data assets with bonding curve pricing
+  - name: reputation
+    description: Time-decaying trust scores
+  - name: work
+    description: Proof of Useful Work — distributed compute tasks
+  - name: onboarding
+    description: Permissionless PoW self-registration
+  - name: bank
+    description: Token balances and transfers (Cosmos SDK)
+
+paths:
+  # ===== CAPABILITY =====
+  /oasyce/capability/v1/capabilities:
+    get:
+      tags: [capability]
+      summary: List all registered AI capabilities
+      description: Returns all capabilities. Filter by tags using query parameter.
+      parameters:
+        - name: tags
+          in: query
+          schema:
+            type: string
+          description: Comma-separated tags to filter by
+      responses:
+        '200':
+          description: List of capabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  capabilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Capability'
+
+  /oasyce/capability/v1/capability/{capability_id}:
+    get:
+      tags: [capability]
+      summary: Get capability by ID
+      parameters:
+        - name: capability_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Capability details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capability'
+
+  /oasyce/capability/v1/capabilities/provider/{provider}:
+    get:
+      tags: [capability]
+      summary: Get capabilities by provider address
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider's capabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  capabilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Capability'
+
+  /oasyce/capability/v1/earnings/{provider}:
+    get:
+      tags: [capability]
+      summary: Get provider earnings and call count
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Earnings summary
+
+  # ===== SETTLEMENT =====
+  /oasyce/settlement/v1/escrow/{escrow_id}:
+    get:
+      tags: [settlement]
+      summary: Get escrow by ID
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Escrow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Escrow'
+
+  /oasyce/settlement/v1/escrows/{creator}:
+    get:
+      tags: [settlement]
+      summary: Get all escrows by creator
+      parameters:
+        - name: creator
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Creator's escrows
+
+  /oasyce/settlement/v1/bonding_curve/{asset_id}:
+    get:
+      tags: [settlement]
+      summary: Get bonding curve state for data asset
+      description: Returns current price, supply, and reserve for a data asset's bonding curve.
+      parameters:
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bonding curve state
+
+  # ===== DATARIGHTS =====
+  /oasyce/datarights/v1/data_asset/{asset_id}:
+    get:
+      tags: [datarights]
+      summary: Get data asset by ID
+      parameters:
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data asset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataAsset'
+
+  /oasyce/datarights/v1/data_assets:
+    get:
+      tags: [datarights]
+      summary: List all data assets
+      parameters:
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: owner
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of data assets
+
+  /oasyce/datarights/v1/shares/{asset_id}:
+    get:
+      tags: [datarights]
+      summary: Get shareholders of a data asset
+      parameters:
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shareholder list with amounts
+
+  /oasyce/datarights/v1/dispute/{dispute_id}:
+    get:
+      tags: [datarights]
+      summary: Get dispute by ID
+      parameters:
+        - name: dispute_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dispute details
+
+  /oasyce/datarights/v1/disputes:
+    get:
+      tags: [datarights]
+      summary: List disputes
+      parameters:
+        - name: asset_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of disputes
+
+  /oasyce/datarights/v1/migration_path/{source_asset_id}/{target_asset_id}:
+    get:
+      tags: [datarights]
+      summary: Get migration path between asset versions
+      parameters:
+        - name: source_asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: target_asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Migration path details
+
+  /oasyce/datarights/v1/asset_children/{parent_asset_id}:
+    get:
+      tags: [datarights]
+      summary: Get all versioned children of an asset
+      parameters:
+        - name: parent_asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Child assets
+
+  # ===== REPUTATION =====
+  /oasyce/reputation/v1/reputation/{address}:
+    get:
+      tags: [reputation]
+      summary: Get reputation score for address
+      description: Returns current reputation score (0-500 scale, time-decaying with 30-day half-life).
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reputation score
+
+  /oasyce/reputation/v1/leaderboard:
+    get:
+      tags: [reputation]
+      summary: Get top-rated providers
+      responses:
+        '200':
+          description: Leaderboard entries
+
+  /oasyce/reputation/v1/feedback/{invocation_id}:
+    get:
+      tags: [reputation]
+      summary: Get feedback for a specific invocation
+      parameters:
+        - name: invocation_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Feedback details
+
+  # ===== WORK =====
+  /oasyce/work/v1/task/{task_id}:
+    get:
+      tags: [work]
+      summary: Get task by ID
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task details
+
+  /oasyce/work/v1/tasks/status/{status}:
+    get:
+      tags: [work]
+      summary: Get tasks by status
+      description: |
+        Status codes: 1=SUBMITTED, 2=ASSIGNED, 3=COMMITTED, 4=REVEALING, 5=SETTLED, 6=EXPIRED, 7=DISPUTED
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: integer
+            enum: [1, 2, 3, 4, 5, 6, 7]
+      responses:
+        '200':
+          description: Tasks with given status
+
+  /oasyce/work/v1/executor/{address}:
+    get:
+      tags: [work]
+      summary: Get executor profile
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Executor profile
+
+  /oasyce/work/v1/executors:
+    get:
+      tags: [work]
+      summary: List all executors
+      responses:
+        '200':
+          description: Executor list
+
+  /oasyce/work/v1/params:
+    get:
+      tags: [work]
+      summary: Get work module parameters
+      responses:
+        '200':
+          description: Module parameters
+
+  # ===== ONBOARDING =====
+  /oasyce/onboarding/v1/registration/{address}:
+    get:
+      tags: [onboarding]
+      summary: Get registration status for address
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registration details
+
+  /oasyce/onboarding/v1/debt/{address}:
+    get:
+      tags: [onboarding]
+      summary: Get outstanding airdrop debt
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Debt details
+
+  /oasyce/onboarding/v1/params:
+    get:
+      tags: [onboarding]
+      summary: Get onboarding parameters (difficulty, airdrop amount)
+      responses:
+        '200':
+          description: Module parameters
+
+  # ===== COSMOS SDK STANDARD =====
+  /cosmos/bank/v1beta1/balances/{address}:
+    get:
+      tags: [bank]
+      summary: Get token balances for address
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account balances
+          content:
+            application/json:
+              example:
+                balances:
+                  - denom: uoas
+                    amount: "100000000"
+
+  /cosmos/auth/v1beta1/accounts/{address}:
+    get:
+      tags: [bank]
+      summary: Get account info
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account details
+
+  /cosmos/base/tendermint/v1beta1/blocks/latest:
+    get:
+      tags: [bank]
+      summary: Get latest block
+      responses:
+        '200':
+          description: Latest block info
+
+components:
+  schemas:
+    Capability:
+      type: object
+      properties:
+        capability_id:
+          type: string
+          example: "CAP_abc123"
+        name:
+          type: string
+          example: "GPT-4 Summarizer"
+        provider:
+          type: string
+          example: "oasyce1abc..."
+        endpoint_url:
+          type: string
+          example: "https://api.example.com/summarize"
+        price_per_call:
+          type: object
+          properties:
+            denom:
+              type: string
+              example: "uoas"
+            amount:
+              type: string
+              example: "100"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["nlp", "summarization"]
+        total_calls:
+          type: string
+          example: "42"
+        active:
+          type: boolean
+
+    Escrow:
+      type: object
+      properties:
+        escrow_id:
+          type: string
+        creator:
+          type: string
+        provider:
+          type: string
+        amount:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+        status:
+          type: string
+          enum: [LOCKED, RELEASED, REFUNDED, EXPIRED]
+
+    DataAsset:
+      type: object
+      properties:
+        asset_id:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+        content_hash:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        total_shares:
+          type: string
+        reserve:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+        status:
+          type: string
+          enum: [ACTIVE, SHUTTING_DOWN, SETTLED]
+        version:
+          type: integer

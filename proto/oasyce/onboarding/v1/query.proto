@@ -1,0 +1,57 @@
+syntax = "proto3";
+package oasyce.onboarding.v1;
+
+option go_package = "github.com/oasyce/chain/x/onboarding/types";
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/onboarding/v1/types.proto";
+import "oasyce/onboarding/v1/genesis.proto";
+
+// Query defines the onboarding module's gRPC query service.
+service Query {
+  // Registration queries a registration by address.
+  rpc Registration(QueryRegistrationRequest) returns (QueryRegistrationResponse) {
+    option (google.api.http).get =
+        "/oasyce/onboarding/v1/registration/{address}";
+  }
+
+  // Debt queries outstanding debt for an address.
+  rpc Debt(QueryDebtRequest) returns (QueryDebtResponse) {
+    option (google.api.http).get =
+        "/oasyce/onboarding/v1/debt/{address}";
+  }
+
+  // OnboardingParams queries the module parameters.
+  rpc OnboardingParams(QueryOnboardingParamsRequest) returns (QueryOnboardingParamsResponse) {
+    option (google.api.http).get = "/oasyce/onboarding/v1/params";
+  }
+}
+
+// QueryRegistrationRequest is the request for Query/Registration.
+message QueryRegistrationRequest {
+  string address = 1;
+}
+
+// QueryRegistrationResponse is the response for Query/Registration.
+message QueryRegistrationResponse {
+  Registration registration = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryDebtRequest is the request for Query/Debt.
+message QueryDebtRequest {
+  string address = 1;
+}
+
+// QueryDebtResponse is the response for Query/Debt.
+message QueryDebtResponse {
+  Registration registration = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOnboardingParamsRequest is the request for Query/OnboardingParams.
+message QueryOnboardingParamsRequest {}
+
+// QueryOnboardingParamsResponse is the response for Query/OnboardingParams.
+message QueryOnboardingParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}

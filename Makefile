@@ -15,15 +15,15 @@ all: build
 
 build:
 	@echo "Building $(BINARY)..."
-	@go build -ldflags '$(LDFLAGS)' -o $(BUILD_DIR)/$(BINARY) ./cmd/oasyced
+	@CGO_ENABLED=0 go build -ldflags '$(LDFLAGS)' -o $(BUILD_DIR)/$(BINARY) ./cmd/oasyced
 
 install:
 	@echo "Installing $(BINARY)..."
-	@go install -ldflags '$(LDFLAGS)' ./cmd/oasyced
+	@CGO_ENABLED=0 go install -ldflags '$(LDFLAGS)' ./cmd/oasyced
 
 test:
 	@echo "Running tests..."
-	@go test ./... -v
+	@CGO_ENABLED=0 go test ./... -v
 
 lint:
 	@echo "Running linter..."

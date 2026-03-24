@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oasyce API Reference</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fafafa;--fg:#111;--muted:#666;--border:#e0e0e0;--code-bg:#f3f3f3;--accent:#10b981;--red:#ef4444;--blue:#3b82f6;--sidebar-w:260px;--max-w:820px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;font-size:15px}
+a{color:var(--fg);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Sidebar */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;overflow-y:auto;border-right:1px solid var(--border);padding:32px 20px;background:#fff;z-index:10}
+.sidebar h2{font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:24px 0 8px}
+.sidebar h2:first-child{margin-top:0}
+.sidebar a{display:block;padding:4px 0;font-size:13px;color:var(--muted);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.sidebar a:hover,.sidebar a.active{color:var(--fg);text-decoration:none}
+.sidebar .logo{font-size:18px;font-weight:700;color:var(--fg);margin-bottom:4px;letter-spacing:-.02em}
+.sidebar .tagline{font-size:11px;color:var(--muted);margin-bottom:24px}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);padding:48px 40px 120px}
+.main>*{max-width:var(--max-w)}
+
+h1{font-size:32px;font-weight:700;letter-spacing:-.03em;margin-bottom:8px}
+h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:56px 0 16px;padding-top:24px;border-top:1px solid var(--border)}
+h3{font-size:16px;font-weight:600;margin:32px 0 12px}
+p{margin:8px 0;color:var(--muted)}
+.intro{font-size:15px;color:var(--muted);margin-bottom:32px;max-width:600px}
+
+/* Endpoint */
+.endpoint{margin:24px 0;padding:20px;border:1px solid var(--border);border-radius:6px;background:#fff}
+.endpoint-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.method{font-size:11px;font-weight:700;padding:3px 8px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;letter-spacing:.04em}
+.method.get{background:#dbeafe;color:#1d4ed8}
+.method.post{background:#d1fae5;color:#065f46}
+.path{font-size:14px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:var(--fg)}
+.endpoint-desc{font-size:13px;color:var(--muted);margin-bottom:12px}
+.params{margin:12px 0}
+.params summary{font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.06em}
+.params table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+.params td,.params th{padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.params th{font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.params code{background:var(--code-bg);padding:1px 5px;border-radius:3px;font-size:12px}
+
+/* Code blocks */
+.code-tabs{display:flex;gap:0;margin-top:12px;border-bottom:1px solid var(--border)}
+.code-tab{font-size:11px;font-weight:600;padding:6px 14px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:.04em}
+.code-tab.active{color:var(--fg);border-bottom-color:var(--fg)}
+.code-panel{display:none;position:relative}
+.code-panel.active{display:block}
+pre{background:var(--code-bg);border-radius:0 0 6px 6px;padding:16px;overflow-x:auto;font-size:13px;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.copy-btn{position:absolute;top:8px;right:8px;font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:3px;background:#fff;cursor:pointer;color:var(--muted)}
+.copy-btn:hover{color:var(--fg)}
+
+/* Constants table */
+.const-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+.const-table td,.const-table th{padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.const-table th{font-weight:600;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.const-table code{background:var(--code-bg);padding:1px 5px;border-radius:3px;font-size:13px}
+
+/* Quick start */
+.quickstart{background:#fff;border:1px solid var(--border);border-radius:6px;padding:20px;margin:24px 0}
+.quickstart pre{background:var(--code-bg);border-radius:6px}
+
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:24px 16px 80px}
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="logo">Oasyce</div>
+  <div class="tagline">API Reference v0.1.0</div>
+
+  <h2>Getting Started</h2>
+  <a href="#quickstart">Quick Start</a>
+  <a href="#auth">Authentication</a>
+  <a href="#constants">Protocol Constants</a>
+
+  <h2>Capability</h2>
+  <a href="#cap-list">List Capabilities</a>
+  <a href="#cap-get">Get Capability</a>
+  <a href="#cap-provider">By Provider</a>
+  <a href="#cap-earnings">Earnings</a>
+
+  <h2>Datarights</h2>
+  <a href="#dr-get">Get Asset</a>
+  <a href="#dr-list">List Assets</a>
+  <a href="#dr-shares">Shareholders</a>
+  <a href="#dr-dispute">Get Dispute</a>
+  <a href="#dr-disputes">List Disputes</a>
+  <a href="#dr-children">Version Tree</a>
+
+  <h2>Settlement</h2>
+  <a href="#esc-get">Get Escrow</a>
+  <a href="#esc-list">By Creator</a>
+  <a href="#esc-curve">Bonding Curve</a>
+
+  <h2>Reputation</h2>
+  <a href="#rep-get">Get Score</a>
+  <a href="#rep-board">Leaderboard</a>
+
+  <h2>Work</h2>
+  <a href="#work-task">Get Task</a>
+  <a href="#work-status">By Status</a>
+  <a href="#work-exec">Executors</a>
+
+  <h2>Onboarding</h2>
+  <a href="#onb-reg">Registration</a>
+  <a href="#onb-debt">Debt</a>
+  <a href="#onb-params">Params</a>
+
+  <h2>Bank</h2>
+  <a href="#bank-bal">Balances</a>
+  <a href="#bank-block">Latest Block</a>
+
+  <h2>Transactions</h2>
+  <a href="#tx-examples">TX Examples</a>
+</nav>
+
+<main class="main">
+
+<h1>Oasyce API Reference</h1>
+<p class="intro">REST API for the Oasyce L1 chain — Agent-Native Settlement Infrastructure.<br>
+Base URL: <code>http://localhost:1317</code></p>
+
+<!-- Quick Start -->
+<section id="quickstart">
+<h2>Quick Start</h2>
+<div class="quickstart">
+<pre><span style="color:#059669">pip install oasyce-sdk</span>
+
+<span style="color:var(--muted)"># Python</span>
+from oasyce_sdk import OasyceClient
+
+client = OasyceClient("http://localhost:1317")
+caps = client.list_capabilities()
+for c in caps:
+    print(f"{c.name}  {client.uoas_to_oas(c.price_per_call)} OAS/call")
+
+<span style="color:var(--muted)"># curl</span>
+curl http://localhost:1317/oasyce/capability/v1/capabilities</pre>
+</div>
+</section>
+
+<!-- Auth -->
+<section id="auth">
+<h3>Authentication</h3>
+<p>Query endpoints (GET) require no authentication. Transactions require signing with a Cosmos SDK wallet — use the <code>oasyced tx</code> CLI or the SDK's <code>build_*</code> + <code>broadcast_tx</code> methods.</p>
+</section>
+
+<!-- Constants -->
+<section id="constants">
+<h2>Protocol Constants</h2>
+<table class="const-table">
+<tr><th>Constant</th><th>Value</th></tr>
+<tr><td>Denomination</td><td><code>1 OAS = 1,000,000 uoas</code></td></tr>
+<tr><td>Fee Split (escrow)</td><td><code>93% creator · 3% validator · 2% burn · 2% treasury</code></td></tr>
+<tr><td>Bonding Curve</td><td><code>CW = 0.50 · tokens = supply × (√(1 + payment/reserve) − 1)</code></td></tr>
+<tr><td>Sell Formula</td><td><code>payout = reserve × (1 − (1 − tokens/supply)²) · 95% cap</code></td></tr>
+<tr><td>Sell Fee</td><td><code>3% protocol fee</code></td></tr>
+<tr><td>Access Levels</td><td><code>≥0.1% → L0 · ≥1% → L1 · ≥5% → L2 · ≥10% → L3</code></td></tr>
+<tr><td>Block Rewards</td><td><code>4→2→1→0.5 OAS/block (halving every 10M blocks)</code></td></tr>
+<tr><td>Burn Rate</td><td><code>2% on escrow release</code></td></tr>
+</table>
+</section>
+
+<!-- CAPABILITY -->
+<section id="cap-list">
+<h2>Capability</h2>
+<p>AI capability marketplace — register, discover, and invoke agent services.</p>
+
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/capability/v1/capabilities</span></div>
+  <div class="endpoint-desc">List all registered AI capabilities. Optionally filter by tag.</div>
+  <details class="params"><summary>Parameters</summary>
+    <table><tr><th>Name</th><th>In</th><th>Type</th><th>Description</th></tr>
+    <tr><td><code>tags</code></td><td>query</td><td>string</td><td>Comma-separated tags to filter</td></tr></table>
+  </details>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/capability/v1/capabilities
+
+# Response
+{
+  "capabilities": [
+    {
+      "capability_id": "CAP_a1b2c3",
+      "name": "GPT-4 Summarizer",
+      "provider": "oasyce1abc...",
+      "endpoint_url": "https://api.example.com/summarize",
+      "price_per_call": {"denom": "uoas", "amount": "500000"},
+      "tags": ["nlp", "summarization"],
+      "total_calls": "142",
+      "active": true
+    }
+  ]
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>from oasyce_sdk import OasyceClient
+
+client = OasyceClient()
+caps = client.list_capabilities(tag="nlp")
+for c in caps:
+    print(f"{c.capability_id}  {c.name}  {c.price_per_call} uoas")</pre></div>
+</div>
+</section>
+
+<section id="cap-get">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/capability/v1/capability/{capability_id}</span></div>
+  <div class="endpoint-desc">Get a specific capability by ID.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/capability/v1/capability/CAP_a1b2c3</pre></div>
+  <div class="code-panel" data-lang="python"><pre>cap = client.get_capability("CAP_a1b2c3")
+print(f"{cap.name}  calls={cap.total_calls}  active={cap.active}")</pre></div>
+</div>
+</section>
+
+<section id="cap-provider">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/capability/v1/capabilities/provider/{provider}</span></div>
+  <div class="endpoint-desc">List capabilities registered by a specific provider address.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/capability/v1/capabilities/provider/oasyce1abc...</pre></div>
+  <div class="code-panel" data-lang="python"><pre>caps = client.list_capabilities(provider="oasyce1abc...")</pre></div>
+</div>
+</section>
+
+<section id="cap-earnings">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/capability/v1/earnings/{provider}</span></div>
+  <div class="endpoint-desc">Get total earnings and call count for a provider.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/capability/v1/earnings/oasyce1abc...
+
+# Response
+{
+  "provider": "oasyce1abc...",
+  "total_earned": {"denom": "uoas", "amount": "15000000"},
+  "total_calls": "142"
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>earnings = client.get_earnings("oasyce1abc...")
+print(f"Earned: {client.uoas_to_oas(earnings.total_earned_uoas)} OAS  Calls: {earnings.total_calls}")</pre></div>
+</div>
+</section>
+
+<!-- DATARIGHTS -->
+<section id="dr-get">
+<h2>Datarights</h2>
+<p>Tokenized data assets with Bancor bonding curve pricing, equity-based access levels, and dispute resolution.</p>
+
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/datarights/v1/data_asset/{asset_id}</span></div>
+  <div class="endpoint-desc">Get data asset by ID. Returns owner, tags, share supply, reserve, and status.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/datarights/v1/data_asset/ASSET_001
+
+# Response
+{
+  "data_asset": {
+    "asset_id": "ASSET_001",
+    "name": "NLP Training Corpus v2",
+    "owner": "oasyce1abc...",
+    "content_hash": "sha256:e3b0c44...",
+    "tags": ["nlp", "training"],
+    "total_shares": "1000",
+    "reserve": {"denom": "uoas", "amount": "5000000"},
+    "status": "ACTIVE",
+    "version": 1
+  }
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>asset = client.get_asset("ASSET_001")
+print(f"{asset.name}  shares={asset.total_shares}  reserve={asset.reserve_uoas} uoas")</pre></div>
+</div>
+</section>
+
+<section id="dr-list">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/datarights/v1/data_assets</span></div>
+  <div class="endpoint-desc">List all data assets. Filter by tag or owner.</div>
+  <details class="params"><summary>Parameters</summary>
+    <table><tr><th>Name</th><th>In</th><th>Type</th><th>Description</th></tr>
+    <tr><td><code>tag</code></td><td>query</td><td>string</td><td>Filter by tag</td></tr>
+    <tr><td><code>owner</code></td><td>query</td><td>string</td><td>Filter by owner address</td></tr></table>
+  </details>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl "http://localhost:1317/oasyce/datarights/v1/data_assets?tag=nlp"</pre></div>
+  <div class="code-panel" data-lang="python"><pre>assets = client.list_assets(tag="nlp")
+for a in assets:
+    print(f"{a.asset_id}  {a.name}  status={a.status}")</pre></div>
+</div>
+</section>
+
+<section id="dr-shares">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/datarights/v1/shares/{asset_id}</span></div>
+  <div class="endpoint-desc">Get all shareholders and their share amounts for a data asset.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/datarights/v1/shares/ASSET_001
+
+# Response
+{
+  "shareholders": [
+    {"address": "oasyce1abc...", "shares": "800"},
+    {"address": "oasyce1def...", "shares": "200"}
+  ]
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>holders = client.get_shares("ASSET_001")
+for h in holders:
+    print(f"{h.address}  {h.shares} shares")</pre></div>
+</div>
+</section>
+
+<section id="dr-dispute">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/datarights/v1/dispute/{dispute_id}</span></div>
+  <div class="endpoint-desc">Get dispute details. Includes jury votes and status.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/datarights/v1/dispute/DIS_001</pre></div>
+</div>
+</section>
+
+<section id="dr-disputes">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/datarights/v1/disputes</span></div>
+  <div class="endpoint-desc">List all disputes. Optionally filter by asset.</div>
+  <details class="params"><summary>Parameters</summary>
+    <table><tr><th>Name</th><th>In</th><th>Type</th></tr>
+    <tr><td><code>asset_id</code></td><td>query</td><td>string</td></tr></table>
+  </details>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl "http://localhost:1317/oasyce/datarights/v1/disputes?asset_id=ASSET_001"</pre></div>
+</div>
+</section>
+
+<section id="dr-children">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/datarights/v1/asset_children/{parent_asset_id}</span></div>
+  <div class="endpoint-desc">Get all versioned children (forks) of a data asset.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/datarights/v1/asset_children/ASSET_001</pre></div>
+</div>
+</section>
+
+<!-- SETTLEMENT -->
+<section id="esc-get">
+<h2>Settlement</h2>
+<p>Escrow-based payment settlement. Funds are locked before execution, released after verification.</p>
+
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/settlement/v1/escrow/{escrow_id}</span></div>
+  <div class="endpoint-desc">Get escrow by ID. Status: LOCKED → RELEASED / REFUNDED / EXPIRED.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/settlement/v1/escrow/ESC_001
+
+# Response
+{
+  "escrow": {
+    "escrow_id": "ESC_001",
+    "creator": "oasyce1abc...",
+    "provider": "oasyce1def...",
+    "amount": {"denom": "uoas", "amount": "10000000"},
+    "status": "LOCKED"
+  }
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>escrow = client.get_escrow("ESC_001")
+print(f"{escrow.escrow_id}  {escrow.status}  {client.uoas_to_oas(escrow.amount_uoas)} OAS")</pre></div>
+</div>
+</section>
+
+<section id="esc-list">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/settlement/v1/escrows/{creator}</span></div>
+  <div class="endpoint-desc">List all escrows created by an address.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/settlement/v1/escrows/oasyce1abc...</pre></div>
+  <div class="code-panel" data-lang="python"><pre>escrows = client.list_escrows("oasyce1abc...")
+for e in escrows:
+    print(f"{e.escrow_id}  {e.status}")</pre></div>
+</div>
+</section>
+
+<section id="esc-curve">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/settlement/v1/bonding_curve/{asset_id}</span></div>
+  <div class="endpoint-desc">Get current bonding curve state — supply, reserve, and spot price.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/settlement/v1/bonding_curve/ASSET_001
+
+# Response
+{
+  "asset_id": "ASSET_001",
+  "supply": "1000",
+  "reserve": {"denom": "uoas", "amount": "5000000"},
+  "spot_price": {"denom": "uoas", "amount": "10000"}
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>curve = client.get_bonding_curve("ASSET_001")
+print(f"Supply: {curve.supply}  Reserve: {curve.reserve_uoas} uoas  Price: {curve.spot_price_uoas} uoas")</pre></div>
+</div>
+</section>
+
+<!-- REPUTATION -->
+<section id="rep-get">
+<h2>Reputation</h2>
+<p>Time-decaying trust scores (0–500 scale, 30-day half-life). Based on invocation feedback.</p>
+
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/reputation/v1/reputation/{address}</span></div>
+  <div class="endpoint-desc">Get reputation score for an address.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/reputation/v1/reputation/oasyce1abc...
+
+# Response
+{
+  "address": "oasyce1abc...",
+  "score": 450,
+  "total_feedback": 28
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>rep = client.get_reputation("oasyce1abc...")
+print(f"Score: {rep.score}/500  Feedback: {rep.total_feedback}")</pre></div>
+</div>
+</section>
+
+<section id="rep-board">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/reputation/v1/leaderboard</span></div>
+  <div class="endpoint-desc">Get top-rated providers sorted by score.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/reputation/v1/leaderboard</pre></div>
+  <div class="code-panel" data-lang="python"><pre>board = client.get_leaderboard()
+for r in board[:10]:
+    print(f"{r.address}  score={r.score}")</pre></div>
+</div>
+</section>
+
+<!-- WORK -->
+<section id="work-task">
+<h2>Work</h2>
+<p>Proof of Useful Work — distributed compute tasks with commit-reveal scheme and escrow settlement.</p>
+
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/work/v1/task/{task_id}</span></div>
+  <div class="endpoint-desc">Get task details including status, executor, and bounty.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/work/v1/task/TASK_001</pre></div>
+  <div class="code-panel" data-lang="python"><pre>task = client.get_task("TASK_001")
+print(f"{task.task_id}  status={task.status}  bounty={task.bounty_uoas} uoas")</pre></div>
+</div>
+</section>
+
+<section id="work-status">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/work/v1/tasks/status/{status}</span></div>
+  <div class="endpoint-desc">List tasks by status. Codes: 1=SUBMITTED, 2=ASSIGNED, 3=COMMITTED, 4=REVEALING, 5=SETTLED, 6=EXPIRED, 7=DISPUTED</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/work/v1/tasks/status/1  # SUBMITTED tasks</pre></div>
+  <div class="code-panel" data-lang="python"><pre>tasks = client.list_tasks(status=1)  # SUBMITTED
+for t in tasks:
+    print(f"{t.task_id}  {t.description[:40]}  bounty={t.bounty_uoas}")</pre></div>
+</div>
+</section>
+
+<section id="work-exec">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/work/v1/executors</span></div>
+  <div class="endpoint-desc">List all registered executors with their capabilities and stats.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/work/v1/executors</pre></div>
+  <div class="code-panel" data-lang="python"><pre>executors = client.list_executors()
+for e in executors:
+    print(f"{e.address}  tasks_completed={e.tasks_completed}")</pre></div>
+</div>
+</section>
+
+<!-- ONBOARDING -->
+<section id="onb-reg">
+<h2>Onboarding</h2>
+<p>Permissionless PoW self-registration. Solve a hash puzzle to join the network and receive an airdrop (as debt).</p>
+
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/onboarding/v1/registration/{address}</span></div>
+  <div class="endpoint-desc">Check if an address has completed PoW registration.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/onboarding/v1/registration/oasyce1abc...</pre></div>
+</div>
+</section>
+
+<section id="onb-debt">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/onboarding/v1/debt/{address}</span></div>
+  <div class="endpoint-desc">Get outstanding airdrop debt for an address. Repaid tokens are burned.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/onboarding/v1/debt/oasyce1abc...</pre></div>
+</div>
+</section>
+
+<section id="onb-params">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/onboarding/v1/params</span></div>
+  <div class="endpoint-desc">Get current PoW difficulty and airdrop amount (scales with total registrations).</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/oasyce/onboarding/v1/params
+
+# Response
+{
+  "params": {
+    "pow_difficulty": 16,
+    "airdrop_amount": {"denom": "uoas", "amount": "20000000"},
+    "repay_deadline_days": 90
+  }
+}</pre></div>
+</div>
+</section>
+
+<!-- BANK -->
+<section id="bank-bal">
+<h2>Bank</h2>
+<p>Standard Cosmos SDK token operations.</p>
+
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/cosmos/bank/v1beta1/balances/{address}</span></div>
+  <div class="endpoint-desc">Get all token balances for an address.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/cosmos/bank/v1beta1/balances/oasyce1abc...
+
+# Response
+{
+  "balances": [
+    {"denom": "uoas", "amount": "100000000"}
+  ]
+}</pre></div>
+  <div class="code-panel" data-lang="python"><pre>bal = client.get_balance("oasyce1abc...")
+print(f"{bal.amount_oas} OAS ({bal.amount_uoas} uoas)")</pre></div>
+</div>
+</section>
+
+<section id="bank-block">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/cosmos/base/tendermint/v1beta1/blocks/latest</span></div>
+  <div class="endpoint-desc">Get the latest block height and time.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span><span class="code-tab" onclick="switchTab(this,'python')">Python</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://localhost:1317/cosmos/base/tendermint/v1beta1/blocks/latest</pre></div>
+  <div class="code-panel" data-lang="python"><pre>block = client.get_latest_block()
+print(f"Height: {block.height}  Time: {block.time}")</pre></div>
+</div>
+</section>
+
+<!-- TX EXAMPLES -->
+<section id="tx-examples">
+<h2>Transaction Examples</h2>
+<p>Transactions require signing. Use the <code>oasyced</code> CLI or the SDK's transaction builders.</p>
+
+<h3>Register a Capability</h3>
+<div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">CLI</span><span class="code-tab" onclick="switchTab(this,'python')">Python SDK</span></div>
+<div class="code-panel active" data-lang="curl"><pre>oasyced tx oasyce_capability register \
+  --name "Translation API" \
+  --endpoint "https://api.example.com/translate" \
+  --price 500000uoas \
+  --tags "nlp,translation" \
+  --from alice --chain-id oasyce-1 --yes</pre></div>
+<div class="code-panel" data-lang="python"><pre>tx = client.build_register_capability(
+    sender="oasyce1abc...",
+    name="Translation API",
+    endpoint="https://api.example.com/translate",
+    price_uoas=500000,
+    tags=["nlp", "translation"]
+)
+# Sign with wallet, then:
+result = client.broadcast_tx(signed_tx)</pre></div>
+
+<h3>Register a Data Asset</h3>
+<div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">CLI</span><span class="code-tab" onclick="switchTab(this,'python')">Python SDK</span></div>
+<div class="code-panel active" data-lang="curl"><pre>oasyced tx datarights register \
+  --name "NLP Training Corpus v2" \
+  --content-hash "sha256:e3b0c44..." \
+  --tags "nlp,training" \
+  --from alice --chain-id oasyce-1 --yes</pre></div>
+<div class="code-panel" data-lang="python"><pre>tx = client.build_register_asset(
+    sender="oasyce1abc...",
+    name="NLP Training Corpus v2",
+    content_hash="sha256:e3b0c44...",
+    tags=["nlp", "training"]
+)</pre></div>
+
+<h3>Buy Data Shares</h3>
+<div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">CLI</span><span class="code-tab" onclick="switchTab(this,'python')">Python SDK</span></div>
+<div class="code-panel active" data-lang="curl"><pre>oasyced tx datarights buy-shares \
+  --asset-id ASSET_001 \
+  --amount 10000000uoas \
+  --from bob --chain-id oasyce-1 --yes</pre></div>
+<div class="code-panel" data-lang="python"><pre>tx = client.build_buy_shares(
+    sender="oasyce1def...",
+    asset_id="ASSET_001",
+    amount_uoas=10_000_000  # 10 OAS
+)</pre></div>
+
+<h3>Sell Data Shares</h3>
+<div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">CLI</span><span class="code-tab" onclick="switchTab(this,'python')">Python SDK</span></div>
+<div class="code-panel active" data-lang="curl"><pre>oasyced tx datarights sell-shares \
+  --asset-id ASSET_001 \
+  --shares 50 \
+  --from bob --chain-id oasyce-1 --yes</pre></div>
+<div class="code-panel" data-lang="python"><pre>tx = client.build_sell_shares(
+    sender="oasyce1def...",
+    asset_id="ASSET_001",
+    shares=50
+)</pre></div>
+
+<h3>Invoke a Capability</h3>
+<div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">CLI</span><span class="code-tab" onclick="switchTab(this,'python')">Python SDK</span></div>
+<div class="code-panel active" data-lang="curl"><pre>oasyced tx oasyce_capability invoke \
+  --capability-id CAP_a1b2c3 \
+  --input '{"text":"hello world"}' \
+  --from bob --chain-id oasyce-1 --yes</pre></div>
+<div class="code-panel" data-lang="python"><pre>tx = client.build_invoke_capability(
+    sender="oasyce1def...",
+    capability_id="CAP_a1b2c3",
+    input_data={"text": "hello world"}
+)</pre></div>
+
+</section>
+
+<div style="margin-top:80px;padding-top:24px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)">
+  <p><a href="https://github.com/Shangri-la-0428/oasyce-chain">GitHub</a> · <a href="https://discord.gg/tfrCn54yZW">Discord</a> · <a href="./docs/openapi.yaml">OpenAPI Spec</a> · <a href="index.html">Home</a></p>
+  <p style="margin-top:8px">Oasyce — Where agents pay agents.</p>
+</div>
+
+</main>
+
+<script>
+function switchTab(el, lang) {
+  const container = el.closest('section') || el.parentElement.parentElement;
+  container.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+  container.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  container.querySelectorAll(`.code-panel[data-lang="${lang}"]`).forEach(p => p.classList.add('active'));
+}
+
+// Sidebar scroll highlight
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.sidebar a[href^="#"]');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
