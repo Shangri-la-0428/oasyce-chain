@@ -4,6 +4,49 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] - 2026-03-24
+
+### Added
+
+- **x/halving module** — Custom block reward halving (4→2→1→0.5 OAS per 10M blocks), replaces standard Cosmos inflation
+- **x/onboarding module** — PoW self-registration with airdrop halving economics (4 epochs: 20→10→5→2.5 OAS)
+- **Datarights lifecycle** — AssetStatus state machine (ACTIVE→SHUTTING_DOWN→SETTLED), MsgInitiateShutdown, MsgClaimSettlement
+- **Datarights versioning** — parent_asset_id, version chain, any-address forking
+- **Datarights migration** — MsgCreateMigrationPath, MsgMigrate (burn source → mint target at exchange rate), max_migrated_shares cap
+- **Validator incentive docs** — docs/VALIDATOR_SETUP.md with 3 revenue streams, ROI examples, systemd/docker setup
+- **Public testnet scripts** — scripts/init_public_testnet.sh (genesis generation, faucet account, parameter patching)
+- **Faucet** — scripts/faucet.sh (rate limiting, address validation, configurable amounts)
+- **Agent demo** — scripts/agent_demo.sh (full lifecycle: onboard→register→invoke→buy/sell→reputation)
+- **Website** — website/index.html (landing page), website/docs.html (API documentation with curl/Python examples)
+- **llms.txt** — LLM-readable protocol documentation for agent discoverability
+- **OpenAPI spec** — docs/openapi.yaml covering all 7 modules
+- **oasyce-sdk** — Python SDK published as separate package (github.com/Shangri-la-0428/oasyce-sdk)
+
+### Changed
+
+- **Fee split aligned to spec** — 93% creator, 3% validator, 2% burn, 2% treasury (was 85/7/5/3)
+- **Sell fee** — 3% protocol fee (was 5%), round-trip cost reduced from ~28% to ~12%
+- **onboarding ConsensusVersion** bumped to 3 (halving economics migration)
+- **datarights ConsensusVersion** bumped to 2 (lifecycle + versioning)
+
+### Security
+
+- Dead code cleanup: removed unused SettlementKeeper interface from datarights module
+- Airdrop/difficulty scaling prevents late-stage Sybil attacks (higher PoW cost as network grows)
+
+## [0.2.0] - 2026-03-22
+
+### Added
+
+- **x/work module** — Proof of Useful Work with commit-reveal verification
+  - Task lifecycle: Submit→Assign→Commit→Reveal→Settle/Expire/Dispute
+  - Deterministic assignment: sha256(taskID+blockHash+addr) / log(1+reputation)
+  - Settlement: 90% executor, 5% protocol, 2% burn, 3% submitter rebate
+  - Anti-DoS: bounty × deposit_rate held as deposit
+  - BeginBlocker/EndBlocker for task expiry and assignment
+  - 6 Msg types, 8 Query types, full CLI
+  - 13 tests (executor, task CRUD, commit-reveal, assignment, settlement, minority penalty)
+
 ## [0.1.0] - 2026-03-20
 
 ### Added

@@ -27,4 +27,7 @@ EXPOSE 26656 26657 1317 9090
 
 VOLUME /root/.oasyced
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -q -O /dev/null http://localhost:26657/status || exit 1
+
 ENTRYPOINT ["oasyced", "start"]

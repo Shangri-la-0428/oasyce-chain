@@ -2,6 +2,41 @@
 
 > Run an Oasyce Chain validator node — and earn from three revenue streams.
 
+## Public Testnet Quick Start
+
+| Parameter | Value |
+|-----------|-------|
+| Chain ID | `oasyce-testnet-1` |
+| Genesis | GitHub Release (see below) |
+| Min hardware | 4 CPU, 8 GB RAM, 100 GB SSD |
+| Seed node | Published in [Discord #announcements](https://discord.gg/tfrCn54yZW) |
+| Faucet | Discord bot or `scripts/faucet.sh` |
+
+```bash
+# 1. Build
+git clone https://github.com/Shangri-la-0428/oasyce-chain.git && cd oasyce-chain
+CGO_ENABLED=0 make build
+
+# 2. Init
+./build/oasyced init <your-moniker> --chain-id oasyce-testnet-1
+
+# 3. Genesis (verify SHA256 from Discord)
+curl -L -o ~/.oasyced/config/genesis.json \
+  https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json
+
+# 4. Configure peers (replace with actual seed node address from Discord)
+sed -i.bak 's/persistent_peers = ""/persistent_peers = "<node-id>@<seed-ip>:26656"/' \
+  ~/.oasyced/config/config.toml
+
+# 5. Enable API
+sed -i.bak 's/enable = false/enable = true/' ~/.oasyced/config/app.toml
+
+# 6. Start
+./build/oasyced start --minimum-gas-prices 0.025uoas
+```
+
+---
+
 ## Why Run an Oasyce Validator?
 
 Validators earn OAS from **three independent revenue streams**:
@@ -97,11 +132,15 @@ oasyced keys add validator --keyring-backend file
 
 ## Configure Genesis
 
-For **testnet**, download the shared genesis file:
+For **public testnet** (`oasyce-testnet-1`):
 
 ```bash
-# Replace with actual testnet genesis URL
-curl -o ~/.oasyced/config/genesis.json <genesis-url>
+# Download genesis (verify SHA256 checksum after download)
+curl -L -o ~/.oasyced/config/genesis.json \
+  https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json
+
+# Verify checksum (value published in Discord #announcements)
+sha256sum ~/.oasyced/config/genesis.json
 ```
 
 For **local development**, generate genesis:

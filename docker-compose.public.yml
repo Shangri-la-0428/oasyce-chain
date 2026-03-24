@@ -1,0 +1,46 @@
+# Public testnet single seed node configuration.
+#
+# Usage:
+#   1. Run init_public_testnet.sh to generate genesis + keys
+#   2. Copy node config to ./data/oasyced/
+#   3. docker-compose -f docker-compose.public.yml up -d
+#
+# Environment variables:
+#   CHAIN_ID          — Chain identifier (default: oasyce-testnet-1)
+#   MIN_GAS_PRICES    — Minimum gas price (default: 0.025uoas)
+#   EXTERNAL_ADDRESS  — Public IP:port for P2P (e.g., 1.2.3.4:26656)
+#   LOG_LEVEL         — Tendermint log level (default: info)
+
+version: "3.8"
+
+services:
+  oasyce-seed:
+    image: oasyce/chain:latest
+    container_name: oasyce-seed
+    ports:
+      - "26656:26656"   # P2P
+      - "26657:26657"   # RPC
+      - "1317:1317"     # REST API
+      - "9090:9090"     # gRPC
+      - "26660:26660"   # Prometheus
+    volumes:
+      - seed-data:/root/.oasyced
+    environment:
+      - CHAIN_ID=${CHAIN_ID:-oasyce-testnet-1}
+      - MIN_GAS_PRICES=${MIN_GAS_PRICES:-0.025uoas}
+    entrypoint: >
+      sh -c "oasyced start
+      --minimum-gas-prices $${MIN_GAS_PRICES}
+      --api.enable=true
+      --api.address=tcp://0.0.0.0:1317
+      --grpc.address=0.0.0.0:9090"
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+volumes:
+  seed-data:
+    driver: local
