@@ -33,6 +33,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
+	distcli "github.com/cosmos/cosmos-sdk/x/distribution/client/cli"
+	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
+	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
+
 	"github.com/oasyce/chain/app"
 	capabilitycli "github.com/oasyce/chain/x/capability/cli"
 	datarightscli "github.com/oasyce/chain/x/datarights/cli"
@@ -172,6 +176,9 @@ func initRootCmd(rootCmd *cobra.Command, txCfg client.TxConfig) {
 	// tx commands individually.
 	txCmd.AddCommand(
 		bankcli.NewSendTxCmd(addrCodec),
+		stakingcli.NewTxCmd(valCodec, addrCodec),
+		distcli.NewTxCmd(valCodec, addrCodec),
+		govcli.NewTxCmd(nil),
 		datarightscli.GetTxCmd(),
 		settlementcli.GetTxCmd(),
 		capabilitycli.GetTxCmd(),
