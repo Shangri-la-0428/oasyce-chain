@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -25,6 +27,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdSelfRegister(),
 		CmdRepayDebt(),
+		CmdUpdateParams(),
 	)
 	return cmd
 }
@@ -84,6 +87,42 @@ func CmdRepayDebt() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdUpdateParams creates a CLI command for governance-gated parameter update.
+func CmdUpdateParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-params [params-json-file]",
+		Short: "Update module parameters (governance only)",
+		Long:  "Submit a transaction to update onboarding module parameters. The params-json-file should contain the full Params JSON.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			bz, err := os.ReadFile(args[0])
+			if err != nil {
+				return err
+			}
+
+			var params types.Params
+			if err := json.Unmarshal(bz, &params); err != nil {
+				return err
+			}
+
+			msg := &types.MsgUpdateParams{
+				Authority: clientCtx.GetFromAddress().String(),
+				Params:    params,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

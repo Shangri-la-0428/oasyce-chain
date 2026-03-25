@@ -21,6 +21,7 @@ type Keeper struct {
 	cdc        codec.BinaryCodec
 	storeKey   storetypes.StoreKey
 	bankKeeper types.BankKeeper
+	authority  string
 }
 
 // NewKeeper creates a new onboarding Keeper.
@@ -28,12 +29,19 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
+	authority string,
 ) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		storeKey:   storeKey,
 		bankKeeper: bankKeeper,
+		authority:  authority,
 	}
+}
+
+// Authority returns the module authority address.
+func (k Keeper) Authority() string {
+	return k.authority
 }
 
 // ---------------------------------------------------------------------------

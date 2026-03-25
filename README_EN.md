@@ -7,40 +7,46 @@
 
 > Chinese version: [README.md](README.md) | LLM-optimized docs: [llms.txt](llms.txt)
 
-**Where agents pay agents.**
+**Property, contracts, and arbitration for the agent economy.**
 
-Oasyce is a purpose-built L1 blockchain for the AI agent economy. Every data access and capability invocation between agents is automatically priced, escrowed, and settled. No KYC, no credit cards, no human approval needed.
+When AI agents start collaborating, the problem isn't "how to transfer money" — it's: **Who owns the data? How is it priced? What happens when someone cheats? How are revenues shared?**
 
-When agents vastly outnumber humans, transact far more frequently, and deal in amounts far smaller than humans do, Stripe's model breaks down. The agent economy needs native infrastructure.
-
----
-
-## Why Not Stripe?
-
-| Dimension | Stripe / Traditional | Oasyce / Agent-Native |
-|-----------|---------------------|----------------------|
-| **Identity** | Human KYC required | Agents self-register via PoW |
-| **Min transaction** | ~$0.50 (fee floor) | 0.000001 OAS (gas only) |
-| **Settlement** | T+2 days | ~5 seconds (1 block) |
-| **Programmability** | Webhooks + API | On-chain escrow + programmable logic |
-| **Dispute resolution** | Human support, 30 days | On-chain jury voting, deterministic |
-| **Permission** | Platform can freeze accounts | Permissionless, censorship-resistant |
-| **Micropayments** | Not viable | Native support |
+Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is justified."
 
 ---
 
-## Seven Modules
+## Beyond Payments
 
-| Module | Purpose | TX | Queries |
-|--------|---------|-----|---------|
-| **x/settlement** | Escrow settlement, Bancor bonding curve pricing, 2% deflationary burn | 3 | 4 |
-| **x/capability** | AI capability marketplace — register endpoints, invoke, auto-settle | 4 | 4 |
-| **x/datarights** | Data asset registration, share trading, tiered access, jury disputes, version migration | 11 | 9 |
-| **x/reputation** | Time-decaying trust scores (30-day half-life), leaderboard | 2 | 3 |
-| **x/work** | Proof of Useful Work — task distribution, commit-reveal verification, settlement | 6 | 8 |
-| **x/onboarding** | PoW self-registration (no KYC), airdrop halving economics | 2 | 3 |
+| Problem | Payment Rails (Stripe, x402, Tempo) | Oasyce |
+|---------|-------------------------------------|--------|
+| **Data ownership** | Not addressed | Data securitization — bonding curve pricing, share trading, version migration |
+| **Fair pricing** | Fixed price / off-chain negotiation | Bancor continuous curve — price rises with demand |
+| **Service delivery** | Pay and hope | On-chain escrow + challenge window + dispute mechanism |
+| **Trust** | None / platform reputation | On-chain credit scores (time-decaying, verifiable feedback) |
+| **Disputes** | Chargebacks or nothing | On-chain jury voting, deterministic outcome |
+| **Access** | KYC + corporate entity | PoW self-registration, permissionless |
 
-**Total**: 28 transaction types, 31 query endpoints, 59 CLI commands.
+---
+
+## Economic System Architecture
+
+### Core — Property & Contracts
+
+| Module | Economic Function | TX | Queries |
+|--------|------------------|-----|---------|
+| **x/datarights** | Data securitization — register, share trading, bonding curves, tiered access, jury disputes, version migration | 11 | 9 |
+| **x/capability** | Service contracts — register/invoke/complete/fail/claim/dispute, challenge window, auto-settlement | 8 | 4 |
+| **x/settlement** | Transaction clearing — atomic escrow, bonding curve engine, 2% deflationary burn | 3 | 4 |
+
+### Supporting Infrastructure
+
+| Module | Economic Function | TX | Queries |
+|--------|------------------|-----|---------|
+| **x/reputation** | Credit scoring — time-decaying (30-day half-life), factors into pricing and jury selection | 2 | 3 |
+| **x/work** | Verifiable compute — commit-reveal anti-copying, multi-executor consensus | 6 | 8 |
+| **x/onboarding** | Permissionless access — PoW anti-sybil, airdrop halving economics | 2 | 3 |
+
+**Total**: 32 transaction types, 33 query endpoints, 66 CLI commands.
 
 ---
 

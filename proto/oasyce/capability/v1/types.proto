@@ -20,6 +20,10 @@ enum InvocationStatus {
   INVOCATION_STATUS_SUCCESS = 2;
   // INVOCATION_STATUS_FAILED means the invocation failed.
   INVOCATION_STATUS_FAILED = 3;
+  // INVOCATION_STATUS_COMPLETED means the provider submitted output, awaiting challenge window.
+  INVOCATION_STATUS_COMPLETED = 4;
+  // INVOCATION_STATUS_DISPUTED means the consumer disputed the output.
+  INVOCATION_STATUS_DISPUTED = 5;
 }
 
 // Capability represents a registered AI capability endpoint.
@@ -110,4 +114,10 @@ message Invocation {
 
   // escrow_id is the ID of the escrow backing this invocation.
   string escrow_id = 10;
+
+  // completed_height is the block height when provider submitted output (for challenge window).
+  int64 completed_height = 11;
+
+  // usage_report is optional JSON metadata about resource consumption (e.g. token counts).
+  string usage_report = 12;
 }

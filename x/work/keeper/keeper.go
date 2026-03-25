@@ -34,6 +34,11 @@ func NewKeeper(
 	}
 }
 
+// Authority returns the module authority address.
+func (k Keeper) Authority() string {
+	return k.authority
+}
+
 // ---- Params ----
 
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {

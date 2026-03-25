@@ -7,40 +7,46 @@
 
 > English version: [README_EN.md](README_EN.md) | LLM-optimized docs: [llms.txt](llms.txt)
 
-**Where agents pay agents.**
+**Agent 世界的产权、合同和仲裁。**
 
-Oasyce 是专为 AI Agent 经济设计的 L1 结算链。Agent 之间的每一次数据访问和能力调用，都会被自动定价、托管、结算。无需 KYC，无需信用卡，无需人类审批。
+当 AI agent 开始互相协作，问题不再是"怎么调用 API"或"怎么转账"，而是：**谁拥有数据？如何定价？对方作弊怎么办？如何分润？**
 
-当 AI agent 数量远超人类、交易频率远超人类、单笔金额远低于人类时，Stripe 的模型不再适用。Agent 经济需要原生基础设施。
-
----
-
-## 为什么不用 Stripe？
-
-| 维度 | Stripe / 传统支付 | Oasyce / Agent 原生结算 |
-|------|-------------------|------------------------|
-| **身份** | 需要人类 KYC、公司实体 | Agent 自主注册（PoW 防女巫） |
-| **最小交易** | ~$0.50（手续费限制） | 0.000001 OAS（gas 唯一成本） |
-| **结算速度** | T+2 天 | ~5 秒（1 个区块） |
-| **可编程性** | Webhook + API | 链上托管 + 可编程结算逻辑 |
-| **争议解决** | 人工客服，30 天 | 链上陪审投票，确定性结果 |
-| **许可** | 平台可冻结账号 | 无许可，抗审查 |
-| **微支付** | 不可行 | 原生支持 |
+Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付钱是合理的"。
 
 ---
 
-## 六大模块
+## 不只是支付
 
-| 模块 | 功能 | TX 数 | Query 数 |
-|------|------|-------|----------|
-| **x/settlement** | 托管结算、Bancor 联合曲线定价、2% 通缩燃烧 | 3 | 4 |
-| **x/capability** | AI 能力市场——注册端点、调用、自动结算 | 4 | 4 |
-| **x/datarights** | 数据资产注册、股份买卖、分级访问、争议陪审、版本迁移 | 11 | 9 |
-| **x/reputation** | 时间衰减声誉（30 天半衰期）、排行榜 | 2 | 3 |
-| **x/work** | 有用工作证明——任务分发、commit-reveal 验证、结算 | 6 | 8 |
-| **x/onboarding** | PoW 自注册（无 KYC）、空投减半经济学 | 2 | 3 |
+| 问题 | 支付方案 (Stripe, x402, Tempo) | Oasyce |
+|------|-------------------------------|--------|
+| **数据归属** | 不涉及 | 数据证券化——联合曲线定价、股份交易、版本迁移 |
+| **公平定价** | 固定价格 / 线下协商 | Bancor 连续曲线——需求越多价格越高 |
+| **服务交付** | 付款后祈祷 | 链上托管 + 挑战窗口 + 争议机制 |
+| **信任** | 无 / 平台背书 | 链上信用评分（时间衰减 + 可验证反馈） |
+| **纠纷** | 退单或无门 | 链上陪审投票，确定性裁决 |
+| **准入** | KYC + 公司实体 | PoW 自注册，无许可 |
 
-**合计**：28 种交易类型，31 个查询端点，59 条 CLI 命令。
+---
+
+## 经济系统架构
+
+### 核心——产权与合同
+
+| 模块 | 经济功能 | TX | Query |
+|------|---------|-----|-------|
+| **x/datarights** | 数据证券化——注册、股份买卖、联合曲线、分级访问、争议仲裁、版本迁移 | 11 | 10 |
+| **x/capability** | 服务合同——注册/调用/完成/失败/认领/争议，挑战窗口，自动结算 | 8 | 5 |
+| **x/settlement** | 交易清算——原子托管、联合曲线引擎、2% 通缩燃烧 | 3 | 4 |
+
+### 支撑基础设施
+
+| 模块 | 经济功能 | TX | Query |
+|------|---------|-----|-------|
+| **x/reputation** | 信用评分——时间衰减（30 天半衰期）、影响定价和仲裁资格 | 2 | 3 |
+| **x/work** | 可验证计算——commit-reveal 防抄袭、多执行者共识 | 6 | 8 |
+| **x/onboarding** | 无许可准入——PoW 防女巫、空投减半经济学 | 2 | 3 |
+
+**合计**：32 种交易类型，33 个查询端点，66+ 条 CLI 命令。
 
 ---
 
@@ -96,7 +102,7 @@ bash scripts/start_testnet.sh
 ### 运行测试
 
 ```bash
-make test   # 50+ tests across 7 suites
+make test   # 55+ tests across 8 suites (including tx codec integration tests)
 ```
 
 ---
@@ -146,7 +152,8 @@ localhost:9090
 
 ```bash
 # === Agent 注册（PoW 自注册，无需 KYC） ===
-oasyced tx onboarding register [nonce] --from agent1
+oasyced util solve-pow [address] --difficulty 16 --output json  # 先解 PoW
+oasyced tx onboarding register [nonce] --from agent1 --output json --yes
 
 # === 注册 AI 能力 ===
 oasyced tx oasyce_capability register \
@@ -154,34 +161,45 @@ oasyced tx oasyce_capability register \
   --endpoint "https://api.example.com/translate" \
   --price 500000uoas \
   --tags "nlp,translation" \
-  --from provider
+  --from provider --output json --yes
 
 # === 调用能力（自动创建托管 + 结算） ===
-oasyced tx oasyce_capability invoke [cap-id] '{"text":"hello","target":"zh"}' --from consumer
+oasyced tx oasyce_capability invoke [cap-id] '{"text":"hello","target":"zh"}' --from consumer --output json --yes
+
+# === 完成调用（提交输出哈希，开始 100 区块挑战窗口） ===
+oasyced tx oasyce_capability complete-invocation [inv-id] [sha256-output-hash] \
+  --usage-report '{"prompt_tokens":150,"completion_tokens":80}' \
+  --from provider --output json --yes
+
+# === 认领付款（挑战窗口结束后） ===
+oasyced tx oasyce_capability claim-invocation [inv-id] --from provider --output json --yes
+
+# === 争议（挑战窗口内，消费者发起） ===
+oasyced tx oasyce_capability dispute-invocation [inv-id] "reason" --from consumer --output json --yes
 
 # === 注册数据资产 ===
 oasyced tx datarights register \
   --name "Medical Imaging Dataset" \
   --content-hash "abc123..." \
   --tags "medical,imaging" \
-  --from alice
+  --from alice --output json --yes
 
 # === 购买数据股份（Bancor 曲线定价） ===
-oasyced tx datarights buy-shares [asset-id] 1000000uoas --from bob
+oasyced tx datarights buy-shares [asset-id] 1000000uoas --from bob --output json --yes
 
-# === 卖出股份（反向曲线，3% 协议费） ===
-oasyced tx datarights sell-shares [asset-id] 100 --from bob
+# === 卖出股份（反向曲线，5% 协议费） ===
+oasyced tx datarights sell-shares [asset-id] 100 --from bob --output json --yes
 
 # === 提交计算任务 ===
 oasyced tx work submit-task \
   --task-type "data-cleaning" \
   --input-hash [sha256] \
   --bounty 1000uoas \
-  --from submitter
+  --from submitter --output json --yes
 
 # === 查询声誉 ===
-oasyced query reputation show [address]
-oasyced query reputation leaderboard
+oasyced query reputation show [address] --output json
+oasyced query reputation leaderboard --output json
 ```
 
 ---
@@ -193,12 +211,13 @@ oasyced query reputation leaderboard
 | 代币 | OAS（1 OAS = 1,000,000 uoas） |
 | 联合曲线 | Bancor, CW = 0.5 |
 | 托管释放费用分配 | 90% 提供者, 5% 协议, 2% 销毁, 3% 国库 |
-| 卖出协议费 | 5% |
+| 卖出协议费 | 5% (从联合曲线卖出收益中扣除) |
 | 储备金上限 | 卖出时最高 95% |
 | 区块奖励 | 4→2→1→0.5 OAS/block 减半（每 10M 区块） |
 | 区块时间 | ~5 秒 |
 | 最大验证者 | 100 |
 | 解绑期 | 21 天 |
+| 挑战窗口 | 100 区块（~8 分钟） |
 | 陪审团规模 | 5 人 / 争议 |
 | 陪审门槛 | 2/3 多数 |
 
@@ -255,6 +274,7 @@ oasyced query reputation leaderboard
 - **2% 通缩燃烧** — 每次托管释放燃烧 2%
 - **分级访问门控** — >=0.1% → L0, >=1% → L1, >=5% → L2, >=10% → L3
 - **陪审投票** — `sha256(disputeID + nodeID) * log(1 + reputation)`，5 人陪审，2/3 多数
+- **挑战窗口** — 完成调用后 100 区块（~8 分钟）消费者可争议；无争议则提供者认领付款
 - **Commit-reveal PoUW** — `sha256(output_hash + salt + executor + unavailable)` 防抄袭
 - **确定性任务分配** — `sha256(taskID + blockHash + addr) / log(1 + reputation)`
 - **PoW 自注册** — `sha256(address || nonce)` 满足 N 位前导零，无 KYC 防女巫

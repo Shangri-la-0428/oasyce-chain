@@ -228,7 +228,7 @@ func setupSuite(t *testing.T) *testSuite {
 
 	// Wire keepers with real cross-module dependencies.
 	settlementK := setkeeper.NewKeeper(cdc, settlementStoreKey, sdkBank, "authority")
-	capabilityK := capkeeper.NewKeeper(capabilityStoreKey, cdc, sdkBank, settlementK)
+	capabilityK := capkeeper.NewKeeper(capabilityStoreKey, cdc, sdkBank, settlementK, "authority")
 	reputationK := repkeeper.NewKeeper(cdc, reputationStoreKey, capabilityK, "authority")
 	datarightsK := drkeeper.NewKeeper(cdc, datarightsStoreKey, ctxBank, arbitratorAddr())
 
@@ -311,10 +311,24 @@ func TestFullCapabilityInvocationFlow(t *testing.T) {
 		t.Fatalf("expected consumer balance 900, got %s", consBal)
 	}
 
-	// 3. Provider completes the invocation (escrow releases: 95 to provider, 5 protocol fee).
-	err = s.capabilityK.CompleteInvocation(s.ctx, invocationID, "outputhash123", prov)
+	// 3. Provider completes the invocation — marks COMPLETED, escrow stays locked.
+	s.ctx = s.ctx.WithBlockHeight(10)
+	err = s.capabilityK.CompleteInvocation(s.ctx, invocationID, "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0", prov, "")
 	if err != nil {
 		t.Fatalf("CompleteInvocation failed: %v", err)
+	}
+
+	// Escrow should still be LOCKED during challenge window.
+	escrow, _ = s.settlementK.GetEscrow(s.ctx, escrowID)
+	if escrow.Status != settypes.EscrowStatusLocked {
+		t.Fatalf("expected LOCKED escrow during challenge window, got %s", escrow.Status)
+	}
+
+	// 3b. Provider claims after challenge window passes (block 10 + 100 = 110).
+	s.ctx = s.ctx.WithBlockHeight(110)
+	err = s.capabilityK.ClaimInvocation(s.ctx, invocationID, prov)
+	if err != nil {
+		t.Fatalf("ClaimInvocation failed: %v", err)
 	}
 
 	// Verify escrow is released.
@@ -642,10 +656,18 @@ func TestFreeCapabilityNoEscrow(t *testing.T) {
 		t.Fatalf("expected consumer balance 1000, got %s", consBal)
 	}
 
-	// 3. Complete successfully.
-	err = s.capabilityK.CompleteInvocation(s.ctx, invocationID, "freehash", prov)
+	// 3. Complete — marks COMPLETED (challenge window starts).
+	s.ctx = s.ctx.WithBlockHeight(5)
+	err = s.capabilityK.CompleteInvocation(s.ctx, invocationID, "aaaaaaaaaaaabbbbbbbbbbbbcccccccccccc", prov, "")
 	if err != nil {
 		t.Fatalf("CompleteInvocation failed: %v", err)
+	}
+
+	// 3b. Claim after challenge window (free capability, no escrow to release).
+	s.ctx = s.ctx.WithBlockHeight(105)
+	err = s.capabilityK.ClaimInvocation(s.ctx, invocationID, prov)
+	if err != nil {
+		t.Fatalf("ClaimInvocation failed: %v", err)
 	}
 
 	// 4. Verify no funds moved.

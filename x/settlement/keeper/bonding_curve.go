@@ -157,7 +157,7 @@ func BancorSell(supply, reserve, tokens math.LegacyDec) (math.LegacyDec, error) 
 
 // BuyShares calculates and mints shares for a buyer on a bonding curve
 // using the Bancor continuous token model.
-func (k Keeper) BuyShares(ctx sdk.Context, assetID string, buyer string, paymentAmount math.Int) (math.Int, error) {
+func (k Keeper) BuyShares(ctx sdk.Context, assetID string, buyer string, denom string, paymentAmount math.Int) (math.Int, error) {
 	buyerAddr, err := sdk.AccAddressFromBech32(buyer)
 	if err != nil {
 		return math.Int{}, types.ErrInvalidAddress.Wrapf("invalid buyer: %s", err)
@@ -171,12 +171,16 @@ func (k Keeper) BuyShares(ctx sdk.Context, assetID string, buyer string, payment
 	if !found {
 		// Initialize a new bonding curve for this asset.
 		state = types.BondingCurveState{
-			AssetId:     assetID,
-			TotalShares: math.ZeroInt(),
-			Reserve:     math.ZeroInt(),
-			PriceFactor: math.LegacyNewDec(1),
-			BuyerCount:  0,
+			AssetId:      assetID,
+			TotalShares:  math.ZeroInt(),
+			Reserve:      math.ZeroInt(),
+			PriceFactor:  math.LegacyNewDec(1),
+			BuyerCount:   0,
+			ReserveDenom: denom,
 		}
+	} else if state.ReserveDenom == "" {
+		// Backfill denom for pre-existing curves.
+		state.ReserveDenom = denom
 	}
 
 	// Bancor calculation using LegacyDec.
@@ -195,7 +199,7 @@ func (k Keeper) BuyShares(ctx sdk.Context, assetID string, buyer string, payment
 	}
 
 	// Transfer payment from buyer to module.
-	coins := sdk.NewCoins(sdk.NewCoin("uoas", paymentAmount))
+	coins := sdk.NewCoins(sdk.NewCoin(denom, paymentAmount))
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, buyerAddr, types.ModuleName, coins); err != nil {
 		return math.Int{}, types.ErrInsufficientFunds.Wrapf("failed to collect payment: %s", err)
 	}

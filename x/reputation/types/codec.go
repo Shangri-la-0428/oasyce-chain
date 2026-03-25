@@ -11,6 +11,7 @@ import (
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgSubmitFeedback{}, "oasyce/reputation/MsgSubmitFeedback", nil)
 	cdc.RegisterConcrete(&MsgReportMisbehavior{}, "oasyce/reputation/MsgReportMisbehavior", nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, "oasyce/reputation/MsgUpdateParams", nil)
 }
 
 // RegisterInterfaces registers the reputation module's interface types with the interface registry.
@@ -18,6 +19,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgSubmitFeedback{},
 		&MsgReportMisbehavior{},
+		&MsgUpdateParams{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

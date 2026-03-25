@@ -28,6 +28,22 @@ service Msg {
   // DeactivateCapability takes a capability offline.
   rpc DeactivateCapability(MsgDeactivateCapability)
       returns (MsgDeactivateCapabilityResponse);
+
+  // CompleteInvocation allows provider to submit output hash, starting the challenge window.
+  rpc CompleteInvocation(MsgCompleteInvocation)
+      returns (MsgCompleteInvocationResponse);
+
+  // FailInvocation allows provider or consumer to report a failed invocation and refund escrow.
+  rpc FailInvocation(MsgFailInvocation)
+      returns (MsgFailInvocationResponse);
+
+  // ClaimInvocation allows provider to claim payment after challenge window passes.
+  rpc ClaimInvocation(MsgClaimInvocation)
+      returns (MsgClaimInvocationResponse);
+
+  // DisputeInvocation allows consumer to dispute a completed invocation within the challenge window.
+  rpc DisputeInvocation(MsgDisputeInvocation)
+      returns (MsgDisputeInvocationResponse);
 }
 
 // MsgRegisterCapability registers a new AI capability endpoint.
@@ -128,3 +144,72 @@ message MsgDeactivateCapability {
 
 // MsgDeactivateCapabilityResponse is the response for MsgDeactivateCapability.
 message MsgDeactivateCapabilityResponse {}
+
+// MsgClaimInvocation allows provider to claim payment after challenge window.
+message MsgClaimInvocation {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgClaimInvocation";
+
+  // creator is the provider claiming the payment.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // invocation_id is the ID of the completed invocation to claim.
+  string invocation_id = 2;
+}
+
+// MsgClaimInvocationResponse is the response for MsgClaimInvocation.
+message MsgClaimInvocationResponse {}
+
+// MsgDisputeInvocation allows consumer to dispute a completed invocation.
+message MsgDisputeInvocation {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgDisputeInvocation";
+
+  // creator is the consumer disputing the invocation.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // invocation_id is the ID of the invocation to dispute.
+  string invocation_id = 2;
+
+  // reason is the reason for the dispute.
+  string reason = 3;
+}
+
+// MsgDisputeInvocationResponse is the response for MsgDisputeInvocation.
+message MsgDisputeInvocationResponse {}
+
+// MsgCompleteInvocation allows provider to submit output hash, starting the challenge window.
+message MsgCompleteInvocation {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgCompleteInvocation";
+
+  // creator is the provider completing the invocation.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // invocation_id is the ID of the invocation to complete.
+  string invocation_id = 2;
+
+  // output_hash is the hash of the invocation output (>= 32 hex chars).
+  string output_hash = 3;
+
+  // usage_report is optional JSON metadata about resource consumption (e.g. token counts).
+  string usage_report = 4;
+}
+
+// MsgCompleteInvocationResponse is the response for MsgCompleteInvocation.
+message MsgCompleteInvocationResponse {}
+
+// MsgFailInvocation allows provider or consumer to report a failed invocation.
+message MsgFailInvocation {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/capability/MsgFailInvocation";
+
+  // creator is the provider or consumer reporting the failure.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // invocation_id is the ID of the invocation that failed.
+  string invocation_id = 2;
+}
+
+// MsgFailInvocationResponse is the response for MsgFailInvocation.
+message MsgFailInvocationResponse {}

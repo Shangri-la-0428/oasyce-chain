@@ -38,6 +38,11 @@ func NewKeeper(
 	}
 }
 
+// Authority returns the module authority address.
+func (k Keeper) Authority() string {
+	return k.authority
+}
+
 // ---------------------------------------------------------------------------
 // Params
 // ---------------------------------------------------------------------------

@@ -84,4 +84,7 @@ message BondingCurveState {
 
   // buyer_count is the number of unique buyers of this asset.
   uint32 buyer_count = 5;
+
+  // reserve_denom is the denomination of the reserve backing this curve.
+  string reserve_denom = 6;
 }

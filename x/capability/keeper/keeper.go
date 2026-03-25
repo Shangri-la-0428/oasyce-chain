@@ -20,6 +20,7 @@ type Keeper struct {
 	cdc              codec.BinaryCodec
 	bankKeeper       types.BankKeeper
 	settlementKeeper types.SettlementKeeper
+	authority        string
 }
 
 // NewKeeper creates a new capability Keeper.
@@ -28,13 +29,20 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	bankKeeper types.BankKeeper,
 	settlementKeeper types.SettlementKeeper,
+	authority string,
 ) Keeper {
 	return Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
 		bankKeeper:       bankKeeper,
 		settlementKeeper: settlementKeeper,
+		authority:        authority,
 	}
+}
+
+// Authority returns the module authority address.
+func (k Keeper) Authority() string {
+	return k.authority
 }
 
 // --- Params ---
@@ -272,8 +280,10 @@ func (k Keeper) InvokeCapability(ctx sdk.Context, msg *types.MsgInvokeCapability
 	return invocationID, escrowID, nil
 }
 
-// CompleteInvocation marks an invocation as successful and releases the escrow.
-func (k Keeper) CompleteInvocation(ctx sdk.Context, invocationID, outputHash, caller string) error {
+// CompleteInvocation marks an invocation as COMPLETED (awaiting challenge window).
+// The escrow is NOT released yet — the provider must call ClaimInvocation after
+// the challenge window passes, or the consumer can DisputeInvocation within it.
+func (k Keeper) CompleteInvocation(ctx sdk.Context, invocationID, outputHash, caller, usageReport string) error {
 	inv, err := k.GetInvocation(ctx, invocationID)
 	if err != nil {
 		return err
@@ -285,6 +295,50 @@ func (k Keeper) CompleteInvocation(ctx sdk.Context, invocationID, outputHash, ca
 	if inv.Provider != caller {
 		return types.ErrUnauthorized.Wrap("only the provider can complete an invocation")
 	}
+	// Output hash must be non-empty (at least 32 hex chars = 16 bytes).
+	if len(outputHash) < 32 {
+		return types.ErrEmptyOutputHash.Wrap("output_hash must be at least 32 hex characters")
+	}
+
+	// Mark as COMPLETED (not SUCCESS) — escrow stays locked during challenge window.
+	inv.Status = types.StatusCompleted
+	inv.OutputHash = outputHash
+	inv.UsageReport = usageReport
+	inv.CompletedHeight = ctx.BlockHeight()
+	if err := k.setInvocation(ctx, inv); err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		"invocation_completed",
+		sdk.NewAttribute("invocation_id", invocationID),
+		sdk.NewAttribute("capability_id", inv.CapabilityId),
+		sdk.NewAttribute("output_hash", outputHash),
+		sdk.NewAttribute("challenge_window_ends", fmt.Sprintf("%d", ctx.BlockHeight()+types.ChallengeWindow)),
+	))
+
+	return nil
+}
+
+// ClaimInvocation allows the provider to claim payment after the challenge window passes.
+func (k Keeper) ClaimInvocation(ctx sdk.Context, invocationID, caller string) error {
+	inv, err := k.GetInvocation(ctx, invocationID)
+	if err != nil {
+		return err
+	}
+	if inv.Status != types.StatusCompleted {
+		return types.ErrInvalidStatus.Wrapf("invocation %s is not in COMPLETED status (status: %s)", invocationID, inv.Status)
+	}
+	if inv.Provider != caller {
+		return types.ErrUnauthorized.Wrap("only the provider can claim an invocation")
+	}
+	// Challenge window must have passed.
+	if ctx.BlockHeight() < inv.CompletedHeight+types.ChallengeWindow {
+		return types.ErrChallengeWindow.Wrapf(
+			"challenge window ends at block %d, current block %d",
+			inv.CompletedHeight+types.ChallengeWindow, ctx.BlockHeight(),
+		)
+	}
 
 	// Release escrow to pay the provider.
 	if inv.Amount.IsPositive() && inv.EscrowId != "" {
@@ -294,7 +348,6 @@ func (k Keeper) CompleteInvocation(ctx sdk.Context, invocationID, outputHash, ca
 	}
 
 	inv.Status = types.StatusSuccess
-	inv.OutputHash = outputHash
 	if err := k.setInvocation(ctx, inv); err != nil {
 		return err
 	}
@@ -304,21 +357,84 @@ func (k Keeper) CompleteInvocation(ctx sdk.Context, invocationID, outputHash, ca
 	if err == nil {
 		cap.TotalCalls++
 		cap.TotalEarned = cap.TotalEarned.Add(inv.Amount.Amount)
-		// Update success rate: weighted average in basis points.
-		// successRate = (oldRate * (totalCalls-1) + 10000) / totalCalls
 		if cap.TotalCalls == 1 {
 			cap.SuccessRate = 10000
 		} else {
 			cap.SuccessRate = (cap.SuccessRate*(uint32(cap.TotalCalls)-1) + 10000) / uint32(cap.TotalCalls)
 		}
-		_ = k.setCapability(ctx, cap)
+		if err := k.setCapability(ctx, cap); err != nil {
+			ctx.EventManager().EmitEvent(sdk.NewEvent("capability_stats_update_failed",
+				sdk.NewAttribute("capability_id", inv.CapabilityId),
+				sdk.NewAttribute("error", err.Error()),
+			))
+		}
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		"invocation_completed",
+		"invocation_claimed",
 		sdk.NewAttribute("invocation_id", invocationID),
 		sdk.NewAttribute("capability_id", inv.CapabilityId),
-		sdk.NewAttribute("output_hash", outputHash),
+		sdk.NewAttribute("provider", inv.Provider),
+	))
+
+	return nil
+}
+
+// DisputeInvocation allows the consumer to dispute a completed invocation within the challenge window.
+func (k Keeper) DisputeInvocation(ctx sdk.Context, invocationID, caller, reason string) error {
+	inv, err := k.GetInvocation(ctx, invocationID)
+	if err != nil {
+		return err
+	}
+	if inv.Status != types.StatusCompleted {
+		return types.ErrInvalidStatus.Wrapf("invocation %s is not in COMPLETED status (status: %s)", invocationID, inv.Status)
+	}
+	if inv.Consumer != caller {
+		return types.ErrUnauthorized.Wrap("only the consumer can dispute an invocation")
+	}
+	// Must be within the challenge window.
+	if ctx.BlockHeight() >= inv.CompletedHeight+types.ChallengeWindow {
+		return types.ErrChallengeWindow.Wrapf(
+			"challenge window ended at block %d, current block %d",
+			inv.CompletedHeight+types.ChallengeWindow, ctx.BlockHeight(),
+		)
+	}
+
+	// Refund escrow to consumer.
+	if inv.Amount.IsPositive() && inv.EscrowId != "" {
+		if err := k.settlementKeeper.RefundEscrow(ctx, inv.EscrowId, caller); err != nil {
+			return err
+		}
+	}
+
+	inv.Status = types.StatusDisputed
+	if err := k.setInvocation(ctx, inv); err != nil {
+		return err
+	}
+
+	// Update capability stats (record dispute as failure).
+	cap, err := k.GetCapability(ctx, inv.CapabilityId)
+	if err == nil {
+		cap.TotalCalls++
+		if cap.TotalCalls == 1 {
+			cap.SuccessRate = 0
+		} else {
+			cap.SuccessRate = (cap.SuccessRate * (uint32(cap.TotalCalls) - 1)) / uint32(cap.TotalCalls)
+		}
+		if err := k.setCapability(ctx, cap); err != nil {
+			ctx.EventManager().EmitEvent(sdk.NewEvent("capability_stats_update_failed",
+				sdk.NewAttribute("capability_id", inv.CapabilityId),
+				sdk.NewAttribute("error", err.Error()),
+			))
+		}
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		"invocation_disputed",
+		sdk.NewAttribute("invocation_id", invocationID),
+		sdk.NewAttribute("capability_id", inv.CapabilityId),
+		sdk.NewAttribute("consumer", inv.Consumer),
+		sdk.NewAttribute("reason", reason),
 	))
 
 	return nil
@@ -360,7 +476,12 @@ func (k Keeper) FailInvocation(ctx sdk.Context, invocationID, caller string) err
 		} else {
 			cap.SuccessRate = (cap.SuccessRate * (uint32(cap.TotalCalls) - 1)) / uint32(cap.TotalCalls)
 		}
-		_ = k.setCapability(ctx, cap)
+		if err := k.setCapability(ctx, cap); err != nil {
+			ctx.EventManager().EmitEvent(sdk.NewEvent("capability_stats_update_failed",
+				sdk.NewAttribute("capability_id", inv.CapabilityId),
+				sdk.NewAttribute("error", err.Error()),
+			))
+		}
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(

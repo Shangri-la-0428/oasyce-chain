@@ -188,6 +188,7 @@ func initRootCmd(rootCmd *cobra.Command, txCfg client.TxConfig) {
 		txCmd,
 		debug.Cmd(),
 		keys.Commands(),
+		UtilCmd(),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)

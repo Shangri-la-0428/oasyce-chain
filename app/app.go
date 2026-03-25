@@ -2,7 +2,9 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -91,6 +93,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	// Oasyce custom modules
+	"github.com/oasyce/chain/docs"
 	oasyceparams "github.com/oasyce/chain/app/params"
 	capability "github.com/oasyce/chain/x/capability"
 	capabilitykeeper "github.com/oasyce/chain/x/capability/keeper"
@@ -525,6 +528,7 @@ func NewOasyceApp(
 		appCodec,
 		app.BankKeeper,
 		app.SettlementKeeper,
+		govAuthority,
 	)
 
 	app.ReputationKeeper = reputationkeeper.NewKeeper(
@@ -553,6 +557,7 @@ func NewOasyceApp(
 		appCodec,
 		keys[onboardingtypes.StoreKey],
 		app.BankKeeper,
+		govAuthority,
 	)
 
 	app.HalvingKeeper = halvingkeeper.NewKeeper(app.BankKeeper)
@@ -758,6 +763,60 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 	cmtservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+
+	// --- AI Agent Discovery Endpoints ---
+
+	// Serve llms.txt — the primary document for AI agents to understand the chain.
+	apiSvr.Router.HandleFunc("/llms.txt", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.Write(docs.LLMSTxt)
+	}).Methods("GET")
+
+	// Serve OpenAPI specification.
+	apiSvr.Router.HandleFunc("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.Write(docs.OpenAPISpec)
+	}).Methods("GET")
+
+	// Service discovery metadata for AI agents.
+	apiSvr.Router.HandleFunc("/.well-known/oasyce.json", func(w http.ResponseWriter, r *http.Request) {
+		chainID := ""
+		if info, err := clientCtx.Client.Status(r.Context()); err == nil {
+			chainID = info.NodeInfo.Network
+		}
+		discovery := map[string]interface{}{
+			"name":        "Oasyce Agent Economy",
+			"description": "On-chain property rights, service contracts, and arbitration for autonomous agents",
+			"chain_id":    chainID,
+			"version":     version.Version,
+			"denom":       "uoas",
+			"docs": map[string]string{
+				"llms_txt": "/llms.txt",
+				"openapi":  "/openapi.yaml",
+			},
+			"modules":    []string{"settlement", "capability", "datarights", "reputation", "work", "onboarding"},
+			"onboarding": "oasyced util auto-register",
+			"report_issue": map[string]string{
+				"api":      "https://api.github.com/repos/Shangri-la-0428/oasyce-chain/issues",
+				"template": "ai_agent_report",
+				"label":    "ai-reported",
+			},
+			"source": "https://github.com/Shangri-la-0428/oasyce-chain",
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Cache-Control", "public, max-age=300")
+		bz, _ := json.MarshalIndent(discovery, "", "  ")
+		fmt.Fprintln(w, string(bz))
+	}).Methods("GET")
+
+	// Error codes catalog — machine-readable error recovery guide.
+	apiSvr.Router.HandleFunc("/oasyce/v1/error-codes", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.Write(docs.ErrorCodes)
+	}).Methods("GET")
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.

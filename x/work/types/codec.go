@@ -14,6 +14,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCommitResult{}, "oasyce/work/MsgCommitResult", nil)
 	cdc.RegisterConcrete(&MsgRevealResult{}, "oasyce/work/MsgRevealResult", nil)
 	cdc.RegisterConcrete(&MsgDisputeResult{}, "oasyce/work/MsgDisputeResult", nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, "oasyce/work/MsgUpdateParams", nil)
 }
 
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
@@ -24,6 +25,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgCommitResult{},
 		&MsgRevealResult{},
 		&MsgDisputeResult{},
+		&MsgUpdateParams{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

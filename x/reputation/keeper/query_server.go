@@ -27,7 +27,11 @@ func (q queryServer) Reputation(goCtx context.Context, req *types.QueryReputatio
 
 	score, found := q.Keeper.GetReputation(ctx, req.Address)
 	if !found {
-		return nil, types.ErrInvalidAddress.Wrapf("no reputation found for %s", req.Address)
+		// Return default zero reputation for new addresses.
+		score = types.ReputationScore{
+			Address:     req.Address,
+			LastUpdated: ctx.BlockTime(),
+		}
 	}
 	return &types.QueryReputationResponse{Reputation: score}, nil
 }

@@ -270,7 +270,7 @@ func TestBondingCurvePricing(t *testing.T) {
 	bank.fundAccount(buyer2, sdk.NewCoins(sdk.NewCoin("uoas", payment)))
 
 	// First buyer (bootstrap): tokens = payment / INITIAL_PRICE = 100000
-	shares1, err := k.BuyShares(ctx, assetID, buyer1, payment)
+	shares1, err := k.BuyShares(ctx, assetID, buyer1, "uoas", payment)
 	if err != nil {
 		t.Fatalf("BuyShares buyer1 failed: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestBondingCurvePricing(t *testing.T) {
 
 	// Second buyer: Bancor formula with supply=100000, reserve=100000
 	// tokens = 100000 * (sqrt(1 + 100000/100000) - 1) = 100000 * (sqrt(2)-1) ≈ 41421
-	shares2, err := k.BuyShares(ctx, assetID, buyer2, payment)
+	shares2, err := k.BuyShares(ctx, assetID, buyer2, "uoas", payment)
 	if err != nil {
 		t.Fatalf("BuyShares buyer2 failed: %v", err)
 	}

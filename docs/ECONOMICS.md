@@ -71,9 +71,10 @@ When an escrow is released upon successful invocation:
 
 ```
 Total Payment
-  ├── 93% → Provider (AI capability owner)
+  ├── 90% → Provider (AI capability owner)
   ├──  5% → Protocol (fee_collector module account)
-  └──  2% → Burned 🔥 (permanently destroyed)
+  ├──  2% → Burned 🔥 (permanently destroyed)
+  └──  3% → Treasury
 ```
 
 ### Share Sell Fee

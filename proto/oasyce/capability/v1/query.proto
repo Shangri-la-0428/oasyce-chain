@@ -35,6 +35,12 @@ service Query {
     option (google.api.http).get =
         "/oasyce/capability/v1/earnings/{provider}";
   }
+
+  // Invocation queries an invocation by ID.
+  rpc Invocation(QueryInvocationRequest) returns (QueryInvocationResponse) {
+    option (google.api.http).get =
+        "/oasyce/capability/v1/invocation/{invocation_id}";
+  }
 }
 
 // QueryCapabilityRequest is the request type for the Query/Capability RPC.
@@ -85,4 +91,14 @@ message QueryEarningsResponse {
 
   // total_calls is the total number of successful invocations.
   uint64 total_calls = 2;
+}
+
+// QueryInvocationRequest is the request type for the Query/Invocation RPC.
+message QueryInvocationRequest {
+  string invocation_id = 1;
+}
+
+// QueryInvocationResponse is the response type for the Query/Invocation RPC.
+message QueryInvocationResponse {
+  Invocation invocation = 1 [(gogoproto.nullable) = false];
 }

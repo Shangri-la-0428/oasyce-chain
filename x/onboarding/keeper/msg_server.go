@@ -2,6 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/oasyce/chain/x/onboarding/types"
 )
@@ -30,4 +33,24 @@ func (m msgServer) RepayDebt(ctx context.Context, msg *types.MsgRepayDebt) (*typ
 		return nil, err
 	}
 	return &types.MsgRepayDebtResponse{RemainingDebt: remaining}, nil
+}
+
+// UpdateParams handles MsgUpdateParams — governance-gated parameter updates.
+func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if m.Keeper.Authority() != msg.Authority {
+		return nil, fmt.Errorf("unauthorized: expected %s, got %s", m.Keeper.Authority(), msg.Authority)
+	}
+
+	if err := m.Keeper.SetParams(ctx, msg.Params); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		"onboarding_params_updated",
+		sdk.NewAttribute("authority", msg.Authority),
+	))
+
+	return &types.MsgUpdateParamsResponse{}, nil
 }

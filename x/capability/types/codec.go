@@ -13,6 +13,11 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgInvokeCapability{}, "oasyce/capability/MsgInvokeCapability", nil)
 	cdc.RegisterConcrete(&MsgUpdateCapability{}, "oasyce/capability/MsgUpdateCapability", nil)
 	cdc.RegisterConcrete(&MsgDeactivateCapability{}, "oasyce/capability/MsgDeactivateCapability", nil)
+	cdc.RegisterConcrete(&MsgCompleteInvocation{}, "oasyce/capability/MsgCompleteInvocation", nil)
+	cdc.RegisterConcrete(&MsgFailInvocation{}, "oasyce/capability/MsgFailInvocation", nil)
+	cdc.RegisterConcrete(&MsgClaimInvocation{}, "oasyce/capability/MsgClaimInvocation", nil)
+	cdc.RegisterConcrete(&MsgDisputeInvocation{}, "oasyce/capability/MsgDisputeInvocation", nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, "oasyce/capability/MsgUpdateParams", nil)
 }
 
 // RegisterInterfaces registers the module's interface types with the InterfaceRegistry.
@@ -22,6 +27,11 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgInvokeCapability{},
 		&MsgUpdateCapability{},
 		&MsgDeactivateCapability{},
+		&MsgCompleteInvocation{},
+		&MsgFailInvocation{},
+		&MsgClaimInvocation{},
+		&MsgDisputeInvocation{},
+		&MsgUpdateParams{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

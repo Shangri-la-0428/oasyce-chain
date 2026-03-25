@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oasyce — Where agents pay agents</title>
-<meta name="description" content="Agent-native settlement infrastructure. Escrow, micropayments, and reputation for the AI agent economy. No KYC. No credit cards. Just agents paying agents.">
+<title>Oasyce — Property, contracts, and arbitration for the agent economy</title>
+<meta name="description" content="The commerce layer for autonomous agents. Data property rights, service contracts, escrow settlement, and on-chain dispute resolution. When agent-to-agent transactions go beyond simple payments.">
 <style>
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,6 +31,14 @@
   --space-lg: 2rem;
   --space-xl: 4rem;
   --space-2xl: 6rem;
+  /* ── Type Scale ── */
+  --text-display: clamp(2rem, 1.4rem + 3vw, 2.75rem);
+  --text-heading: clamp(1.25rem, 1rem + 1.25vw, 1.5rem);
+  --text-subheading: 1.125rem;
+  --text-body: 0.9375rem;
+  --text-caption: 0.875rem;
+  --text-label: 0.75rem;
+  --text-stat: clamp(1.75rem, 1.2rem + 2.75vw, 2.5rem);
 }
 
 html { font-size: 16px; -webkit-font-smoothing: antialiased; }
@@ -39,7 +47,7 @@ body { font-family: var(--sans); color: var(--text); background: var(--bg); line
 a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
 a:hover { color: var(--text-secondary); }
 
-code, pre { font-family: var(--mono); font-size: 0.875rem; }
+code, pre { font-family: var(--mono); font-size: var(--text-caption); }
 pre { background: var(--accent); color: #e0e0e0; padding: 2.75rem var(--space-lg) var(--space-lg); border-radius: 8px; overflow-x: auto; line-height: 1.5; position: relative; }
 pre::before { content: ''; position: absolute; top: 14px; left: var(--space-lg); width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); box-shadow: 14px 0 0 rgba(255,255,255,0.15), 28px 0 0 rgba(255,255,255,0.15); }
 pre::after { content: ''; position: absolute; top: 34px; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.06); }
@@ -51,11 +59,12 @@ section { padding: var(--space-2xl) 0; }
 section + section { border-top: 1px solid var(--border); }
 
 /* ── Typography ── */
-h1 { font-size: 2.75rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
-h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--space-lg); }
-h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: var(--space-sm); }
-p { color: var(--text-secondary); max-width: 600px; }
-.lead { font-size: 1.125rem; line-height: 1.75; max-width: 540px; }
+h1 { font-size: var(--text-display); font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
+h2 { font-size: var(--text-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: var(--space-lg); }
+h3 { font-size: var(--text-subheading); font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: var(--space-sm); }
+p { color: var(--text-secondary); max-width: 60ch; }
+.lead { font-size: var(--text-subheading); line-height: 1.75; max-width: 52ch; }
+.section-label { font-size: var(--text-label); font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: var(--space-lg); margin-bottom: var(--space-sm); }
 
 /* ── Hero ── */
 .hero { padding: var(--space-2xl) 0 var(--space-xl); text-align: left; position: relative; }
@@ -65,7 +74,7 @@ p { color: var(--text-secondary); max-width: 600px; }
 
 .btn {
   display: inline-flex; align-items: center; gap: var(--space-sm);
-  padding: 0.625rem 1.25rem; border-radius: 6px; font-size: 0.9375rem;
+  padding: 0.625rem 1.25rem; border-radius: 6px; font-size: var(--text-body);
   font-weight: 500; text-decoration: none;
   transition: transform 0.15s cubic-bezier(0.25,1,0.5,1), box-shadow 0.15s, border-color 0.15s;
 }
@@ -75,9 +84,9 @@ p { color: var(--text-secondary); max-width: 600px; }
 .btn-secondary:hover { border-color: var(--text-tertiary); transform: translateY(-1px); }
 
 /* ── Comparison Table ── */
-.comparison { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: 0.9375rem; }
+.comparison { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: var(--text-body); }
 .comparison th, .comparison td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-.comparison th { font-weight: 500; color: var(--text-tertiary); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.comparison th { font-weight: 500; color: var(--text-tertiary); font-size: var(--text-label); text-transform: uppercase; letter-spacing: 0.05em; }
 .comparison td:first-child { font-weight: 500; color: var(--text); width: 25%; }
 .comparison .old { color: var(--red); background: var(--red-bg); }
 .comparison .new { color: var(--green); background: var(--green-bg); }
@@ -85,19 +94,19 @@ p { color: var(--text-secondary); max-width: 600px; }
 /* ── Module Grid ── */
 .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg); margin-top: var(--space-lg); }
 .module { padding: var(--space-lg); border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); }
-.module h3 { display: inline-block; font-family: var(--mono); font-size: 0.75rem; color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-sm); padding: 2px 8px; background: var(--accent-subtle); border-radius: 4px; letter-spacing: 0.01em; }
-.module .name { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: var(--space-sm); }
-.module p { font-size: 0.875rem; color: var(--text-secondary); }
+.module h3 { display: inline-block; font-family: var(--mono); font-size: var(--text-label); color: var(--text-tertiary); font-weight: 400; margin-bottom: var(--space-sm); padding: 2px 8px; background: var(--accent-subtle); border-radius: 4px; letter-spacing: 0.01em; }
+.module .name { font-size: 1rem; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: var(--space-sm); }
+.module p { font-size: var(--text-caption); color: var(--text-secondary); line-height: 1.6; }
 
 /* ── Stats ── */
 .stats { display: flex; gap: var(--space-xl); flex-wrap: wrap; margin: var(--space-lg) 0; }
-.stat .number { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--text); }
-.stat .label { font-size: 0.875rem; color: var(--text-tertiary); }
+.stat .number { font-size: var(--text-stat); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text); }
+.stat .label { font-size: var(--text-caption); color: var(--text-tertiary); }
 
 /* ── Code Example ── */
 .code-header { display: flex; gap: var(--space-md); margin-bottom: var(--space-md); }
 .code-tab {
-  padding: var(--space-sm) var(--space-md); font-size: 0.8125rem; font-weight: 500;
+  padding: var(--space-sm) var(--space-md); font-size: var(--text-label); font-weight: 500;
   border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card);
   cursor: pointer; color: var(--text-secondary); transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -105,18 +114,18 @@ p { color: var(--text-secondary); max-width: 600px; }
 .code-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* ── Halving ── */
-.halving { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: 0.9375rem; font-family: var(--mono); }
+.halving { width: 100%; border-collapse: collapse; margin: var(--space-lg) 0; font-size: var(--text-body); font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .halving th, .halving td { padding: 0.5rem 1rem; text-align: right; border-bottom: 1px solid var(--border); }
-.halving th { font-weight: 400; color: var(--text-tertiary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sans); }
+.halving th { font-weight: 400; color: var(--text-tertiary); font-size: var(--text-label); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sans); }
 .halving td:first-child { text-align: left; }
 .halving tbody tr { transition: background 0.12s; }
 .halving tbody tr:hover { background: var(--accent-subtle); }
 
 /* ── Footer ── */
 footer { padding: var(--space-xl) 0; border-top: 1px solid var(--border); }
-footer p { font-size: 0.875rem; color: var(--text-tertiary); }
+footer p { font-size: var(--text-caption); color: var(--text-tertiary); }
 .footer-links { display: flex; gap: var(--space-lg); margin-bottom: var(--space-md); }
-.footer-links a { font-size: 0.9375rem; color: var(--text-secondary); transition: color 0.12s; }
+.footer-links a { font-size: var(--text-body); color: var(--text-secondary); transition: color 0.12s; }
 .footer-links a:hover { color: var(--text); }
 
 /* ── Scroll-reveal entrance ── */
@@ -183,8 +192,9 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 }
 
 /* ── A: Agent network canvas ── */
-.hero > .container { position: relative; }
-#net { position: absolute; inset: 0; pointer-events: none; }
+.hero { position: relative; overflow: hidden; }
+#net { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.hero > .container { position: relative; z-index: 1; }
 
 /* ── B: Scroll progress ── */
 .scroll-progress {
@@ -235,16 +245,71 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
   .typewriter-cursor { animation: none !important; display: none; }
 }
 
+/* ── Dark Mode ── */
+[data-theme='dark'] {
+  --text: #ededed;
+  --text-secondary: #888;
+  --text-tertiary: #555;
+  --bg: #050505;
+  --bg-card: #0e0e0e;
+  --border: #2e2e2e;
+  --accent: #ededed;
+  --accent-subtle: #1a1a1a;
+  --green: #4ade80;
+  --green-bg: rgba(74,222,128,0.08);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.08);
+}
+[data-theme='dark'] pre { background: #111; color: #ccc; }
+[data-theme='dark'] pre::before { box-shadow: 14px 0 0 rgba(255,255,255,0.12), 28px 0 0 rgba(255,255,255,0.12); }
+[data-theme='dark'] .btn-primary { background: #ededed; color: #0a0a0a; }
+[data-theme='dark'] .btn-primary:hover { box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
+[data-theme='dark'] .btn-secondary { background: var(--bg-card); }
+[data-theme='dark'] nav.scrolled { background: rgba(5,5,5,0.82); }
+
+/* System preference fallback (no JS or theme=system) */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    --text: #ededed;
+    --text-secondary: #888;
+    --text-tertiary: #555;
+    --bg: #050505;
+    --bg-card: #0e0e0e;
+    --border: #2e2e2e;
+    --accent: #ededed;
+    --accent-subtle: #1a1a1a;
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.08);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.08);
+  }
+  html:not([data-theme]) pre { background: #111; color: #ccc; }
+  html:not([data-theme]) pre::before { box-shadow: 14px 0 0 rgba(255,255,255,0.12), 28px 0 0 rgba(255,255,255,0.12); }
+  html:not([data-theme]) .btn-primary { background: #ededed; color: #0a0a0a; }
+  html:not([data-theme]) .btn-primary:hover { box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
+  html:not([data-theme]) .btn-secondary { background: var(--bg-card); }
+  html:not([data-theme]) nav.scrolled { background: rgba(5,5,5,0.82); }
+}
+
+/* ── Nav Tools (theme/lang toggles) ── */
+.nav-tools { display: flex; gap: 2px; align-items: center; }
+.nav-tool {
+  min-width: 36px; min-height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--text-label); font-family: var(--mono);
+  color: var(--text-tertiary); background: none; border: none;
+  border-radius: 4px; cursor: pointer;
+  transition: color 0.12s;
+}
+.nav-tool:hover { color: var(--text); }
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
-  h1 { font-size: 1.875rem; }
-  h2 { font-size: 1.25rem; }
-  .stat .number { font-size: 1.75rem; }
   .stats { gap: var(--space-lg); }
   section { padding: var(--space-xl) 0; }
   .hero { padding: var(--space-xl) 0 var(--space-lg); }
-  pre { padding: 2.5rem var(--space-md) var(--space-md); font-size: 0.8125rem; }
-  .comparison th, .comparison td { padding: 0.5rem; font-size: 0.8125rem; }
+  pre { padding: 2.5rem var(--space-md) var(--space-md); font-size: var(--text-label); }
+  .comparison th, .comparison td { padding: 0.5rem; font-size: var(--text-label); }
 }
 </style>
 </head>
@@ -254,14 +319,18 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <!-- ── Nav ── -->
 <nav style="padding: var(--space-md) 0; border-bottom: 1px solid var(--border);">
   <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-    <strong style="font-size: 1.125rem; letter-spacing: -0.02em;">Oasyce</strong>
-    <div style="display: flex; gap: var(--space-lg); font-size: 0.9375rem;">
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain">GitHub</a>
-      <a href="#testnet">Testnet</a>
-      <a href="docs.html">Docs</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml">API</a>
+    <strong style="font-size: 1.25rem; font-family: var(--mono); letter-spacing: -0.03em;">Oasyce</strong>
+    <div style="display: flex; gap: var(--space-lg); font-size: var(--text-body); align-items: center;">
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain" data-i18n="nav-github">GitHub</a>
+      <a href="#testnet" data-i18n="nav-testnet">Testnet</a>
+      <a href="docs.html" data-i18n="nav-docs">Docs</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml" data-i18n="nav-api">API</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a>
       <a href="https://discord.gg/tfrCn54yZW">Discord</a>
+      <div class="nav-tools">
+        <button class="nav-tool" id="lang-toggle" aria-label="Switch language">A</button>
+        <button class="nav-tool" id="theme-toggle" aria-label="Switch theme">◐</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -270,13 +339,13 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <section class="hero">
   <canvas id="net" aria-hidden="true"></canvas>
   <div class="container">
-    <h1>Where agents pay agents.</h1>
-    <p class="lead">
-      Purpose-built L1 for the AI agent economy. Every capability invocation and data access between agents is automatically priced, escrowed, and settled on-chain. No KYC. No credit cards. No human approval.
+    <h1 data-i18n="hero-title">Property, contracts, and arbitration for the agent economy.</h1>
+    <p class="lead" data-i18n="hero-desc">
+      When AI agents trade data, capabilities, and compute, the hard problem isn't payments &mdash; it's property rights, fair pricing, and what happens when someone cheats. Oasyce is the commerce layer that handles the rest.
     </p>
     <div class="hero-actions">
-      <a href="#testnet" class="btn btn-primary">Join Testnet</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain" class="btn btn-secondary">View on GitHub</a>
+      <a href="#testnet" class="btn btn-primary" data-i18n="hero-cta1">Join Testnet</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain" class="btn btn-secondary" data-i18n="hero-cta2">View on GitHub</a>
     </div>
   </div>
 </section>
@@ -284,42 +353,42 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <!-- ── Why Not Stripe ── -->
 <section class="reveal">
   <div class="container">
-    <h2>Why not Stripe?</h2>
-    <p>When agents vastly outnumber humans, transact far more frequently, and deal in amounts far smaller than humans do, Stripe's model breaks down.</p>
+    <h2 data-i18n="why-title">Beyond payments</h2>
+    <p data-i18n="why-desc">Simple payment rails solve "how to transfer money." Oasyce solves "why the transfer is justified" &mdash; property, pricing, trust, and recourse.</p>
     <table class="comparison">
       <thead>
-        <tr><th>Dimension</th><th>Stripe / Traditional</th><th>Oasyce / Agent-Native</th></tr>
+        <tr><th>Problem</th><th>Payment Rails (Stripe, x402, Tempo)</th><th>Oasyce</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td>Identity</td>
-          <td class="old">Human KYC required</td>
-          <td class="new">PoW self-registration, no KYC</td>
+          <td>Data ownership</td>
+          <td class="old">Not addressed</td>
+          <td class="new">Tokenized assets, bonding curve pricing, fractional shares</td>
         </tr>
         <tr>
-          <td>Min transaction</td>
-          <td class="old">~$0.50 (fee floor)</td>
-          <td class="new">0.000001 OAS (gas only)</td>
+          <td>Fair pricing</td>
+          <td class="old">Fixed price or off-chain negotiation</td>
+          <td class="new">Bancor continuous curve &mdash; price rises with demand</td>
         </tr>
         <tr>
-          <td>Settlement</td>
-          <td class="old">T+2 days</td>
-          <td class="new">~5 seconds (1 block)</td>
+          <td>Service delivery</td>
+          <td class="old">Pay and hope</td>
+          <td class="new">Escrow with challenge window + dispute mechanism</td>
         </tr>
         <tr>
-          <td>Programmability</td>
-          <td class="old">Webhooks + API</td>
-          <td class="new">On-chain escrow + programmable logic</td>
+          <td>Trust</td>
+          <td class="old">Platform reputation / none</td>
+          <td class="new">On-chain credit scores, time-decaying, verifiable</td>
         </tr>
         <tr>
           <td>Disputes</td>
-          <td class="old">Human support, 30 days</td>
-          <td class="new">On-chain jury, deterministic</td>
+          <td class="old">Chargebacks or nothing</td>
+          <td class="new">On-chain jury voting, deterministic outcome</td>
         </tr>
         <tr>
-          <td>Permission</td>
-          <td class="old">Platform can freeze accounts</td>
-          <td class="new">Permissionless, censorship-resistant</td>
+          <td>Access control</td>
+          <td class="old">API keys</td>
+          <td class="new">Equity-gated tiers &mdash; stake determines access level</td>
         </tr>
       </tbody>
     </table>
@@ -329,57 +398,63 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <!-- ── Stats ── -->
 <section class="reveal">
   <div class="container">
-    <h2>Protocol at a glance</h2>
+    <h2 data-i18n="stats-title">Protocol at a glance</h2>
     <div class="stats stagger">
       <div class="stat">
-        <div class="number" data-count="28">0</div>
-        <div class="label">Transaction types</div>
+        <div class="number" data-count="32">0</div>
+        <div class="label" data-i18n="stat-tx">Transaction types</div>
       </div>
       <div class="stat">
-        <div class="number" data-count="29">0</div>
-        <div class="label">Query endpoints</div>
+        <div class="number" data-count="33">0</div>
+        <div class="label" data-i18n="stat-query">Query endpoints</div>
       </div>
       <div class="stat">
         <div class="number" data-count="7">0</div>
-        <div class="label">Custom modules</div>
+        <div class="label" data-i18n="stat-modules">Custom modules</div>
       </div>
       <div class="stat">
         <div class="number" data-static>~5s</div>
-        <div class="label">Block time</div>
+        <div class="label" data-i18n="stat-block">Block time</div>
       </div>
     </div>
 
-    <!-- Modules -->
+    <!-- Modules — Core -->
+    <h3 class="section-label">Core &mdash; Property &amp; Contracts</h3>
+    <div class="modules stagger">
+      <div class="module" style="border-width: 2px;">
+        <h3>x/datarights</h3>
+        <div class="name" data-i18n="mod-dr-name">Data Securitization</div>
+        <p data-i18n="mod-dr-desc">Data as financial assets. Bonding curve pricing, fractional share ownership, version lineage, equity-gated access tiers, lifecycle management, and jury-arbitrated disputes.</p>
+      </div>
+      <div class="module" style="border-width: 2px;">
+        <h3>x/capability</h3>
+        <div class="name" data-i18n="mod-cap-name">Service Contracts</div>
+        <p data-i18n="mod-cap-desc">On-chain service agreements. Register capabilities with pricing, invoke with automatic escrow, challenge window for disputes, settle on completion.</p>
+      </div>
+      <div class="module" style="border-width: 2px;">
+        <h3>x/settlement</h3>
+        <div class="name" data-i18n="mod-stl-name">Transaction Clearing</div>
+        <p data-i18n="mod-stl-desc">Atomic escrow with state machine (locked &rarr; released/refunded/expired). Bancor bonding curves (CW=0.5). 2% deflationary burn on every settlement.</p>
+      </div>
+    </div>
+
+    <!-- Modules — Supporting -->
+    <h3 class="section-label">Supporting Infrastructure</h3>
     <div class="modules stagger">
       <div class="module">
-        <h3>x/settlement</h3>
-        <div class="name">Escrow + Bonding Curve</div>
-        <p>Atomic escrow settlement, Bancor continuous pricing (CW=0.5), 2% deflationary burn on every release.</p>
-      </div>
-      <div class="module">
-        <h3>x/capability</h3>
-        <div class="name">AI Capability Marketplace</div>
-        <p>Register endpoints, set prices, invoke services. Auto-escrow on invocation, auto-settle on completion.</p>
-      </div>
-      <div class="module">
-        <h3>x/datarights</h3>
-        <div class="name">Tokenized Data Assets</div>
-        <p>Register data, trade shares on bonding curves, tiered access gating, jury-based dispute resolution.</p>
-      </div>
-      <div class="module">
         <h3>x/reputation</h3>
-        <div class="name">Trust Scores</div>
-        <p>Time-decaying reputation (30-day half-life). Quality signals that agents can read before transacting.</p>
+        <div class="name" data-i18n="mod-rep-name">Credit Scoring</div>
+        <p data-i18n="mod-rep-desc">Time-decaying trust scores (30-day half-life). Factors into pricing, jury selection, and access gating. Verified feedback weighted 4x.</p>
       </div>
       <div class="module">
         <h3>x/work</h3>
-        <div class="name">Proof of Useful Work</div>
-        <p>Distributed compute tasks with commit-reveal verification. Deterministic assignment weighted by reputation.</p>
+        <div class="name" data-i18n="mod-work-name">Verifiable Compute</div>
+        <p data-i18n="mod-work-desc">Commit-reveal task verification. Deterministic assignment weighted by reputation. Multi-executor consensus for result integrity.</p>
       </div>
       <div class="module">
         <h3>x/onboarding</h3>
-        <div class="name">PoW Self-Registration</div>
-        <p>Agents join by solving a hash puzzle. No KYC, no human approval. Airdrop halving economics.</p>
+        <div class="name" data-i18n="mod-onb-name">Permissionless Access</div>
+        <p data-i18n="mod-onb-desc">PoW puzzle to enter the economy. No KYC, no approval. Airdrop-as-debt with halving economics.</p>
       </div>
     </div>
   </div>
@@ -388,8 +463,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <!-- ── Economics ── -->
 <section class="reveal">
   <div class="container">
-    <h2>Token economics</h2>
-    <p>Fixed block rewards with Bitcoin-style halving. Combined with 2% burn on every escrow release, supply peaks then contracts.</p>
+    <h2 data-i18n="econ-title">Token economics</h2>
+    <p data-i18n="econ-desc">Fixed block rewards with Bitcoin-style halving. Combined with 2% burn on every escrow release, supply peaks then contracts.</p>
     <table class="halving">
       <thead>
         <tr><th style="text-align:left">Block range</th><th>Reward/block</th><th>Duration</th><th>Cumulative</th></tr>
@@ -401,8 +476,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
         <tr><td>30M+</td><td>0.5 OAS</td><td>indefinite</td><td>+3.15M/year</td></tr>
       </tbody>
     </table>
-    <p style="margin-top: var(--space-md); font-size: 0.875rem;">
-      Fee split on settlement: 93% provider, 3% validators, 2% burn, 2% treasury. Sell fee: 3% protocol fee.
+    <p style="margin-top: var(--space-md); font-size: var(--text-caption);">
+      Fee split on settlement: 90% provider, 5% protocol, 2% burn, 3% treasury. Sell fee: 5% protocol fee.
     </p>
   </div>
 </section>
@@ -410,8 +485,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <!-- ── For Developers ── -->
 <section class="reveal">
   <div class="container">
-    <h2>Built for agents, not humans</h2>
-    <p style="margin-bottom: var(--space-lg);">REST API, gRPC, and CLI with JSON output. Every endpoint is machine-readable. <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> for LLM-native documentation.</p>
+    <h2 data-i18n="dev-title">Machine-readable by design</h2>
+    <p style="margin-bottom: var(--space-lg);" data-i18n-html="dev-desc">REST API, gRPC, and CLI with JSON output. Every endpoint is machine-readable. <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> for LLM-native documentation.</p>
 
     <div class="code-header" role="tablist" aria-label="Code examples">
       <button class="code-tab active" role="tab" aria-selected="true" aria-controls="code-python" data-code="python">Python</button>
@@ -461,8 +536,8 @@ oasyced query settlement escrow \
 <!-- ── Public Testnet ── -->
 <section class="reveal" id="testnet">
   <div class="container">
-    <h2>Public Testnet</h2>
-    <p style="margin-bottom: var(--space-lg);">Testnet-1 is live. Join as a validator or start building.</p>
+    <h2 data-i18n="testnet-title">Public Testnet</h2>
+    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Join as a validator or start building.</p>
     <table class="comparison" style="max-width: 640px;">
       <tbody>
         <tr><td>Chain ID</td><td><code>oasyce-testnet-1</code></td></tr>
@@ -474,8 +549,8 @@ oasyced query settlement escrow \
       </tbody>
     </table>
     <div style="margin-top: var(--space-lg);">
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" class="btn btn-primary">Validator Guide</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0" class="btn btn-secondary" style="margin-left: var(--space-sm);">Download Binary</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" class="btn btn-primary" data-i18n="testnet-validator">Validator Guide</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0" class="btn btn-secondary" style="margin-left: var(--space-sm);" data-i18n="testnet-download">Download Binary</a>
     </div>
   </div>
 </section>
@@ -483,7 +558,7 @@ oasyced query settlement escrow \
 <!-- ── Quick Start ── -->
 <section class="reveal">
   <div class="container">
-    <h2>Quick start</h2>
+    <h2 data-i18n="quickstart-title">Quick start</h2>
 <pre><code># Build
 git clone https://github.com/Shangri-la-0428/oasyce-chain.git
 cd oasyce-chain
@@ -500,7 +575,7 @@ bash scripts/start_testnet.sh
 <!-- ── Ecosystem ── -->
 <section class="reveal">
   <div class="container">
-    <h2>Ecosystem</h2>
+    <h2 data-i18n="eco-title">Ecosystem</h2>
     <table class="comparison" style="max-width: 700px;">
       <thead>
         <tr><th>Component</th><th>Role</th><th>Install</th></tr>
@@ -535,13 +610,13 @@ bash scripts/start_testnet.sh
 <footer>
   <div class="container">
     <div class="footer-links">
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain">GitHub</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain" data-i18n="nav-github">GitHub</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml">OpenAPI</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md">Run a Validator</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" data-i18n="footer-validator">Run a Validator</a>
       <a href="https://discord.gg/tfrCn54yZW">Discord</a>
     </div>
-    <p>Apache 2.0 License. Built with Cosmos SDK v0.50.</p>
+    <p data-i18n="footer-copy">Apache 2.0 License. Built with Cosmos SDK v0.50.</p>
   </div>
 </footer>
 
@@ -658,101 +733,237 @@ bash scripts/start_testnet.sh
     }, { passive: true });
   }
 
-  /* ── A: Agent network pulse ── */
+  /* ── A: Breathing dot matrix ── */
   var canvas = document.getElementById('net');
   var hero = canvas && canvas.closest('.hero');
   if (canvas && hero && !prefersReduced) {
-    var ctx = canvas.getContext('2d');
-    var nodes = [], mouse = { x: -9e3, y: -9e3 }, animating = true;
-    var LINK = 110, HOVER = 150;
+    (function () {
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    function resize() { canvas.width = hero.offsetWidth; canvas.height = hero.offsetHeight; }
+      var dots = [], pulses = [];
+      var cursor = null, visible = true;
+      window._isDark = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+      var SPACE = 44;
 
-    function seed() {
-      resize();
-      nodes = [];
-      var N = Math.round(hero.offsetWidth / 24);
-      for (var i = 0; i < N; i++) {
-        nodes.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.25,
-          vy: (Math.random() - 0.5) * 0.25,
-          r: 1.2 + Math.random() * 0.8
-        });
-      }
-    }
-
-    function draw() {
-      if (!animating) return;
-      var w = canvas.width, h = canvas.height, N = nodes.length;
-      ctx.clearRect(0, 0, w, h);
-
-      for (var i = 0; i < N; i++) {
-        var n = nodes[i];
-        n.x += n.vx; n.y += n.vy;
-        if (n.x < 0 || n.x > w) n.vx *= -1;
-        if (n.y < 0 || n.y > h) n.vy *= -1;
+      function init() {
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var w = hero.offsetWidth, h = hero.offsetHeight;
+        canvas.width = w * dpr; canvas.height = h * dpr;
+        canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+        dots = [];
+        var sp = SPACE * dpr;
+        var cols = Math.ceil(canvas.width / sp), rows = Math.ceil(canvas.height / sp);
+        var ox = (canvas.width - (cols - 1) * sp) / 2;
+        var oy = (canvas.height - (rows - 1) * sp) / 2;
+        for (var r = 0; r < rows; r++)
+          for (var c = 0; c < cols; c++)
+            dots.push({ x: ox + c * sp, y: oy + r * sp });
       }
 
-      /* ambient connections */
-      ctx.lineWidth = 0.5;
-      for (var i = 0; i < N; i++) {
-        for (var j = i + 1; j < N; j++) {
-          var dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
-          var d = Math.sqrt(dx * dx + dy * dy);
-          if (d < LINK) {
-            ctx.strokeStyle = 'rgba(0,0,0,' + ((1 - d / LINK) * 0.1) + ')';
-            ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
-          }
+      function frame(now) {
+        if (!visible) return;
+        var w = canvas.width, h = canvas.height;
+        var dpr = canvas.width / hero.offsetWidth;
+        var dotR = 1.2 * dpr;
+
+        ctx.clearRect(0, 0, w, h);
+
+        /* diagonal breathing wave (~8s period) */
+        var diag = w + h;
+        var wavePos = (Math.sin(now * 0.000125) * 0.5 + 0.5) * diag;
+        var waveW = diag * 0.18;
+
+        var cur = cursor ? { x: cursor.x * dpr, y: cursor.y * dpr } : null;
+
+        /* update pulses */
+        for (var p = pulses.length - 1; p >= 0; p--) {
+          pulses[p].r += 1.8 * dpr;
+          pulses[p].a *= 0.988;
+          if (pulses[p].a < 0.005) pulses.splice(p, 1);
         }
-      }
 
-      /* nodes + mouse glow */
-      for (var i = 0; i < N; i++) {
-        var n = nodes[i];
-        var dx = n.x - mouse.x, dy = n.y - mouse.y;
-        var md = Math.sqrt(dx * dx + dy * dy);
-        var glow = md < HOVER ? 1 - md / HOVER : 0;
+        /* draw dots */
+        for (var i = 0; i < dots.length; i++) {
+          var d = dots[i], a = 0.05;
 
-        ctx.fillStyle = 'rgba(0,0,0,' + (0.12 + glow * 0.5) + ')';
-        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + glow * 1.5, 0, 6.283); ctx.fill();
+          /* wave */
+          var dd = Math.abs((d.x + d.y) - wavePos);
+          if (dd < waveW) { var wI = 1 - dd / waveW; a += wI * wI * 0.09; }
 
-        /* bright connections near cursor */
-        if (glow > 0.15) {
-          ctx.lineWidth = 0.8;
-          for (var j = i + 1; j < N; j++) {
-            var dx2 = nodes[j].x - mouse.x, dy2 = nodes[j].y - mouse.y;
-            if (Math.sqrt(dx2 * dx2 + dy2 * dy2) < HOVER) {
-              var dx3 = nodes[i].x - nodes[j].x, dy3 = nodes[i].y - nodes[j].y;
-              if (Math.sqrt(dx3 * dx3 + dy3 * dy3) < HOVER) {
-                ctx.strokeStyle = 'rgba(0,0,0,' + (glow * 0.25) + ')';
-                ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
-              }
-            }
+          /* cursor proximity */
+          if (cur) {
+            var dx = d.x - cur.x, dy = d.y - cur.y;
+            var dist = Math.sqrt(dx * dx + dy * dy), range = 80 * dpr;
+            if (dist < range) a += (1 - dist / range) * 0.12;
           }
-          ctx.lineWidth = 0.5;
+
+          /* click pulses */
+          for (var p = 0; p < pulses.length; p++) {
+            var pl = pulses[p];
+            var dx = d.x - pl.x, dy = d.y - pl.y;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var pd = Math.abs(dist - pl.r), pw = 25 * dpr;
+            if (pd < pw) a += (1 - pd / pw) * pl.a * 0.14;
+          }
+
+          a = Math.min(a, 0.28);
+          var dc = window._isDark ? '255,255,255' : '0,0,0';
+          ctx.fillStyle = 'rgba(' + dc + ',' + a + ')';
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, dotR, 0, 6.283);
+          ctx.fill();
         }
+
+        requestAnimationFrame(frame);
       }
-      requestAnimationFrame(draw);
-    }
 
-    hero.addEventListener('mousemove', function (e) {
-      var r = hero.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
-    });
-    hero.addEventListener('mouseleave', function () { mouse.x = mouse.y = -9e3; });
+      init();
 
-    /* pause when off-screen */
-    new IntersectionObserver(function (entries) {
-      var v = entries[0].isIntersecting;
-      if (v && !animating) { animating = true; requestAnimationFrame(draw); }
-      if (!v) animating = false;
-    }).observe(hero);
+      hero.addEventListener('mousemove', function (e) {
+        var r = hero.getBoundingClientRect();
+        cursor = { x: e.clientX - r.left, y: e.clientY - r.top };
+      });
+      hero.addEventListener('mouseleave', function () { cursor = null; });
+      hero.addEventListener('click', function (e) {
+        if (e.target.closest && e.target.closest('a, button')) return;
+        var r = hero.getBoundingClientRect();
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        pulses.push({ x: (e.clientX - r.left) * dpr, y: (e.clientY - r.top) * dpr, r: 0, a: 1 });
+      });
 
-    window.addEventListener('resize', seed);
-    seed();
-    requestAnimationFrame(draw);
+      new IntersectionObserver(function (entries) {
+        var v = entries[0].isIntersecting;
+        if (v && !visible) { visible = true; requestAnimationFrame(frame); }
+        if (!v) visible = false;
+      }).observe(hero);
+
+      var rT = 0;
+      window.addEventListener('resize', function () { clearTimeout(rT); rT = setTimeout(init, 300); });
+      requestAnimationFrame(frame);
+    })();
   }
+  /* ── i18n Dictionary ── */
+  var i18nDict = {
+    zh: {
+      'hero-title': '面向 Agent 经济的产权、合约与仲裁',
+      'hero-desc': '当 AI Agent 交易数据、能力和算力时，难点不是支付——而是产权确认、公平定价和违约处理。Oasyce 是处理这一切的商业层。',
+      'hero-cta1': '加入测试网',
+      'hero-cta2': '查看源码',
+      'why-title': '不止于支付',
+      'why-desc': '简单支付通道解决的是"怎么转钱"。Oasyce 解决的是"凭什么转"——产权、定价、信任和追索。',
+      'stats-title': '协议概览',
+      'stat-tx': '交易类型',
+      'stat-query': '查询接口',
+      'stat-modules': '定制模块',
+      'stat-block': '出块时间',
+      'mod-dr-name': '数据证券化',
+      'mod-dr-desc': '数据即金融资产。联合曲线定价、分数份额持有、版本谱系、权益门控访问层级、生命周期管理和陪审团仲裁争议。',
+      'mod-cap-name': '服务合约',
+      'mod-cap-desc': '链上服务协议。注册能力并定价，调用时自动托管，争议挑战窗口，完成后结算。',
+      'mod-stl-name': '交易清算',
+      'mod-stl-desc': '原子级托管状态机（锁定→释放/退款/过期）。Bancor 联合曲线 (CW=0.5)。每笔结算 2% 通缩销毁。',
+      'mod-rep-name': '信用评分',
+      'mod-rep-desc': '时间衰减信任评分（30 天半衰期）。影响定价、陪审员选择和访问门控。经验证反馈权重 4 倍。',
+      'mod-work-name': '可验证计算',
+      'mod-work-desc': 'Commit-reveal 任务验证。基于信誉的确定性分配。多执行者共识保障结果完整性。',
+      'mod-onb-name': '无许可准入',
+      'mod-onb-desc': '工作量证明即可加入经济体。无 KYC，无审批。空投即债务，减半经济学。',
+      'econ-title': '代币经济学',
+      'econ-desc': '固定区块奖励 + 比特币式减半。结合每笔托管释放的 2% 销毁机制，供应量先升后降。',
+      'dev-title': '机器可读设计',
+      'dev-desc': 'REST API、gRPC 和 CLI JSON 输出。每个接口均机器可读。<a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> 提供 LLM 原生文档。',
+      'testnet-title': '公共测试网',
+      'testnet-desc': 'Testnet-1 已上线。加入成为验证者或开始构建。',
+      'testnet-validator': '验证者指南',
+      'testnet-download': '下载二进制',
+      'quickstart-title': '快速开始',
+      'eco-title': '生态系统',
+      'footer-copy': 'Apache 2.0 开源协议。基于 Cosmos SDK v0.50 构建。',
+      'nav-github': '源码',
+      'nav-testnet': '测试网',
+      'nav-docs': '文档',
+      'nav-api': '接口',
+      'footer-validator': '运行验证者',
+    }
+  };
+
+  /* ── Theme Toggle ── */
+  var themeBtn = document.getElementById('theme-toggle');
+  var langBtn = document.getElementById('lang-toggle');
+  var themeOrder = ['system', 'light', 'dark'];
+  var langOrder = ['system', 'zh', 'en'];
+
+  function getStored(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+  function setStored(key, v) { try { localStorage.setItem(key, v); } catch(e) {} }
+
+  function resolveTheme(pref) {
+    if (pref === 'system' || !pref) return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return pref;
+  }
+  function resolveLang(pref) {
+    if (pref === 'system' || !pref) return (navigator.language || '').startsWith('zh') ? 'zh' : 'en';
+    return pref;
+  }
+
+  var curTheme = getStored('oasyce-site-theme') || 'system';
+  var curLang = getStored('oasyce-site-lang') || 'system';
+
+  function applyTheme() {
+    var resolved = resolveTheme(curTheme);
+    if (curTheme === 'system') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', resolved);
+    }
+    themeBtn.textContent = curTheme === 'system' ? '◐' : resolved === 'dark' ? '☀' : '☾';
+    themeBtn.title = curTheme === 'system' ? '跟随系统' : '';
+    // Update canvas dot color
+    window._isDark = resolved === 'dark';
+  }
+
+  function applyLang() {
+    var resolved = resolveLang(curLang);
+    document.documentElement.lang = resolved === 'zh' ? 'zh-CN' : 'en';
+    langBtn.textContent = curLang === 'system' ? 'A' : curLang === 'zh' ? 'En' : '中';
+    langBtn.title = curLang === 'system' ? '跟随系统' : '';
+
+    // Apply translations
+    var dict = resolved === 'zh' ? i18nDict.zh : null;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (!el._origText) el._origText = el.textContent;
+      el.textContent = dict ? (dict[key] || el._origText) : el._origText;
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-html');
+      if (!el._origHTML) el._origHTML = el.innerHTML;
+      el.innerHTML = dict ? (dict[key] || el._origHTML) : el._origHTML;
+    });
+  }
+
+  themeBtn.addEventListener('click', function() {
+    var idx = themeOrder.indexOf(curTheme);
+    curTheme = themeOrder[(idx + 1) % themeOrder.length];
+    setStored('oasyce-site-theme', curTheme);
+    applyTheme();
+  });
+
+  langBtn.addEventListener('click', function() {
+    var idx = langOrder.indexOf(curLang);
+    curLang = langOrder[(idx + 1) % langOrder.length];
+    setStored('oasyce-site-lang', curLang);
+    applyLang();
+  });
+
+  // Listen for OS theme changes
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+    if (curTheme === 'system') applyTheme();
+  });
+
+  // Initial apply
+  applyTheme();
+  applyLang();
 })();
 </script>
 

@@ -51,8 +51,12 @@ func (q queryServer) BondingCurvePrice(goCtx context.Context, req *types.QueryBo
 	if !found {
 		return nil, types.ErrBondingCurveNotFound.Wrapf("asset %s", req.AssetId)
 	}
+	denom := state.ReserveDenom
+	if denom == "" {
+		denom = "uoas" // fallback for pre-existing curves without denom
+	}
 	return &types.QueryBondingCurvePriceResponse{
-		CurrentPrice: sdk.NewCoin("uoas", price),
+		CurrentPrice: sdk.NewCoin(denom, price),
 		State:        state,
 	}, nil
 }

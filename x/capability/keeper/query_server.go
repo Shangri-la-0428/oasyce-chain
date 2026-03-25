@@ -45,22 +45,45 @@ func (q queryServer) CapabilitiesByProvider(goCtx context.Context, req *types.Qu
 	return &types.QueryCapabilitiesByProviderResponse{Capabilities: caps}, nil
 }
 
+// Invocation queries a single invocation by ID.
+func (q queryServer) Invocation(goCtx context.Context, req *types.QueryInvocationRequest) (*types.QueryInvocationResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	inv, err := q.keeper.GetInvocation(ctx, req.InvocationId)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryInvocationResponse{Invocation: inv}, nil
+}
+
 // Earnings queries the total earnings for a provider across all capabilities.
 func (q queryServer) Earnings(goCtx context.Context, req *types.QueryEarningsRequest) (*types.QueryEarningsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	caps := q.keeper.ListByProvider(ctx, req.Provider)
 
-	totalEarned := math.ZeroInt()
+	// Aggregate earnings per denomination from each capability's PricePerCall.
+	denomTotals := make(map[string]math.Int)
 	var totalCalls uint64
 	for _, cap := range caps {
-		totalEarned = totalEarned.Add(cap.TotalEarned)
 		totalCalls += cap.TotalCalls
+		if cap.TotalEarned.IsPositive() {
+			denom := cap.PricePerCall.Denom
+			if denom == "" {
+				denom = "uoas" // fallback for capabilities without explicit denom
+			}
+			if existing, ok := denomTotals[denom]; ok {
+				denomTotals[denom] = existing.Add(cap.TotalEarned)
+			} else {
+				denomTotals[denom] = cap.TotalEarned
+			}
+		}
 	}
 
-	// Return the total earned as a single coin (uoas).
 	var coins []sdk.Coin
-	if totalEarned.IsPositive() {
-		coins = sdk.NewCoins(sdk.NewCoin("uoas", totalEarned))
+	for denom, amount := range denomTotals {
+		coins = append(coins, sdk.NewCoin(denom, amount))
+	}
+	if len(coins) > 0 {
+		coins = sdk.NewCoins(coins...) // sort and deduplicate
 	}
 
 	return &types.QueryEarningsResponse{

@@ -12,6 +12,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateEscrow{}, "oasyce/settlement/MsgCreateEscrow", nil)
 	cdc.RegisterConcrete(&MsgReleaseEscrow{}, "oasyce/settlement/MsgReleaseEscrow", nil)
 	cdc.RegisterConcrete(&MsgRefundEscrow{}, "oasyce/settlement/MsgRefundEscrow", nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, "oasyce/settlement/MsgUpdateParams", nil)
 }
 
 // RegisterInterfaces registers the settlement module's interface types with the interface registry.
@@ -20,6 +21,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgCreateEscrow{},
 		&MsgReleaseEscrow{},
 		&MsgRefundEscrow{},
+		&MsgUpdateParams{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

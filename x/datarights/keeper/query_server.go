@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/oasyce/chain/x/datarights/types"
@@ -148,4 +149,40 @@ func (q queryServer) DatarightsParams(ctx context.Context, _ *types.QueryParamsR
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	params := q.Keeper.GetParams(sdkCtx)
 	return &types.QueryParamsResponse{Params: params}, nil
+}
+
+// AccessLevel returns the access level for an address on a data asset.
+func (q queryServer) AccessLevel(ctx context.Context, req *types.QueryAccessLevelRequest) (*types.QueryAccessLevelResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	asset, found := q.Keeper.GetAsset(sdkCtx, req.AssetId)
+	if !found {
+		return nil, types.ErrAssetNotFound.Wrapf("asset %s not found", req.AssetId)
+	}
+
+	resp := &types.QueryAccessLevelResponse{
+		TotalShares: asset.TotalShares.String(),
+	}
+
+	sh, found := q.Keeper.GetShareHolder(sdkCtx, req.AssetId, req.Address)
+	if !found || sh.Shares.IsZero() {
+		resp.Shares = "0"
+		resp.EquityBps = 0
+		resp.AccessLevel = ""
+		return resp, nil
+	}
+
+	resp.Shares = sh.Shares.String()
+
+	// Equity in basis points.
+	if !asset.TotalShares.IsZero() {
+		resp.EquityBps = sh.Shares.Mul(math.NewInt(10000)).Quo(asset.TotalShares).Uint64()
+	}
+
+	// Use a default reputation of 100 (full access) for the query.
+	// In production, the off-chain gateway would supply the actual reputation.
+	level := q.Keeper.GetAccessLevel(sdkCtx, req.AssetId, req.Address, math.LegacyNewDec(100))
+	resp.AccessLevel = level
+
+	return resp, nil
 }

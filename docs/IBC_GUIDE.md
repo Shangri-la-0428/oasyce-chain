@@ -65,7 +65,7 @@ rly start oasyce-hub
 oasyced tx ibc-transfer transfer transfer channel-0 \
   cosmos1xxx 1000000uoas \
   --from alice \
-  --fees 500uoas \
+  --fees 10000uoas \
   --chain-id oasyce-1
 ```
 

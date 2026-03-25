@@ -314,6 +314,23 @@ func (k Keeper) GetAssetReserve(ctx sdk.Context, assetID string) math.Int {
 	return reserve
 }
 
+// GetAssetReserveDenom retrieves the bonding curve reserve denomination for a data asset.
+// Returns "uoas" as fallback for pre-existing assets without stored denom.
+func (k Keeper) GetAssetReserveDenom(ctx sdk.Context, assetID string) string {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.AssetReserveDenomKey(assetID))
+	if bz == nil {
+		return "uoas"
+	}
+	return string(bz)
+}
+
+// SetAssetReserveDenom stores the bonding curve reserve denomination for a data asset.
+func (k Keeper) SetAssetReserveDenom(ctx sdk.Context, assetID string, denom string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.AssetReserveDenomKey(assetID), []byte(denom))
+}
+
 // SetAssetReserve stores the bonding curve reserve for a data asset.
 func (k Keeper) SetAssetReserve(ctx sdk.Context, assetID string, reserve math.Int) error {
 	bz, err := reserve.Marshal()
@@ -500,7 +517,12 @@ func (k Keeper) BuyShares(ctx context.Context, msg types.MsgBuyShares) (math.Int
 		return math.Int{}, err
 	}
 
-	// Update reserve.
+	// Update reserve and store denom (set on first buy, verify on subsequent).
+	storedDenom := k.GetAssetReserveDenom(sdkCtx, msg.AssetId)
+	if storedDenom == "uoas" && reserve.IsZero() {
+		// First buy — store the actual denom.
+		k.SetAssetReserveDenom(sdkCtx, msg.AssetId, msg.Amount.Denom)
+	}
 	newReserve := reserve.Add(paymentAmount)
 	if err := k.SetAssetReserve(sdkCtx, msg.AssetId, newReserve); err != nil {
 		return math.Int{}, err
@@ -622,9 +644,12 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 			"slippage: would pay out %s, minimum requested %s", payoutAmount, msg.MinPayoutOut)
 	}
 
+	// Resolve reserve denomination for coin creation.
+	reserveDenom := k.GetAssetReserveDenom(sdkCtx, msg.AssetId)
+
 	// Send payout from module to seller.
 	if payoutAmount.IsPositive() {
-		payoutCoin := sdk.NewCoin("uoas", payoutAmount)
+		payoutCoin := sdk.NewCoin(reserveDenom, payoutAmount)
 		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sellerAddr, sdk.NewCoins(payoutCoin)); err != nil {
 			return math.Int{}, fmt.Errorf("failed to send payout: %w", err)
 		}
@@ -632,7 +657,7 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 
 	// Send protocol fee to fee_collector.
 	if feeAmount.IsPositive() {
-		feeCoin := sdk.NewCoin("uoas", feeAmount)
+		feeCoin := sdk.NewCoin(reserveDenom, feeAmount)
 		if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, "fee_collector", sdk.NewCoins(feeCoin)); err != nil {
 			return math.Int{}, fmt.Errorf("failed to send protocol fee: %w", err)
 		}
@@ -782,8 +807,9 @@ func (k Keeper) ClaimSettlement(ctx context.Context, msg types.MsgClaimSettlemen
 	}
 
 	// Send payout from module to claimer (no protocol fee on settlement).
+	reserveDenom := k.GetAssetReserveDenom(sdkCtx, msg.AssetId)
 	if payout.IsPositive() {
-		payoutCoin := sdk.NewCoin("uoas", payout)
+		payoutCoin := sdk.NewCoin(reserveDenom, payout)
 		if sendErr := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, claimerAddr, sdk.NewCoins(payoutCoin)); sendErr != nil {
 			return math.Int{}, fmt.Errorf("failed to send settlement: %w", sendErr)
 		}

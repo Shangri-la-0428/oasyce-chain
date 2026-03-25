@@ -21,7 +21,7 @@ CHAIN_ID="${CHAIN_ID:-oasyce-local-1}"
 NODE="tcp://localhost:26657"
 REST="http://localhost:1317"
 KB="--keyring-backend test"
-FEES="--fees 500uoas"
+FEES="--fees 10000uoas"
 COMMON="$KB --chain-id $CHAIN_ID $FEES --yes"
 
 # Colors

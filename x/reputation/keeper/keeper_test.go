@@ -319,3 +319,31 @@ func TestReportMisbehavior(t *testing.T) {
 		t.Fatal("expected non-empty report ID")
 	}
 }
+
+// TestQueryReputationDefaultZero tests that querying reputation for an unseen
+// address returns a default zero-valued response.
+func TestQueryReputationDefaultZero(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+
+	qs := keeper.NewQueryServer(k)
+
+	unknownAddr := "cosmos1w3jhxap3ta5haz7v3kfp0qgart58sckay4wlms"
+	resp, err := qs.Reputation(ctx, &types.QueryReputationRequest{
+		Address: unknownAddr,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp == nil {
+		t.Fatal("expected non-nil response")
+	}
+	if resp.Reputation.Address != unknownAddr {
+		t.Fatalf("expected address %s, got %s", unknownAddr, resp.Reputation.Address)
+	}
+	if resp.Reputation.TotalScore != 0 {
+		t.Fatalf("expected TotalScore 0 for unseen address, got %d", resp.Reputation.TotalScore)
+	}
+	if resp.Reputation.LastUpdated.IsZero() {
+		t.Fatal("expected LastUpdated to be set (not zero time)")
+	}
+}

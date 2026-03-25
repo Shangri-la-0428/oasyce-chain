@@ -334,5 +334,25 @@ func isAssigned(executors []string, addr string) bool {
 	return false
 }
 
+// UpdateParams handles MsgUpdateParams — governance-gated parameter updates.
+func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if m.Keeper.Authority() != msg.Authority {
+		return nil, fmt.Errorf("unauthorized: expected %s, got %s", m.Keeper.Authority(), msg.Authority)
+	}
+
+	if err := m.Keeper.SetParams(ctx, msg.Params); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		"work_params_updated",
+		sdk.NewAttribute("authority", msg.Authority),
+	))
+
+	return &types.MsgUpdateParamsResponse{}, nil
+}
+
 // ensure math import is used
 var _ = math.ZeroInt

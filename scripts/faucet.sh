@@ -84,7 +84,7 @@ $OASYCED tx send "$FAUCET_ADDR" "$RECIPIENT" "${AMOUNT_UOAS}uoas" \
   $KB \
   --chain-id "$CHAIN_ID" \
   --node "$NODE" \
-  --fees 500uoas \
+  --fees 10000uoas \
   --yes 2>/dev/null
 
 # Record rate limit

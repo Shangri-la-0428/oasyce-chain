@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] - 2026-03-26
+
+### Added
+
+- **Challenge window mechanism** — `CompleteInvocation` starts 100-block challenge window; `ClaimInvocation` after expiry, `DisputeInvocation` within window (refunds escrow)
+- **AccessLevel query endpoint** — `GET /oasyce/datarights/v1/access_level/{asset_id}/{address}` returns L0-L3 tier
+- **Invocation query endpoint** — `GET /oasyce/capability/v1/invocation/{invocation_id}` for tracking challenge window progress
+- **UpdateCapability and DeactivateCapability** — CLI commands for managing registered services
+- **MsgUpdateParams for all 6 modules** — Governance-gated parameter updates with `Descriptor()` methods
+- **AI-First agent interface** — `/llms.txt`, `/openapi.yaml`, `/.well-known/oasyce.json`, `/oasyce/v1/error-codes` served from node
+- **PoW solver CLI** — `oasyced util solve-pow [address]` for agent self-onboarding
+- **gRPC reflection** — `grpcurl -plaintext :9090 list` returns all services
+- **AI auto-reporting** — Issue template `.github/ISSUE_TEMPLATE/ai_agent_report.md`, `report_issue` in discovery JSON
+- **Tx codec integration tests** — 152 sub-tests covering all 38 message types (Descriptor, RegisterInterfaces, marshal roundtrip)
+- **Proto descriptor patcher** — `tools/patch_descriptors` with `ensureSignerOptions()` and `validateModule()` for hand-written .pb.go
+- **Agent workflows doc** — `docs/AGENT_WORKFLOWS.md` with 5 complete step-by-step flows
+- **QA test suite** — `scripts/qa_full_test.sh` for comprehensive end-to-end protocol validation
+
+### Fixed
+
+- **Missing Descriptor() methods** — All hand-written protobuf types (20 across 6 modules) now have correct `Descriptor()` returning proper file descriptor index
+- **Missing cosmos.msg.v1.signer options** — Patcher auto-injects signer extension bytes for all Msg types
+- **E2E test timing** — `wait_tx` increased from 3s to 7s for 5s block time; PoW test uses built-in solver; user2 account pre-funded
+- **Reputation query returns default zero** — Unknown address now returns zero-value response instead of HTTP 500
+- **Documentation sync** — README, openapi.yaml, llms.txt, CONTRIBUTING.md updated to match actual 33 query endpoints
+
+### Changed
+
+- **Query count** — 33 query endpoints (was 32), 66+ CLI commands
+- **Minimum fees updated** — Default fees in examples updated from `500uoas` to `10000uoas`
+- **CONTRIBUTING.md** — Added proto descriptor requirements and patcher tool documentation
+
 ## [0.4.0] - 2026-03-25
 
 ### Changed (Economic Model Review)

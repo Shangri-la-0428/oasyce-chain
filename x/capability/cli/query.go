@@ -21,6 +21,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetCapability(),
 		CmdListCapabilities(),
 		CmdEarnings(),
+		CmdGetInvocation(),
 	)
 	return cmd
 }
@@ -61,6 +62,30 @@ func CmdListCapabilities() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.Capabilities(cmd.Context(), &types.QueryCapabilitiesRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdGetInvocation() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "invocation [invocation-id]",
+		Short: "Query an invocation by ID",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.Invocation(cmd.Context(), &types.QueryInvocationRequest{
+				InvocationId: args[0],
+			})
 			if err != nil {
 				return err
 			}

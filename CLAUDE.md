@@ -20,7 +20,7 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 7 cu
 - All 6 modules have CLI tx + query commands (`x/*/cli/`)
 - `oasyced tx datarights register|buy-shares|file-dispute|resolve-dispute`
 - `oasyced tx settlement create-escrow|release-escrow|refund-escrow`
-- `oasyced tx oasyce_capability register|invoke`
+- `oasyced tx oasyce_capability register|invoke|complete-invocation|fail-invocation|claim-invocation|dispute-invocation`
 - `oasyced tx reputation submit-feedback|report`
 - `oasyced tx send` (bank transfers)
 - Query commands: `oasyced query <module> <subcommand>`
@@ -55,7 +55,7 @@ Five economic/governance upgrades implemented and tested:
 All 4 modules verified with real transactions:
 - **datarights**: register asset, buy shares (Bancor curve), sell shares, access gating, jury voting
 - **settlement**: create escrow (LOCKED), release escrow (RELEASED, 5% fee + 2% burn)
-- **capability**: register capability, invoke (creates escrow + invocation)
+- **capability**: register capability, invoke (creates escrow + invocation), complete + challenge window + claim/dispute
 - **reputation**: submit feedback (score=450), leaderboard populated
 - **bank**: cross-account transfers work
 - E2E test script: `scripts/e2e_test.sh`
@@ -79,12 +79,33 @@ All 4 modules verified with real transactions:
 - Query: `oasyced query work task|tasks-by-status|executor|executors|params|epoch`
 - Files: `x/work/`, `proto/oasyce/work/v1/`
 
+### Capability Challenge Window — COMPLETE ✅
+- **Two-phase completion**: Provider submits output (COMPLETED) → 100-block challenge window → Claim (SUCCESS) or Dispute (DISPUTED + refund)
+- `CompleteInvocation` requires non-empty output_hash (≥32 chars), marks COMPLETED, records completed_height + optional usage_report, escrow stays LOCKED
+- `ClaimInvocation` (new): provider claims after challenge window, releases escrow, marks SUCCESS
+- `DisputeInvocation` (new): consumer disputes within window, refunds escrow, marks DISPUTED
+- New proto messages: MsgCompleteInvocation, MsgFailInvocation, MsgClaimInvocation, MsgDisputeInvocation
+- New statuses: INVOCATION_STATUS_COMPLETED, INVOCATION_STATUS_DISPUTED
+- CLI: `oasyced tx oasyce_capability claim-invocation|dispute-invocation`
+- ChallengeWindow constant: 100 blocks (~8 minutes at 5s/block)
+- `usage_report` field (optional JSON string): on-chain token/resource usage tracking for transparency
+  - Stored in Invocation (field 12) and submitted via MsgCompleteInvocation (field 4)
+  - CLI: `--usage-report '{"prompt_tokens":150,"completion_tokens":80}'`
+  - Provider agent auto-extracts from OpenAI-compatible upstream responses
+- 5 new tests (complete flow, dispute flow, expired window, early claim rejection, short hash rejection)
+
+### AccessLevel Query Endpoint — COMPLETE ✅
+- REST: `GET /oasyce/datarights/v1/access_level/{asset_id}/{address}`
+- Returns: access_level (L0-L3 or empty), equity_bps, shares, total_shares
+- Off-chain gateways query this endpoint to decide data delivery tier
+- Architecture: chain computes level, off-chain enforces gating
+
 ### Build & Test Status
 ```
 go build ./...  ✅
-go test ./...   ✅ (50+ tests across 8 suites)
-  tests/integration     — 3 tests (full capability flow, Bancor curve, escrow lifecycle)
-  x/capability/keeper   — capability tests
+go test ./...   ✅ (55+ tests across 8 suites)
+  tests/integration     — 3 tests (full capability flow w/ challenge window, Bancor curve, escrow lifecycle)
+  x/capability/keeper   — 11 tests (register, invoke, complete, claim, dispute, deactivate, auth, rate limit, tags)
   x/datarights/keeper   — 16 tests (Bancor buy/sell, access gating, jury voting, lifecycle, versioning, migration)
   x/reputation/keeper   — reputation tests
   x/settlement/keeper   — escrow + bonding curve tests
@@ -131,6 +152,48 @@ go test ./...   ✅ (50+ tests across 8 suites)
   - `total_registrations` counter stored at `TotalRegistrationsKey = 0x03`
   - Effective difficulty = max(params, halving); effective airdrop = min(params, halving)
 - ConsensusVersion = 3
+
+### Governance: MsgUpdateParams — COMPLETE ✅
+All 6 custom modules support governance-gated parameter updates via `MsgUpdateParams`:
+- **settlement**: `oasyced tx settlement update-params [params.json]`
+- **capability**: `oasyced tx oasyce_capability update-params [params.json]`
+- **reputation**: `oasyced tx reputation update-params [params.json]`
+- **datarights**: `oasyced tx datarights update-params [params.json]`
+- **work**: `oasyced tx work update-params [params.json]`
+- **onboarding**: `oasyced tx onboarding update-params [params.json]`
+- Each module's keeper has `Authority()` method, msg_server checks `msg.Authority == keeper.Authority()`
+- Params JSON file contains full `Params` struct; broadcasted as standard Cosmos TX
+- Files per module: `types/msg_update_params.go`, `keeper/msg_server.go`, `cli/tx.go`, `types/codec.go`
+
+### Multi-Denom Support — COMPLETE ✅
+Removed hardcoded `"uoas"` from production code:
+- **Settlement bonding curve**: `BondingCurveState.ReserveDenom` field (proto field 6), set on first `BuyShares`, backward-compatible fallback to `"uoas"`
+- **Datarights**: per-asset denom stored at `AssetReserveDenomPrefix + assetID`, set on first buy when reserve is zero
+- **Capability earnings**: grouped by `PricePerCall.Denom` in Earnings query, falls back to `"uoas"` for legacy capabilities
+
+### AI-First Agent Interface — COMPLETE ✅
+Chain nodes now serve AI-discoverable endpoints:
+- `GET /llms.txt` — Agent playbook (embedded, 620+ lines) with step-by-step workflows
+- `GET /openapi.yaml` — OpenAPI 3.0 spec (embedded)
+- `GET /.well-known/oasyce.json` — Service discovery metadata (chain_id, modules, denom, report_issue)
+- `GET /oasyce/v1/error-codes` — 60+ error codes with recovery actions (JSON)
+- `oasyced util solve-pow [address]` — Built-in PoW solver for agent self-onboarding
+- gRPC reflection enabled by Cosmos SDK v0.50.10 (`grpcurl -plaintext :9090 list`)
+- **AI auto-reporting**: Agents can file GitHub issues/PRs when encountering problems
+  - Issue template: `.github/ISSUE_TEMPLATE/ai_agent_report.md`, label: `ai-reported`
+  - `/.well-known/oasyce.json` includes `report_issue` field with API URL
+  - `llms.txt` §10 has exact curl/gh commands for filing issues and PRs
+- Files: `docs/embed.go`, `docs/error_codes.json`, `cmd/oasyced/cmd/pow.go`, `app/app.go` (RegisterAPIRoutes)
+- Docs: `AGENTS.md` (integration guide), `docs/AGENT_WORKFLOWS.md` (5 workflows)
+
+### Proto Descriptor Requirements
+Hand-written protobuf message types (msg_update_params.go, msgs_challenge_pb.go) MUST have:
+1. `Descriptor()` method returning `(fileDescriptor_xxx, []int{N})` where N = message index in file descriptor
+2. `cosmos.msg.v1.signer` option in file descriptor (set by `tools/patch_descriptors`)
+3. `proto.RegisterType` in `init()` function
+Without Descriptor(): SDK error "does not have a Descriptor() method: tx parse error"
+Without signer option: SDK error "no cosmos.msg.v1.signer option found"
+Tool: `go run ./tools/patch_descriptors` — adds missing RPCs, messages, and signer options to file descriptors
 
 ### Protocol Constants (x/settlement/types/types.go)
 ```go

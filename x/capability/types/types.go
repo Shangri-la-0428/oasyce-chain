@@ -6,10 +6,16 @@ import (
 
 // Convenience constants mapping old status names to proto enum values.
 const (
-	StatusPending = INVOCATION_STATUS_PENDING
-	StatusSuccess = INVOCATION_STATUS_SUCCESS
-	StatusFailed  = INVOCATION_STATUS_FAILED
+	StatusPending   = INVOCATION_STATUS_PENDING
+	StatusSuccess   = INVOCATION_STATUS_SUCCESS
+	StatusFailed    = INVOCATION_STATUS_FAILED
+	StatusCompleted = INVOCATION_STATUS_COMPLETED
+	StatusDisputed  = INVOCATION_STATUS_DISPUTED
 )
+
+// ChallengeWindow is the number of blocks after completion during which
+// the consumer can dispute the invocation output.
+const ChallengeWindow int64 = 100
 
 // DefaultParams returns the default module parameters.
 func DefaultParams() Params {

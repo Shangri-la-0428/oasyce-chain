@@ -88,7 +88,7 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context, *mockBankKeeper) {
 	cdc := codec.NewProtoCodec(registry)
 
 	bankKeeper := newMockBankKeeper()
-	k := keeper.NewKeeper(cdc, storeKey, bankKeeper)
+	k := keeper.NewKeeper(cdc, storeKey, bankKeeper, "authority")
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{
 		Time: time.Now().UTC(),

@@ -9,7 +9,7 @@ OASYCED="${OASYCED:-./build/oasyced}"
 CHAIN_ID="oasyce-local-1"
 NODE="tcp://localhost:26657"
 KB="--keyring-backend test"
-FEES="--fees 500uoas"
+FEES="--fees 10000uoas"
 COMMON="$KB --chain-id $CHAIN_ID $FEES --yes"
 
 RED='\033[0;31m'
@@ -19,7 +19,7 @@ NC='\033[0m'
 pass() { echo -e "${GREEN}  ✓ $1${NC}"; }
 fail() { echo -e "${RED}  ✗ $1: $2${NC}"; }
 
-wait_tx() { sleep 3; }
+wait_tx() { sleep 7; }
 
 check_latest_tx() {
     local latest=$(curl -s http://localhost:26657/block | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['block']['header']['height'])")
@@ -105,11 +105,30 @@ RESULT=$(check_latest_tx)
 CODE=$(echo "$RESULT" | cut -d'|' -f1)
 if [ "$CODE" = "0" ]; then pass "InvokeCapability"; else fail "InvokeCapability" "$RESULT"; fi
 
+# Find invocation ID (first invocation = INV_0000000000000001)
+INV_ID="INV_0000000000000001"
+
+# --- Test 6b: Complete Invocation (provider submits output hash) ---
+echo "--- Test 6b: Complete Invocation (challenge window starts) ---"
+OUTPUT_HASH="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+$OASYCED tx oasyce_capability complete-invocation "$INV_ID" "$OUTPUT_HASH" --from validator $COMMON 2>/dev/null
+wait_tx
+RESULT=$(check_latest_tx)
+CODE=$(echo "$RESULT" | cut -d'|' -f1)
+if [ "$CODE" = "0" ]; then pass "CompleteInvocation (challenge window started)"; else fail "CompleteInvocation" "$RESULT"; fi
+
+# --- Test 6c: Claim Invocation (provider claims after challenge window) ---
+# NOTE: On a live chain, must wait 100 blocks (~8 min). For e2e testing this will fail
+# unless the chain has advanced 100+ blocks. We test it anyway to verify the TX format.
+echo "--- Test 6c: Claim Invocation (will fail if <100 blocks since complete) ---"
+$OASYCED tx oasyce_capability claim-invocation "$INV_ID" --from validator $COMMON 2>/dev/null
+wait_tx
+RESULT=$(check_latest_tx)
+CODE=$(echo "$RESULT" | cut -d'|' -f1)
+if [ "$CODE" = "0" ]; then pass "ClaimInvocation"; else fail "ClaimInvocation (expected — challenge window)" "$RESULT"; fi
+
 # --- Test 7: Submit Feedback (from user1 about validator's capability) ---
 echo "--- Test 7: Submit Feedback ---"
-# Find the invocation ID
-INV_COUNT=$($OASYCED query oasyce_capability list --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); caps=[c for c in d.get('capabilities',[]) if c['name']=='E2E-API']; print(caps[0].get('total_calls','0') if caps else '0')" 2>/dev/null)
-INV_ID=$(printf "INV_%016x" $((INV_COUNT)))
 $OASYCED tx reputation submit-feedback "$INV_ID" 450 --comment "Great" --from user1 $COMMON 2>/dev/null
 wait_tx
 RESULT=$(check_latest_tx)
@@ -146,9 +165,13 @@ if [ "$CHILDREN" != "0" ]; then pass "AssetChildren ($CHILDREN forks)"; else fai
 echo "--- Test 12: PoW Self-Register ---"
 $OASYCED keys show user2 $KB 2>/dev/null || $OASYCED keys add user2 $KB 2>/dev/null
 USER2=$($OASYCED keys show user2 -a $KB 2>/dev/null)
-# Note: Halving economics enforces min difficulty=16 at epoch 0, regardless of params.
-# For E2E testing, genesis must set pow_difficulty=0 AND supply a valid nonce for the address.
-$OASYCED tx onboarding register 0 --from user2 $COMMON 2>/dev/null
+# Fund user2 with minimal amount (creates account on chain, needed for tx signing)
+$OASYCED tx send "$ADDR" "$USER2" 1uoas --from validator $COMMON 2>/dev/null
+wait_tx
+# Use built-in PoW solver to find valid nonce
+NONCE=$($OASYCED util solve-pow "$USER2" --difficulty 16 --output json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['nonce'])")
+echo "  Solved PoW nonce: $NONCE"
+$OASYCED tx onboarding register "$NONCE" --from user2 $KB --chain-id $CHAIN_ID --fees 0uoas --yes 2>/dev/null
 wait_tx
 RESULT=$(check_latest_tx)
 CODE=$(echo "$RESULT" | cut -d'|' -f1)
@@ -156,7 +179,8 @@ if [ "$CODE" = "0" ]; then pass "SelfRegister"; else fail "SelfRegister" "$RESUL
 
 # --- Test 13: Onboarding — Repay ---
 echo "--- Test 13: Onboarding Repay ---"
-$OASYCED tx onboarding repay 20000000 --from user2 $COMMON 2>/dev/null
+# Repay partial debt (airdrop=20M uoas, keep some for fees)
+$OASYCED tx onboarding repay 10000000 --from user2 $KB --chain-id $CHAIN_ID --fees 0uoas --yes 2>/dev/null
 wait_tx
 RESULT=$(check_latest_tx)
 CODE=$(echo "$RESULT" | cut -d'|' -f1)

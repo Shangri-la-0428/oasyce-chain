@@ -61,6 +61,12 @@ service Query {
   rpc DatarightsParams(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/oasyce/datarights/v1/params";
   }
+
+  // AccessLevel queries the access level for a given address on a data asset.
+  rpc AccessLevel(QueryAccessLevelRequest) returns (QueryAccessLevelResponse) {
+    option (google.api.http).get =
+        "/oasyce/datarights/v1/access_level/{asset_id}/{address}";
+  }
 }
 
 // QueryDataAssetRequest is the request type for the Query/DataAsset RPC.
@@ -163,4 +169,25 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC.
 message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryAccessLevelRequest is the request type for the Query/AccessLevel RPC.
+message QueryAccessLevelRequest {
+  string asset_id = 1;
+  string address = 2;
+}
+
+// QueryAccessLevelResponse is the response type for the Query/AccessLevel RPC.
+message QueryAccessLevelResponse {
+  // access_level is the access level (L0, L1, L2, L3, or empty if none).
+  string access_level = 1;
+
+  // equity_bps is the holder's equity in basis points (10000 = 100%).
+  uint64 equity_bps = 2;
+
+  // shares is the number of shares held.
+  string shares = 3;
+
+  // total_shares is the total shares outstanding for the asset.
+  string total_shares = 4;
 }

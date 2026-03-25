@@ -101,6 +101,46 @@ paths:
                     items:
                       $ref: '#/components/schemas/Capability'
 
+  /oasyce/capability/v1/invocation/{invocation_id}:
+    get:
+      tags: [capability]
+      summary: Get invocation by ID
+      description: Returns invocation state including status, output_hash, completed_height, and usage_report. Use this to check challenge window progress.
+      parameters:
+        - name: invocation_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invocation details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invocation:
+                    type: object
+                    properties:
+                      invocation_id:
+                        type: string
+                      capability_id:
+                        type: string
+                      consumer:
+                        type: string
+                      provider:
+                        type: string
+                      status:
+                        type: string
+                        enum: [PENDING, COMPLETED, SUCCESS, FAILED, DISPUTED]
+                      output_hash:
+                        type: string
+                      completed_height:
+                        type: string
+                      usage_report:
+                        type: string
+
   /oasyce/capability/v1/earnings/{provider}:
     get:
       tags: [capability]
@@ -163,6 +203,14 @@ paths:
         '200':
           description: Bonding curve state
 
+  /oasyce/settlement/v1/params:
+    get:
+      tags: [settlement]
+      summary: Get settlement module parameters
+      responses:
+        '200':
+          description: Module parameters
+
   # ===== DATARIGHTS =====
   /oasyce/datarights/v1/data_asset/{asset_id}:
     get:
@@ -213,6 +261,40 @@ paths:
         '200':
           description: Shareholder list with amounts
 
+  /oasyce/datarights/v1/access_level/{asset_id}/{address}:
+    get:
+      tags: [datarights]
+      summary: Get access level for address on data asset
+      description: Returns equity-based access tier (L0-L3) for the given address.
+      parameters:
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Access level details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_level:
+                    type: string
+                    enum: ["", "L0", "L1", "L2", "L3"]
+                  equity_bps:
+                    type: integer
+                  shares:
+                    type: string
+                  total_shares:
+                    type: string
+
   /oasyce/datarights/v1/dispute/{dispute_id}:
     get:
       tags: [datarights]
@@ -259,6 +341,20 @@ paths:
         '200':
           description: Migration path details
 
+  /oasyce/datarights/v1/migration_paths/{source_asset_id}:
+    get:
+      tags: [datarights]
+      summary: Get all migration paths from source asset
+      parameters:
+        - name: source_asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Migration paths from source
+
   /oasyce/datarights/v1/asset_children/{parent_asset_id}:
     get:
       tags: [datarights]
@@ -272,6 +368,14 @@ paths:
       responses:
         '200':
           description: Child assets
+
+  /oasyce/datarights/v1/params:
+    get:
+      tags: [datarights]
+      summary: Get datarights module parameters
+      responses:
+        '200':
+          description: Module parameters
 
   # ===== REPUTATION =====
   /oasyce/reputation/v1/reputation/{address}:
@@ -342,6 +446,48 @@ paths:
       responses:
         '200':
           description: Tasks with given status
+
+  /oasyce/work/v1/tasks/creator/{creator}:
+    get:
+      tags: [work]
+      summary: Get tasks by creator
+      parameters:
+        - name: creator
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tasks submitted by creator
+
+  /oasyce/work/v1/tasks/executor/{executor}:
+    get:
+      tags: [work]
+      summary: Get tasks assigned to executor
+      parameters:
+        - name: executor
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tasks assigned to executor
+
+  /oasyce/work/v1/epoch/{epoch}:
+    get:
+      tags: [work]
+      summary: Get epoch statistics
+      parameters:
+        - name: epoch
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Epoch statistics
 
   /oasyce/work/v1/executor/{address}:
     get:

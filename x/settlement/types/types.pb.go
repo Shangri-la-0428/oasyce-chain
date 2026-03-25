@@ -133,6 +133,8 @@ type BondingCurveState struct {
 	PriceFactor cosmossdk_io_math.LegacyDec `protobuf:"bytes,4,opt,name=price_factor,json=priceFactor,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"price_factor"`
 	// buyer_count is the number of unique buyers of this asset.
 	BuyerCount uint32 `protobuf:"varint,5,opt,name=buyer_count,json=buyerCount,proto3" json:"buyer_count,omitempty"`
+	// reserve_denom is the denomination of the reserve backing this curve.
+	ReserveDenom string `protobuf:"bytes,6,opt,name=reserve_denom,json=reserveDenom,proto3" json:"reserve_denom,omitempty"`
 }
 
 func (m *BondingCurveState) Reset()         { *m = BondingCurveState{} }
@@ -317,6 +319,13 @@ func (m *BondingCurveState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.ReserveDenom) > 0 {
+		i -= len(m.ReserveDenom)
+		copy(dAtA[i:], m.ReserveDenom)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.ReserveDenom)))
+		i--
+		dAtA[i] = 0x32
+	}
 	if m.BuyerCount != 0 {
 		i = encodeVarintTypes(dAtA, i, uint64(m.BuyerCount))
 		i--
@@ -421,6 +430,10 @@ func (m *BondingCurveState) Size() (n int) {
 	n += 1 + l + sovTypes(uint64(l))
 	if m.BuyerCount != 0 {
 		n += 1 + sovTypes(uint64(m.BuyerCount))
+	}
+	l = len(m.ReserveDenom)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
 	}
 	return n
 }
@@ -877,6 +890,38 @@ func (m *BondingCurveState) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReserveDenom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ReserveDenom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTypes(dAtA[iNdEx:])

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -42,4 +43,24 @@ func (m msgServer) ReportMisbehavior(goCtx context.Context, msg *types.MsgReport
 	}
 
 	return &types.MsgReportMisbehaviorResponse{ReportId: reportID}, nil
+}
+
+// UpdateParams handles MsgUpdateParams — governance-gated parameter updates.
+func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if m.Keeper.Authority() != msg.Authority {
+		return nil, fmt.Errorf("unauthorized: expected %s, got %s", m.Keeper.Authority(), msg.Authority)
+	}
+
+	if err := m.Keeper.SetParams(ctx, msg.Params); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		"reputation_params_updated",
+		sdk.NewAttribute("authority", msg.Authority),
+	))
+
+	return &types.MsgUpdateParamsResponse{}, nil
 }

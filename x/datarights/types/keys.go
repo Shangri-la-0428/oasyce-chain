@@ -25,12 +25,18 @@ var (
 	AssetByOwnerPrefix       = []byte{0x07}
 	ShareHolderByAssetPrefix = []byte{0x08}
 	AssetReservePrefix       = []byte{0x09}
+	AssetReserveDenomPrefix  = []byte{0x0A}
 	MigrationPathKeyPrefix   = []byte{0x0C}
 )
 
 // AssetReserveKey returns the store key for the bonding curve reserve of an asset.
 func AssetReserveKey(assetID string) []byte {
 	return append(AssetReservePrefix, []byte(assetID)...)
+}
+
+// AssetReserveDenomKey returns the store key for the reserve denomination of an asset.
+func AssetReserveDenomKey(assetID string) []byte {
+	return append(AssetReserveDenomPrefix, []byte(assetID)...)
 }
 
 // DataAssetKey returns the store key for a specific data asset by ID.

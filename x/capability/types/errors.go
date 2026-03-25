@@ -11,4 +11,6 @@ var (
 	ErrInvalidInput       = errors.Register(ModuleName, 7, "invalid input")
 	ErrInvocationNotFound = errors.Register(ModuleName, 8, "invocation not found")
 	ErrInvalidStatus      = errors.Register(ModuleName, 9, "invalid invocation status")
+	ErrChallengeWindow    = errors.Register(ModuleName, 10, "challenge window violation")
+	ErrEmptyOutputHash    = errors.Register(ModuleName, 11, "output hash cannot be empty")
 )

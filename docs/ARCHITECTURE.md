@@ -58,7 +58,7 @@ x/settlement ──→ bank (escrow transfers, burns, fees)
 The financial backbone. Handles:
 
 - **Escrow lifecycle**: `LOCKED → RELEASED | REFUNDED | EXPIRED`
-- **Fee split on release**: 93% provider, 5% protocol fee, 2% burn
+- **Fee split on release**: 90% provider, 5% protocol, 2% burn, 3% treasury
 - **Bancor bonding curve**: continuous pricing with CW=0.5
 - **Auto-expiry**: stale escrows refunded in EndBlock
 
@@ -134,9 +134,10 @@ Consumer          x/capability        x/settlement         Provider
    │                   │                    │                  │
    │                   │ CompleteInvocation()│                  │
    │                   │──────────────────▶│ ReleaseEscrow()   │
-   │                   │                    │ 93% → provider   │
-   │                   │                    │ 5% → fee_collector│
-   │                   │                    │ 2% → burn 🔥     │
+   │                   │                    │ 90% → provider   │
+   │                   │                    │  5% → fee_collector│
+   │                   │                    │  2% → burn 🔥     │
+   │                   │                    │  3% → treasury    │
 ```
 
 ## Network Ports
