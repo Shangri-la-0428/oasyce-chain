@@ -52,6 +52,7 @@ Fee split on release: 90% provider, 5% protocol, 2% burn, 3% treasury.
 ```
 GET /oasyce/settlement/v1/escrow/{escrow_id}
 GET /oasyce/settlement/v1/escrows/{creator}
+GET /oasyce/settlement/v1/params
 ```
 
 ### 2. Capability — AI Service Marketplace
@@ -118,8 +119,9 @@ GET /oasyce/datarights/v1/data_asset/{asset_id}
 GET /oasyce/datarights/v1/data_assets
 GET /oasyce/datarights/v1/shares/{asset_id}
 GET /oasyce/datarights/v1/dispute/{dispute_id}
-GET /oasyce/datarights/v1/migration_path/{source}/{target}
+GET /oasyce/datarights/v1/migration_path/{source_asset_id}/{target_asset_id}
 GET /oasyce/datarights/v1/asset_children/{parent_asset_id}
+GET /oasyce/datarights/v1/params
 ```
 
 ### 4. Reputation — Trust Scores
@@ -275,13 +277,14 @@ response = stub.Capabilities(query_pb2.QueryCapabilitiesRequest())
 | onboarding | SelfRegister | PoW self-registration |
 | onboarding | RepayDebt | Repay airdrop debt |
 
-### Query Endpoints (29 total)
+### Query Endpoints (31 total)
 
 | Module | Endpoint | Method |
 |--------|----------|--------|
 | settlement | /oasyce/settlement/v1/escrow/{escrow_id} | GET |
 | settlement | /oasyce/settlement/v1/escrows/{creator} | GET |
 | settlement | /oasyce/settlement/v1/bonding_curve/{asset_id} | GET |
+| settlement | /oasyce/settlement/v1/params | GET |
 | capability | /oasyce/capability/v1/capability/{capability_id} | GET |
 | capability | /oasyce/capability/v1/capabilities | GET |
 | capability | /oasyce/capability/v1/capabilities/provider/{provider} | GET |
@@ -294,9 +297,10 @@ response = stub.Capabilities(query_pb2.QueryCapabilitiesRequest())
 | datarights | /oasyce/datarights/v1/shares/{asset_id} | GET |
 | datarights | /oasyce/datarights/v1/dispute/{dispute_id} | GET |
 | datarights | /oasyce/datarights/v1/disputes | GET |
-| datarights | /oasyce/datarights/v1/migration_path/{source}/{target} | GET |
+| datarights | /oasyce/datarights/v1/migration_path/{source_asset_id}/{target_asset_id} | GET |
 | datarights | /oasyce/datarights/v1/migration_paths/{source_asset_id} | GET |
 | datarights | /oasyce/datarights/v1/asset_children/{parent_asset_id} | GET |
+| datarights | /oasyce/datarights/v1/params | GET |
 | work | /oasyce/work/v1/task/{task_id} | GET |
 | work | /oasyce/work/v1/tasks/status/{status} | GET |
 | work | /oasyce/work/v1/tasks/creator/{creator} | GET |

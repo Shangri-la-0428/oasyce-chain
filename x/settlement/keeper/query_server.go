@@ -56,3 +56,10 @@ func (q queryServer) BondingCurvePrice(goCtx context.Context, req *types.QueryBo
 		State:        state,
 	}, nil
 }
+
+// SettlementParams returns the settlement module parameters.
+func (q queryServer) SettlementParams(goCtx context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := q.Keeper.GetParams(ctx)
+	return &types.QueryParamsResponse{Params: params}, nil
+}

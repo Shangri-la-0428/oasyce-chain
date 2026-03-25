@@ -142,3 +142,10 @@ func (q queryServer) AssetChildren(ctx context.Context, req *types.QueryAssetChi
 	}
 	return &types.QueryAssetChildrenResponse{DataAssets: children}, nil
 }
+
+// DatarightsParams returns the datarights module parameters.
+func (q queryServer) DatarightsParams(ctx context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	params := q.Keeper.GetParams(sdkCtx)
+	return &types.QueryParamsResponse{Params: params}, nil
+}

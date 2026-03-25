@@ -7,6 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "oasyce/datarights/v1/types.proto";
+import "oasyce/datarights/v1/genesis.proto";
 
 // Query defines the datarights module's gRPC query service.
 service Query {
@@ -54,6 +55,11 @@ service Query {
   rpc AssetChildren(QueryAssetChildrenRequest) returns (QueryAssetChildrenResponse) {
     option (google.api.http).get =
         "/oasyce/datarights/v1/asset_children/{parent_asset_id}";
+  }
+
+  // DatarightsParams queries the module parameters.
+  rpc DatarightsParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/oasyce/datarights/v1/params";
   }
 }
 
@@ -149,4 +155,12 @@ message QueryAssetChildrenRequest {
 // QueryAssetChildrenResponse is the response type for the Query/AssetChildren RPC.
 message QueryAssetChildrenResponse {
   repeated DataAsset data_assets = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
 }

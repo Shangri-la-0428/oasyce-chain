@@ -14,8 +14,28 @@ CHAIN_ID = os.environ.get("CHAIN_ID", "oasyce-testnet-1")
 HOME = os.environ.get("OASYCE_HOME", "/home/oasyce/.oasyced")
 FAUCET_KEY = os.environ.get("FAUCET_KEY", "faucet")
 RATE_SECONDS = 3600  # 1 hour per address
+RATE_FILE = os.environ.get("FAUCET_RATE_FILE", "/tmp/faucet_rate.json")
 
 rate_limit = {}  # address -> last_request_timestamp
+
+
+def load_rate_limit():
+    """Load rate limit state from disk."""
+    global rate_limit
+    try:
+        with open(RATE_FILE) as f:
+            rate_limit = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        rate_limit = {}
+
+
+def save_rate_limit():
+    """Persist rate limit state to disk."""
+    try:
+        with open(RATE_FILE, "w") as f:
+            json.dump(rate_limit, f)
+    except OSError:
+        pass
 
 
 class FaucetHandler(http.server.BaseHTTPRequestHandler):
@@ -64,6 +84,7 @@ class FaucetHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             rate_limit[address] = now
+            save_rate_limit()
             self.send_json(200, {
                 "status": "ok",
                 "amount": f"{AMOUNT} OAS",
@@ -85,6 +106,7 @@ class FaucetHandler(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    load_rate_limit()
     print(f"Faucet listening on :{PORT} ({AMOUNT} OAS per request)")
     httpd = http.server.HTTPServer(("0.0.0.0", PORT), FaucetHandler)
     httpd.serve_forever()

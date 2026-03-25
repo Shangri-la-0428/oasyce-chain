@@ -33,14 +33,14 @@ When agents vastly outnumber humans, transact far more frequently, and deal in a
 
 | Module | Purpose | TX | Queries |
 |--------|---------|-----|---------|
-| **x/settlement** | Escrow settlement, Bancor bonding curve pricing, 2% deflationary burn | 3 | 3 |
+| **x/settlement** | Escrow settlement, Bancor bonding curve pricing, 2% deflationary burn | 3 | 4 |
 | **x/capability** | AI capability marketplace — register endpoints, invoke, auto-settle | 4 | 4 |
-| **x/datarights** | Data asset registration, share trading, tiered access, jury disputes, version migration | 11 | 8 |
+| **x/datarights** | Data asset registration, share trading, tiered access, jury disputes, version migration | 11 | 9 |
 | **x/reputation** | Time-decaying trust scores (30-day half-life), leaderboard | 2 | 3 |
 | **x/work** | Proof of Useful Work — task distribution, commit-reveal verification, settlement | 6 | 8 |
 | **x/onboarding** | PoW self-registration (no KYC), airdrop halving economics | 2 | 3 |
 
-**Total**: 28 transaction types, 29 query endpoints, 57 CLI commands.
+**Total**: 28 transaction types, 31 query endpoints, 59 CLI commands.
 
 ---
 

@@ -8,6 +8,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "oasyce/settlement/v1/types.proto";
+import "oasyce/settlement/v1/genesis.proto";
 
 // Query defines the settlement module's gRPC query service.
 service Query {
@@ -28,6 +29,11 @@ service Query {
       returns (QueryBondingCurvePriceResponse) {
     option (google.api.http).get =
         "/oasyce/settlement/v1/bonding_curve/{asset_id}";
+  }
+
+  // Params queries the module parameters.
+  rpc SettlementParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/oasyce/settlement/v1/params";
   }
 }
 
@@ -65,4 +71,12 @@ message QueryBondingCurvePriceResponse {
 
   // state is the full bonding curve state.
   BondingCurveState state = 2 [(gogoproto.nullable) = false];
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
 }
