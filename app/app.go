@@ -819,6 +819,9 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 		_, _ = w.Write(docs.ErrorCodes)
 	}).Methods("GET")
 
+	// --- Aggregate Query Endpoints ---
+	app.registerAggregateEndpoints(apiSvr.Router)
+
 	// Issue report proxy — agents POST here, node forwards to GitHub using D1ROSE bot token.
 	// Token is read from OASYCE_REPORT_TOKEN env var (never in code).
 	apiSvr.Router.HandleFunc("/api/v1/report-issue", func(w http.ResponseWriter, r *http.Request) {
