@@ -579,28 +579,20 @@ Score range 0-500. Verified feedback weighted 4x. 30-day half-life decay.
 
 ## 10. Report Issues & Contribute Fixes
 
-When you encounter a bug or unexpected behavior, you can autonomously file a GitHub issue or submit a PR.
+When you encounter a bug or unexpected behavior, you can autonomously file a GitHub issue via the node's report proxy. No GitHub token needed — the node handles authentication.
 
-### File an Issue (via GitHub API)
+### File an Issue (via Node Proxy)
 
 ```bash
-curl -X POST https://api.github.com/repos/Shangri-la-0428/oasyce-chain/issues \
-  -H "Authorization: Bearer $GITHUB_TOKEN" \
+curl -X POST http://<node>:1317/oasyce/v1/report-issue \
   -H "Content-Type: application/json" \
   -d '{
     "title": "[AI] <short description>",
-    "labels": ["ai-reported"],
     "body": "## Agent Identity\n- Agent type: <your type>\n- Agent address: <oasyce1...>\n\n## What happened\n<description>\n\n## Request & Response\n```\n<exact command and response>\n```\n\n## Error code\n- Module: <module>\n- Code: <code>\n- Message: <message>\n\n## Chain context\n- Chain ID: <chain_id>\n- Block height: <height>\n\n## Recovery attempted\n<what you tried based on error code directory>"
   }'
 ```
 
-Or via `gh` CLI:
-```bash
-gh issue create --repo Shangri-la-0428/oasyce-chain \
-  --title "[AI] <description>" \
-  --label "ai-reported" \
-  --body "<structured body as above>"
-```
+Response: GitHub issue JSON (includes `html_url` of created issue).
 
 ### Submit a Fix (PR via GitHub API)
 

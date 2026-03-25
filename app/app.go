@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -799,8 +800,8 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 			"modules":    []string{"settlement", "capability", "datarights", "reputation", "work", "onboarding"},
 			"onboarding": "oasyced util auto-register",
 			"report_issue": map[string]string{
-				"api":      "https://api.github.com/repos/Shangri-la-0428/oasyce-chain/issues",
-				"template": "ai_agent_report",
+				"endpoint": "/oasyce/v1/report-issue",
+				"method":   "POST",
 				"label":    "ai-reported",
 			},
 			"source": "https://github.com/Shangri-la-0428/oasyce-chain",
@@ -817,6 +818,56 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 		w.Header().Set("Cache-Control", "public, max-age=3600")
 		_, _ = w.Write(docs.ErrorCodes)
 	}).Methods("GET")
+
+	// Issue report proxy — agents POST here, node forwards to GitHub using D1ROSE bot token.
+	// Token is read from OASYCE_REPORT_TOKEN env var (never in code).
+	apiSvr.Router.HandleFunc("/oasyce/v1/report-issue", func(w http.ResponseWriter, r *http.Request) {
+		token := os.Getenv("OASYCE_REPORT_TOKEN")
+		if token == "" {
+			http.Error(w, `{"error":"issue reporting not configured on this node"}`, http.StatusServiceUnavailable)
+			return
+		}
+
+		// Parse agent's request.
+		var req struct {
+			Title string `json:"title"`
+			Body  string `json:"body"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, `{"error":"invalid JSON body"}`, http.StatusBadRequest)
+			return
+		}
+		if req.Title == "" {
+			http.Error(w, `{"error":"title is required"}`, http.StatusBadRequest)
+			return
+		}
+
+		// Build GitHub API request.
+		ghBody, _ := json.Marshal(map[string]interface{}{
+			"title":  req.Title,
+			"body":   req.Body,
+			"labels": []string{"ai-reported"},
+		})
+		ghReq, _ := http.NewRequestWithContext(r.Context(), "POST",
+			"https://api.github.com/repos/Shangri-la-0428/oasyce-chain/issues",
+			bytes.NewReader(ghBody))
+		ghReq.Header.Set("Authorization", "Bearer "+token)
+		ghReq.Header.Set("Content-Type", "application/json")
+		ghReq.Header.Set("Accept", "application/vnd.github+json")
+		ghReq.Header.Set("User-Agent", "oasyce-node")
+
+		resp, err := http.DefaultClient.Do(ghReq)
+		if err != nil {
+			http.Error(w, `{"error":"failed to reach GitHub"}`, http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Forward GitHub's response.
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(resp.StatusCode)
+		_, _ = io.Copy(w, resp.Body)
+	}).Methods("POST")
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
