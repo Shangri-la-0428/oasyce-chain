@@ -15,7 +15,7 @@ Thank you for your interest in contributing to Oasyce Chain!
 ### Setup
 
 ```bash
-git clone https://github.com/oasyce/chain.git
+git clone https://github.com/Shangri-la-0428/oasyce-chain.git
 cd chain
 make build
 make test
@@ -98,8 +98,8 @@ When adding a new keeper method:
 
 ## Reporting Issues
 
-- **Bugs**: Use the [bug report template](https://github.com/oasyce/chain/issues/new?template=bug_report.md)
-- **Features**: Use the [feature request template](https://github.com/oasyce/chain/issues/new?template=feature_request.md)
+- **Bugs**: Use the [bug report template](https://github.com/Shangri-la-0428/oasyce-chain/issues/new?template=bug_report.md)
+- **Features**: Use the [feature request template](https://github.com/Shangri-la-0428/oasyce-chain/issues/new?template=feature_request.md)
 - **Security**: See [SECURITY.md](SECURITY.md) — do NOT open public issues for vulnerabilities
 
 ## Community
@@ -115,7 +115,7 @@ When adding a new keeper method:
 ## 快速开始
 
 ```bash
-git clone https://github.com/oasyce/chain.git
+git clone https://github.com/Shangri-la-0428/oasyce-chain.git
 cd chain
 make build && make test
 ```

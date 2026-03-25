@@ -210,7 +210,7 @@ func (k Keeper) CreateEscrow(ctx sdk.Context, creator, provider string, amount s
 }
 
 // ReleaseEscrow releases escrowed funds to the provider.
-// Fee split: 93% creator/provider, 3% validator, 2% burn, 2% treasury.
+// Fee split: 90% provider, 5% protocol, 2% burn, 3% treasury.
 //
 // This method signature matches the SettlementKeeper interface expected by the
 // capability module.

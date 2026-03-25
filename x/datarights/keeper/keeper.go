@@ -602,7 +602,7 @@ func (k Keeper) SellShares(ctx context.Context, msg types.MsgSellShares) (math.I
 		}
 	}
 
-	// Deduct protocol fee (3%).
+	// Deduct protocol fee (5%).
 	protocolFeeDec := grossPayout.Mul(settlementtypes.DefaultParams().ProtocolFeeRate)
 	feeAmount := protocolFeeDec.TruncateInt()
 	// Guard against fee truncation to 0 on small sells — minimum 1 uoas fee.

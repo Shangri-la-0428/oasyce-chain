@@ -154,7 +154,7 @@ Binary: `build/oasyced`
 
 ```bash
 # Replace <moniker> with your node name
-oasyced init <moniker> --chain-id oasyce-1
+oasyced init <moniker> --chain-id oasyce-testnet-1
 
 # Import or create validator key
 oasyced keys add validator --keyring-backend file
@@ -273,7 +273,7 @@ oasyced tx staking create-validator \
   --commission-max-change-rate="0.01" \
   --min-self-delegation="1" \
   --from=validator \
-  --chain-id=oasyce-1 \
+  --chain-id=oasyce-testnet-1 \
   --keyring-backend=file \
   --gas=auto \
   --gas-adjustment=1.5 \

@@ -115,7 +115,11 @@ fi
 
 # ── Patch genesis params for testnet ──
 echo "==> Patching genesis parameters..."
-python3 << 'PYEOF' || true
+if ! command -v python3 &>/dev/null; then
+    echo "WARNING: python3 not found, skipping genesis patch."
+    echo "You may need to manually patch genesis.json (see docs/VALIDATOR_SETUP.md)"
+else
+    python3 << 'PYEOF'
 import json, os
 genesis_path = os.path.expanduser("$DATA_DIR/config/genesis.json")
 try:
@@ -137,6 +141,7 @@ try:
 except Exception as e:
     print(f"    Skipping genesis patch: {e}")
 PYEOF
+fi
 
 # ── Enable REST API ──
 APP_TOML="$DATA_DIR/config/app.toml"

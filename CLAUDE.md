@@ -33,7 +33,7 @@ Five economic/governance upgrades implemented and tested:
    - Bootstrap: `tokens = payment / INITIAL_PRICE` when reserve=0
    - Files: `x/settlement/keeper/bonding_curve.go`, `x/datarights/keeper/keeper.go`
 
-2. **2% Token Burn** — Escrow release now splits: 93% provider, 5% protocol fee, 2% burn
+2. **2% Token Burn** — Escrow release now splits: 90% provider, 5% protocol, 2% burn, 3% treasury
    - `BurnCoins()` added to BankKeeper interface
    - File: `x/settlement/keeper/keeper.go` (ReleaseEscrow)
 

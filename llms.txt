@@ -46,7 +46,7 @@ oasyced tx settlement create-escrow [provider] [amount] --from agent1
 ```bash
 oasyced tx settlement release-escrow [escrow-id] --from provider
 ```
-Fee split on release: 93% provider, 3% validators, 2% burn, 2% treasury.
+Fee split on release: 90% provider, 5% protocol, 2% burn, 3% treasury.
 
 **Query escrow**:
 ```
@@ -101,7 +101,7 @@ oasyced tx datarights register \
 oasyced tx datarights buy-shares [asset-id] [amount] --from buyer1
 ```
 
-**Sell shares** (inverse curve, 3% protocol fee):
+**Sell shares** (inverse curve, 5% protocol fee):
 ```bash
 oasyced tx datarights sell-shares [asset-id] [shares] --from holder1
 ```

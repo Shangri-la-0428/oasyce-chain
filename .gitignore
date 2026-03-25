@@ -10,3 +10,6 @@ vendor/
 .DS_Store
 coverage.html
 coverage.out
+
+genesis.json
+oasyced-linux

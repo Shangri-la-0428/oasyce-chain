@@ -35,7 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **Fee split aligned to spec** — 93% creator, 3% validator, 2% burn, 2% treasury (was 85/7/5/3)
+- **Fee split aligned to spec** — 90% provider, 5% protocol, 2% burn, 3% treasury (was 85/7/5/3)
 - **Sell fee** — 3% protocol fee (was 5%), round-trip cost reduced from ~28% to ~12%
 - **onboarding ConsensusVersion** bumped to 3 (halving economics migration)
 - **datarights ConsensusVersion** bumped to 2 (lifecycle + versioning)
@@ -69,7 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **x/reputation** — Feedback-based reputation scoring with time decay
 - **Bancor continuous bonding curve** — `tokens = supply * (sqrt(1 + payment/reserve) - 1)`, CW=0.5
 - **Inverse Bancor sell mechanism** — `payout = reserve * (1 - (1 - tokens/supply)^2)`, 95% reserve solvency cap
-- **2% token burn** on escrow release (93% provider, 5% protocol fee, 2% burn)
+- **2% token burn** on escrow release (90% provider, 5% protocol, 2% burn, 3% treasury)
 - **Access level gating** — Equity-based tiered access (L0-L3) capped by reputation score
 - **Jury voting** — Deterministic jury selection, 2/3 majority threshold, deposit return on upheld disputes
 - **Protobuf-based gRPC/REST API** for all 4 modules

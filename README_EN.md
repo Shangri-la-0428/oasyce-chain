@@ -146,7 +146,7 @@ oasyced tx datarights register \
 # === Buy Data Shares (Bancor curve pricing) ===
 oasyced tx datarights buy-shares [asset-id] 1000000uoas --from bob
 
-# === Sell Shares (inverse curve, 3% protocol fee) ===
+# === Sell Shares (inverse curve, 5% protocol fee) ===
 oasyced tx datarights sell-shares [asset-id] 100 --from bob
 
 # === Submit Compute Task ===
@@ -169,8 +169,8 @@ oasyced query reputation leaderboard
 |-----------|-------|
 | Token | OAS (1 OAS = 1,000,000 uoas) |
 | Bonding Curve | Bancor, CW = 0.5 |
-| Escrow Release Fee Split | 93% provider, 3% validators, 2% burn, 2% treasury |
-| Sell Protocol Fee | 3% |
+| Escrow Release Fee Split | 90% provider, 5% protocol, 2% burn, 3% treasury |
+| Sell Protocol Fee | 5% |
 | Reserve Solvency Cap | 95% max payout on sell |
 | Block Rewards | 4→2→1→0.5 OAS/block halving (every 10M blocks) |
 | Block Time | ~5 seconds |
