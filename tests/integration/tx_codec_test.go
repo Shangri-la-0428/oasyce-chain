@@ -89,11 +89,7 @@ func allModuleMessages() map[string]sdk.Msg {
 func TestAllMessagesHaveDescriptor(t *testing.T) {
 	for name, msg := range allModuleMessages() {
 		t.Run(name, func(t *testing.T) {
-			protoMsg, ok := msg.(gogoproto.Message)
-			if !ok {
-				t.Fatalf("%s does not implement proto.Message", name)
-			}
-			msgName := gogoproto.MessageName(protoMsg)
+			msgName := gogoproto.MessageName(msg)
 			if msgName == "" {
 				t.Fatalf("%s: proto.MessageName returned empty — missing Descriptor()?", name)
 			}
@@ -138,10 +134,8 @@ func TestAllMessagesMarshalRoundtrip(t *testing.T) {
 
 	for name, msg := range allModuleMessages() {
 		t.Run(name, func(t *testing.T) {
-			protoMsg := msg.(gogoproto.Message)
-
 			// Pack into Any (this is what tx encoding does)
-			anyMsg, err := codectypes.NewAnyWithValue(protoMsg)
+			anyMsg, err := codectypes.NewAnyWithValue(msg)
 			if err != nil {
 				t.Fatalf("NewAnyWithValue failed: %v", err)
 			}

@@ -770,14 +770,14 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 	apiSvr.Router.HandleFunc("/llms.txt", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "public, max-age=3600")
-		w.Write(docs.LLMSTxt)
+		_, _ = w.Write(docs.LLMSTxt)
 	}).Methods("GET")
 
 	// Serve OpenAPI specification.
 	apiSvr.Router.HandleFunc("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
 		w.Header().Set("Cache-Control", "public, max-age=3600")
-		w.Write(docs.OpenAPISpec)
+		_, _ = w.Write(docs.OpenAPISpec)
 	}).Methods("GET")
 
 	// Service discovery metadata for AI agents.
@@ -815,7 +815,7 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 	apiSvr.Router.HandleFunc("/oasyce/v1/error-codes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.Header().Set("Cache-Control", "public, max-age=3600")
-		w.Write(docs.ErrorCodes)
+		_, _ = w.Write(docs.ErrorCodes)
 	}).Methods("GET")
 }
 
