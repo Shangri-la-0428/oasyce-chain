@@ -13,6 +13,26 @@ message GenesisState {
   repeated Task           tasks     = 2 [(gogoproto.nullable) = false];
   repeated ExecutorProfile executors = 3 [(gogoproto.nullable) = false];
   uint64                  task_counter = 4;
+  // commitments stores sealed result hashes for tasks in COMMITTED/REVEALING phase.
+  repeated TaskCommitment commitments = 5 [(gogoproto.nullable) = false];
+  // results stores revealed results for tasks in REVEALING phase.
+  repeated TaskResult     results     = 6 [(gogoproto.nullable) = false];
+}
+
+// TaskCommitment stores a sealed result hash from an executor.
+message TaskCommitment {
+  uint64 task_id = 1;
+  string executor = 2;
+  string commitment_hash = 3;
+}
+
+// TaskResult stores a revealed result from an executor.
+message TaskResult {
+  uint64 task_id = 1;
+  string executor = 2;
+  string output_hash = 3;
+  string salt = 4;
+  bool   input_unavailable = 5;
 }
 
 // Params defines the governance-tunable parameters for the work module.

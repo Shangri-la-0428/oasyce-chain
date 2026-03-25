@@ -619,6 +619,130 @@ func TestSettlementWithMinority(t *testing.T) {
 	}
 }
 
+func TestGenesisRoundTrip_WithCommitments(t *testing.T) {
+	k, ctx, _, _ := setupKeeper(t)
+	addrs := testAddresses(3)
+
+	// Set task counter
+	k.SetTaskCounter(ctx, 5)
+
+	// Create a task
+	task := types.Task{
+		Id:          1,
+		Creator:     addrs[0],
+		InputHash:   []byte("abc123"),
+		Status:      types.TASK_STATUS_COMMITTED,
+		Bounty:      sdk.NewCoin("uoas", math.NewInt(1000)),
+		Redundancy:  2,
+		TimeoutHeight: 500,
+	}
+	if err := k.SetTask(ctx, task); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create commitments
+	commitHash1 := sha256.Sum256([]byte("result1_salt1_exec1"))
+	c1 := types.Commitment{
+		Executor:   addrs[1],
+		TaskId:     1,
+		CommitHash: commitHash1[:],
+	}
+	commitHash2 := sha256.Sum256([]byte("result2_salt2_exec2"))
+	c2 := types.Commitment{
+		Executor:   addrs[2],
+		TaskId:     1,
+		CommitHash: commitHash2[:],
+	}
+	if err := k.SetCommitment(ctx, c1); err != nil {
+		t.Fatal(err)
+	}
+	if err := k.SetCommitment(ctx, c2); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create results
+	r1 := types.Result{
+		Executor:    addrs[1],
+		TaskId:      1,
+		OutputHash:  []byte("output_hash_1"),
+		Salt:        []byte("salt_1"),
+		Unavailable: false,
+	}
+	if err := k.SetResult(ctx, r1); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify iteration counts
+	commitCount := 0
+	k.IterateAllCommitments(ctx, func(_ types.Commitment) bool {
+		commitCount++
+		return false
+	})
+	if commitCount != 2 {
+		t.Fatalf("expected 2 commitments, got %d", commitCount)
+	}
+
+	resultCount := 0
+	k.IterateAllResults(ctx, func(_ types.Result) bool {
+		resultCount++
+		return false
+	})
+	if resultCount != 1 {
+		t.Fatalf("expected 1 result, got %d", resultCount)
+	}
+
+	// Export → Import round-trip: re-create store, import what we exported
+	k2, ctx2, _, _ := setupKeeper(t)
+
+	// Import task
+	if err := k2.SetTask(ctx2, task); err != nil {
+		t.Fatal(err)
+	}
+	k2.SetTaskCounter(ctx2, 5)
+
+	// Import commitments
+	if err := k2.SetCommitment(ctx2, c1); err != nil {
+		t.Fatal(err)
+	}
+	if err := k2.SetCommitment(ctx2, c2); err != nil {
+		t.Fatal(err)
+	}
+
+	// Import results
+	if err := k2.SetResult(ctx2, r1); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify commitments survived
+	gotC1, found := k2.GetCommitment(ctx2, 1, addrs[1])
+	if !found {
+		t.Fatal("commitment 1 not found after import")
+	}
+	if string(gotC1.CommitHash) != string(commitHash1[:]) {
+		t.Fatal("commitment hash mismatch after import")
+	}
+
+	gotC2, found := k2.GetCommitment(ctx2, 1, addrs[2])
+	if !found {
+		t.Fatal("commitment 2 not found after import")
+	}
+	if string(gotC2.CommitHash) != string(commitHash2[:]) {
+		t.Fatal("commitment hash mismatch after import")
+	}
+
+	// Verify result survived
+	gotR1, found := k2.GetResult(ctx2, 1, addrs[1])
+	if !found {
+		t.Fatal("result 1 not found after import")
+	}
+	if string(gotR1.OutputHash) != string(r1.OutputHash) {
+		t.Fatal("result output hash mismatch after import")
+	}
+	if string(gotR1.Salt) != string(r1.Salt) {
+		t.Fatal("result salt mismatch after import")
+	}
+}
+
 func TestTerminalStatus(t *testing.T) {
 	tests := []struct {
 		status   types.TaskStatus

@@ -32,6 +32,8 @@ func DefaultGenesisState() *GenesisState {
 		Tasks:       []Task{},
 		Executors:   []ExecutorProfile{},
 		TaskCounter: 0,
+		Commitments: []TaskCommitment{},
+		Results:     []TaskResult{},
 	}
 }
 

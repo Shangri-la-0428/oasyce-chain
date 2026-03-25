@@ -115,11 +115,12 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		panic(fmt.Sprintf("failed to set datarights params: %v", err))
 	}
 
-	// Restore data assets.
+	// Restore data assets and rebuild secondary indexes.
 	for _, asset := range gs.DataAssets {
 		if err := am.keeper.SetAsset(ctx, asset); err != nil {
 			panic(fmt.Sprintf("failed to set data asset %s: %v", asset.Id, err))
 		}
+		am.keeper.RebuildAssetOwnerIndex(ctx, asset)
 	}
 
 	// Restore shareholders.
@@ -140,6 +141,16 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	for _, mp := range gs.MigrationPaths {
 		if err := am.keeper.SetMigrationPath(ctx, mp); err != nil {
 			panic(fmt.Sprintf("failed to set migration path %s->%s: %v", mp.SourceAssetId, mp.TargetAssetId, err))
+		}
+	}
+
+	// Restore asset reserves (bonding curve state).
+	for _, ar := range gs.AssetReserves {
+		if err := am.keeper.SetAssetReserve(ctx, ar.AssetId, ar.Reserve); err != nil {
+			panic(fmt.Sprintf("failed to set asset reserve %s: %v", ar.AssetId, err))
+		}
+		if ar.ReserveDenom != "" {
+			am.keeper.SetAssetReserveDenom(ctx, ar.AssetId, ar.ReserveDenom)
 		}
 	}
 
@@ -184,19 +195,37 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 		migrationPaths = []types.MigrationPath{}
 	}
 
+	// Export asset reserves (bonding curve state).
+	var assetReserves []types.AssetReserve
+	for _, a := range assets {
+		reserve := am.keeper.GetAssetReserve(ctx, a.Id)
+		if !reserve.IsZero() {
+			denom := am.keeper.GetAssetReserveDenom(ctx, a.Id)
+			assetReserves = append(assetReserves, types.AssetReserve{
+				AssetId:      a.Id,
+				Reserve:      reserve,
+				ReserveDenom: denom,
+			})
+		}
+	}
+	if assetReserves == nil {
+		assetReserves = []types.AssetReserve{}
+	}
+
 	gs := types.GenesisState{
 		DataAssets:     assets,
 		Shareholders:   shareholders,
 		Disputes:       disputes,
 		Params:         am.keeper.GetParams(ctx),
 		MigrationPaths: migrationPaths,
+		AssetReserves:  assetReserves,
 	}
 
 	return cdc.MustMarshalJSON(&gs)
 }
 
 // ConsensusVersion returns the module's consensus version.
-func (am AppModule) ConsensusVersion() uint64 { return 2 }
+func (am AppModule) ConsensusVersion() uint64 { return 3 }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
 func (am AppModule) IsOnePerModuleType() {}

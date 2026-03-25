@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -33,4 +35,18 @@ func DefaultGenesisState() *GenesisState {
 		Capabilities: []Capability{},
 		Invocations:  []Invocation{},
 	}
+}
+
+// ValidateGenesis validates the genesis state.
+func ValidateGenesis(gs GenesisState) error {
+	if gs.Params.MaxRateLimit == 0 {
+		return fmt.Errorf("max_rate_limit must be positive")
+	}
+	if gs.Params.MinProviderStake.IsNil() || gs.Params.MinProviderStake.IsNegative() {
+		return fmt.Errorf("min_provider_stake must be non-negative")
+	}
+	if gs.Params.ProtocolFeeRate > 10000 {
+		return fmt.Errorf("protocol_fee_rate must be <= 10000 (100%%)")
+	}
+	return nil
 }

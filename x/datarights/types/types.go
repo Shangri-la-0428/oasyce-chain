@@ -71,6 +71,7 @@ func DefaultGenesisState() *GenesisState {
 		Disputes:       []Dispute{},
 		Params:         DefaultParams(),
 		MigrationPaths: []MigrationPath{},
+		AssetReserves:  []AssetReserve{},
 	}
 }
 

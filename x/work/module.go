@@ -2,6 +2,7 @@ package work
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -98,17 +99,56 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		am.keeper.SetTaskCounter(ctx, gs.TaskCounter)
 	}
 
-	// Restore tasks
+	// Restore tasks and rebuild secondary indexes.
 	for _, task := range gs.Tasks {
 		if err := am.keeper.SetTask(ctx, task); err != nil {
 			panic(fmt.Sprintf("failed to restore task %d: %v", task.Id, err))
 		}
+		am.keeper.RebuildTaskIndexes(ctx, task)
 	}
 
 	// Restore executor profiles
 	for _, exec := range gs.Executors {
 		if err := am.keeper.SetExecutorProfile(ctx, exec); err != nil {
 			panic(fmt.Sprintf("failed to restore executor %s: %v", exec.Address, err))
+		}
+	}
+
+	// Restore commitments
+	for _, gc := range gs.Commitments {
+		hashBz, err := hex.DecodeString(gc.CommitmentHash)
+		if err != nil {
+			panic(fmt.Sprintf("failed to decode commitment hash for task %d: %v", gc.TaskId, err))
+		}
+		c := types.Commitment{
+			Executor:   gc.Executor,
+			TaskId:     gc.TaskId,
+			CommitHash: hashBz,
+		}
+		if err := am.keeper.SetCommitment(ctx, c); err != nil {
+			panic(fmt.Sprintf("failed to restore commitment task=%d executor=%s: %v", gc.TaskId, gc.Executor, err))
+		}
+	}
+
+	// Restore results
+	for _, gr := range gs.Results {
+		outputBz, err := hex.DecodeString(gr.OutputHash)
+		if err != nil {
+			panic(fmt.Sprintf("failed to decode output hash for task %d: %v", gr.TaskId, err))
+		}
+		saltBz, err := hex.DecodeString(gr.Salt)
+		if err != nil {
+			panic(fmt.Sprintf("failed to decode salt for task %d: %v", gr.TaskId, err))
+		}
+		r := types.Result{
+			Executor:    gr.Executor,
+			TaskId:      gr.TaskId,
+			OutputHash:  outputBz,
+			Salt:        saltBz,
+			Unavailable: gr.InputUnavailable,
+		}
+		if err := am.keeper.SetResult(ctx, r); err != nil {
+			panic(fmt.Sprintf("failed to restore result task=%d executor=%s: %v", gr.TaskId, gr.Executor, err))
 		}
 	}
 
@@ -131,10 +171,32 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 		return false
 	})
 
+	// Export commitments
+	am.keeper.IterateAllCommitments(ctx, func(c types.Commitment) bool {
+		gs.Commitments = append(gs.Commitments, types.TaskCommitment{
+			TaskId:         c.TaskId,
+			Executor:       c.Executor,
+			CommitmentHash: hex.EncodeToString(c.CommitHash),
+		})
+		return false
+	})
+
+	// Export results
+	am.keeper.IterateAllResults(ctx, func(r types.Result) bool {
+		gs.Results = append(gs.Results, types.TaskResult{
+			TaskId:           r.TaskId,
+			Executor:         r.Executor,
+			OutputHash:       hex.EncodeToString(r.OutputHash),
+			Salt:             hex.EncodeToString(r.Salt),
+			InputUnavailable: r.Unavailable,
+		})
+		return false
+	})
+
 	return cdc.MustMarshalJSON(&gs)
 }
 
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 func (am AppModule) BeginBlock(ctx sdk.Context) error {
 	return am.keeper.BeginBlocker(ctx)

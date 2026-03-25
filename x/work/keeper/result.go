@@ -138,6 +138,40 @@ func (k Keeper) IterateExecutorProfiles(ctx sdk.Context, cb func(types.ExecutorP
 	}
 }
 
+// IterateAllCommitments iterates over ALL commitments across all tasks.
+func (k Keeper) IterateAllCommitments(ctx sdk.Context, cb func(types.Commitment) bool) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.CommitmentKeyPrefix)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var c types.Commitment
+		if err := k.cdc.Unmarshal(iter.Value(), &c); err != nil {
+			continue
+		}
+		if cb(c) {
+			break
+		}
+	}
+}
+
+// IterateAllResults iterates over ALL results across all tasks.
+func (k Keeper) IterateAllResults(ctx sdk.Context, cb func(types.Result) bool) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.ResultKeyPrefix)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var r types.Result
+		if err := k.cdc.Unmarshal(iter.Value(), &r); err != nil {
+			continue
+		}
+		if cb(r) {
+			break
+		}
+	}
+}
+
 // ---- Epoch Stats ----
 
 func (k Keeper) GetEpochStats(ctx sdk.Context, epoch uint64) (types.EpochStats, bool) {

@@ -104,6 +104,11 @@ func (k Keeper) SetAsset(ctx sdk.Context, asset types.DataAsset) error {
 	return nil
 }
 
+// RebuildAssetOwnerIndex rebuilds the owner->asset secondary index (used during InitGenesis).
+func (k Keeper) RebuildAssetOwnerIndex(ctx sdk.Context, asset types.DataAsset) {
+	k.setAssetOwnerIndex(ctx, asset.Owner, asset.Id)
+}
+
 // setAssetOwnerIndex creates a secondary index entry for owner -> asset.
 func (k Keeper) setAssetOwnerIndex(ctx sdk.Context, owner, assetID string) {
 	store := ctx.KVStore(k.storeKey)

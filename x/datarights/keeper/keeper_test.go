@@ -1687,3 +1687,83 @@ func TestResolveDisputeShareAdjustmentRemedy(t *testing.T) {
 		t.Fatalf("co-creator B mismatch: %+v", asset.CoCreators[1])
 	}
 }
+
+func TestGenesisRoundTrip_WithReserves(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+
+	assetID := "GENESIS_ASSET_1"
+
+	// Create asset.
+	asset := types.DataAsset{
+		Id:    assetID,
+		Name:  "Genesis Test",
+		Owner: sdk.AccAddress([]byte("owner_______________")).String(),
+	}
+	if err := k.SetAsset(ctx, asset); err != nil {
+		t.Fatalf("SetAsset failed: %v", err)
+	}
+
+	// Set reserve and denom (simulates post-BuyShares state).
+	expectedReserve := math.NewInt(500000)
+	if err := k.SetAssetReserve(ctx, assetID, expectedReserve); err != nil {
+		t.Fatalf("SetAssetReserve failed: %v", err)
+	}
+	k.SetAssetReserveDenom(ctx, assetID, "uoas")
+
+	// Snapshot state (simulate ExportGenesis).
+	reserve := k.GetAssetReserve(ctx, assetID)
+	denom := k.GetAssetReserveDenom(ctx, assetID)
+
+	if !reserve.Equal(expectedReserve) {
+		t.Fatalf("expected reserve %s, got %s", expectedReserve, reserve)
+	}
+	if denom != "uoas" {
+		t.Fatalf("expected denom uoas, got %s", denom)
+	}
+
+	// Build genesis state.
+	gs := types.GenesisState{
+		DataAssets: []types.DataAsset{asset},
+		Params:     k.GetParams(ctx),
+		AssetReserves: []types.AssetReserve{
+			{AssetId: assetID, Reserve: reserve, ReserveDenom: denom},
+		},
+	}
+
+	// Create new keeper (simulate chain restart).
+	k2, ctx2, _ := setupKeeper(t)
+
+	// Verify reserve is zero before import.
+	r := k2.GetAssetReserve(ctx2, assetID)
+	if !r.IsZero() {
+		t.Fatalf("expected zero reserve before init, got %s", r)
+	}
+
+	// Restore genesis (simulate InitGenesis).
+	if err := k2.SetParams(ctx2, gs.Params); err != nil {
+		t.Fatalf("SetParams failed: %v", err)
+	}
+	for _, a := range gs.DataAssets {
+		if err := k2.SetAsset(ctx2, a); err != nil {
+			t.Fatalf("SetAsset failed: %v", err)
+		}
+	}
+	for _, ar := range gs.AssetReserves {
+		if err := k2.SetAssetReserve(ctx2, ar.AssetId, ar.Reserve); err != nil {
+			t.Fatalf("SetAssetReserve failed: %v", err)
+		}
+		if ar.ReserveDenom != "" {
+			k2.SetAssetReserveDenom(ctx2, ar.AssetId, ar.ReserveDenom)
+		}
+	}
+
+	// Verify reserve survived the round-trip.
+	restoredReserve := k2.GetAssetReserve(ctx2, assetID)
+	if !restoredReserve.Equal(expectedReserve) {
+		t.Fatalf("reserve lost in genesis round-trip: expected %s, got %s", expectedReserve, restoredReserve)
+	}
+	restoredDenom := k2.GetAssetReserveDenom(ctx2, assetID)
+	if restoredDenom != "uoas" {
+		t.Fatalf("denom lost in genesis round-trip: expected uoas, got %s", restoredDenom)
+	}
+}

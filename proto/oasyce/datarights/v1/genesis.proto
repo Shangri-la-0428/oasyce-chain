@@ -4,6 +4,7 @@ package oasyce.datarights.v1;
 option go_package = "github.com/oasyce/chain/x/datarights/types";
 
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "oasyce/datarights/v1/types.proto";
 
@@ -23,6 +24,16 @@ message GenesisState {
 
   // migration_paths is the list of all migration paths at genesis.
   repeated MigrationPath migration_paths = 5 [(gogoproto.nullable) = false];
+
+  // asset_reserves stores bonding curve reserve amounts per asset.
+  repeated AssetReserve asset_reserves = 6 [(gogoproto.nullable) = false];
+}
+
+// AssetReserve stores the bonding curve reserve and denomination for a data asset.
+message AssetReserve {
+  string asset_id = 1;
+  string reserve = 2 [(cosmos_proto.scalar) = "cosmos.Int", (gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.nullable) = false];
+  string reserve_denom = 3;
 }
 
 // Params defines the parameters for the datarights module.

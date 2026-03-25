@@ -101,6 +101,11 @@ func (k Keeper) SetEscrow(ctx sdk.Context, escrow types.Escrow) error {
 	return nil
 }
 
+// RebuildEscrowIndex rebuilds secondary indexes for an escrow (used during InitGenesis).
+func (k Keeper) RebuildEscrowIndex(ctx sdk.Context, escrow types.Escrow) {
+	k.setEscrowIndex(ctx, escrow.Creator, escrow.Id)
+}
+
 // setEscrowIndex creates a secondary index entry for creator -> escrow.
 func (k Keeper) setEscrowIndex(ctx sdk.Context, creator, escrowID string) {
 	store := ctx.KVStore(k.storeKey)

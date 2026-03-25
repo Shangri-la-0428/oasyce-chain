@@ -62,6 +62,32 @@ func (k Keeper) setTaskWithIndexes(ctx sdk.Context, task types.Task, oldStatus t
 	return nil
 }
 
+// RebuildTaskIndexes rebuilds all secondary indexes for a task (used during InitGenesis).
+func (k Keeper) RebuildTaskIndexes(ctx sdk.Context, task types.Task) {
+	store := ctx.KVStore(k.storeKey)
+
+	// Status index
+	store.Set(types.StatusIndexKey(task.Status, task.Id), []byte{})
+
+	// Creator index
+	store.Set(types.CreatorIndexKey(task.Creator, task.Id), []byte{})
+
+	// Executor indexes
+	for _, exec := range task.AssignedExecutors {
+		store.Set(types.ExecutorIndexKey(exec, task.Id), []byte{})
+	}
+
+	// Expiry index — needed by BeginBlocker to find timed-out tasks
+	if !types.IsTerminalStatus(task.Status) && task.TimeoutHeight > 0 {
+		store.Set(types.ExpiryIndexKey(task.TimeoutHeight, task.Id), []byte{})
+	}
+
+	// Reveal expiry index — needed by BeginBlocker for reveal timeout
+	if task.Status == types.TASK_STATUS_REVEALING && task.RevealTimeoutHeight > 0 {
+		store.Set(types.RevealExpiryIndexKey(task.RevealTimeoutHeight, task.Id), []byte{})
+	}
+}
+
 // ---- Iteration ----
 
 func (k Keeper) IterateTasksByStatus(ctx sdk.Context, status types.TaskStatus, cb func(types.Task) bool) {

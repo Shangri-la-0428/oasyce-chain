@@ -109,11 +109,12 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		panic(fmt.Sprintf("failed to set settlement params: %v", err))
 	}
 
-	// Restore escrows.
+	// Restore escrows and rebuild secondary indexes.
 	for _, escrow := range gs.Escrows {
 		if err := am.keeper.SetEscrow(ctx, escrow); err != nil {
 			panic(fmt.Sprintf("failed to set escrow %s: %v", escrow.Id, err))
 		}
+		am.keeper.RebuildEscrowIndex(ctx, escrow)
 	}
 
 	// Restore bonding curve states.

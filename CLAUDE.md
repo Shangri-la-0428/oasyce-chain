@@ -103,7 +103,7 @@ All 4 modules verified with real transactions:
 ### Build & Test Status
 ```
 go build ./...  ✅
-go test ./...   ✅ (55+ tests across 8 suites)
+go test ./...   ✅ (130+ tests across 10 suites)
   tests/integration     — 3 tests (full capability flow w/ challenge window, Bancor curve, escrow lifecycle)
   x/capability/keeper   — 11 tests (register, invoke, complete, claim, dispute, deactivate, auth, rate limit, tags)
   x/datarights/keeper   — 16 tests (Bancor buy/sell, access gating, jury voting, lifecycle, versioning, migration)
