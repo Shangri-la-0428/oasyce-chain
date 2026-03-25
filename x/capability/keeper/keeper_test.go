@@ -1223,3 +1223,90 @@ func TestUsageReportEmptyIsOk(t *testing.T) {
 		t.Errorf("expected empty usage_report, got %q", inv.UsageReport)
 	}
 }
+
+func TestGenesisRoundTrip_Comprehensive(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+	provider := "oasyce1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5z5tp3"
+	consumer := "oasyce1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5abcde"
+
+	// Build genesis state with capability + invocation
+	seedGS := types.GenesisState{
+		Params: types.DefaultParams(),
+		Capabilities: []types.Capability{
+			{
+				Id:           "cap-1",
+				Provider:     provider,
+				Name:         "test-cap",
+				Description:  "A test capability",
+				EndpointUrl:  "https://example.com/api",
+				PricePerCall: sdk.NewCoin("uoas", math.NewInt(100)),
+				Tags:         []string{"ai", "test"},
+				RateLimit:    10,
+				TotalCalls:   5,
+				TotalEarned:  math.NewInt(500),
+			},
+		},
+		Invocations: []types.Invocation{
+			{
+				Id:           "inv-1",
+				CapabilityId: "cap-1",
+				Consumer:     consumer,
+				Provider:     provider,
+				InputHash:    "input_hash_abc",
+				Status:       types.INVOCATION_STATUS_PENDING,
+				Amount:       sdk.NewCoin("uoas", math.NewInt(100)),
+				Timestamp:    time.Now().UTC().Truncate(time.Second),
+				EscrowId:     "escrow-99",
+			},
+		},
+	}
+
+	// === Import (first pass) ===
+	k.InitGenesis(ctx, seedGS)
+
+	// === Export ===
+	gs := k.ExportGenesis(ctx)
+	if len(gs.Capabilities) != 1 {
+		t.Fatalf("export: expected 1 capability, got %d", len(gs.Capabilities))
+	}
+	if len(gs.Invocations) != 1 {
+		t.Fatalf("export: expected 1 invocation, got %d", len(gs.Invocations))
+	}
+
+	// === Import into new store ===
+	k2, ctx2, _ := setupKeeper(t)
+	k2.InitGenesis(ctx2, *gs)
+
+	// === Re-export and compare ===
+	gs2 := k2.ExportGenesis(ctx2)
+	if len(gs2.Capabilities) != 1 {
+		t.Fatalf("re-export: expected 1 capability, got %d", len(gs2.Capabilities))
+	}
+	if len(gs2.Invocations) != 1 {
+		t.Fatalf("re-export: expected 1 invocation, got %d", len(gs2.Invocations))
+	}
+
+	// Verify capability data
+	gotCap := gs2.Capabilities[0]
+	if gotCap.Id != "cap-1" || gotCap.Provider != provider || gotCap.Name != "test-cap" {
+		t.Fatal("capability data mismatch after round-trip")
+	}
+	if !gotCap.TotalEarned.Equal(math.NewInt(500)) {
+		t.Fatal("capability total_earned mismatch")
+	}
+
+	// Verify invocation data
+	gotInv := gs2.Invocations[0]
+	if gotInv.Id != "inv-1" {
+		t.Fatalf("invocation ID mismatch: got %s, want inv-1", gotInv.Id)
+	}
+	if gotInv.Consumer != consumer || gotInv.Provider != provider {
+		t.Fatal("invocation consumer/provider mismatch")
+	}
+
+	// Verify secondary index (CapByProvider)
+	caps := k2.ListCapabilities(ctx2, "")
+	if len(caps) != 1 {
+		t.Fatalf("ListCapabilities: expected 1, got %d", len(caps))
+	}
+}

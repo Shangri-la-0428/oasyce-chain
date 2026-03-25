@@ -101,6 +101,11 @@ func (k Keeper) SetFeedback(ctx sdk.Context, fb types.Feedback) error {
 	return nil
 }
 
+// RebuildFeedbackIndex rebuilds secondary indexes for a feedback (used during InitGenesis).
+func (k Keeper) RebuildFeedbackIndex(ctx sdk.Context, fb types.Feedback) {
+	k.setFeedbackIndex(ctx, fb)
+}
+
 // setFeedbackIndex creates secondary index entries for a feedback.
 func (k Keeper) setFeedbackIndex(ctx sdk.Context, fb types.Feedback) {
 	store := ctx.KVStore(k.storeKey)

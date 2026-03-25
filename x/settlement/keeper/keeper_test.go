@@ -381,3 +381,106 @@ func TestGetEscrowsByCreator(t *testing.T) {
 		t.Fatalf("expected 3 escrows, got %d", len(escrows))
 	}
 }
+
+func TestGenesisRoundTrip_Comprehensive(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+	creator, provider := testAddresses()
+
+	// Populate escrow
+	escrow := types.Escrow{
+		Id:        "escrow-1",
+		Creator:   creator,
+		Provider:  provider,
+		Amount:    sdk.NewCoin("uoas", math.NewInt(5000)),
+		Status:    types.ESCROW_STATUS_LOCKED,
+		CreatedAt: time.Now().UTC().Truncate(time.Second),
+		ExpiresAt: time.Now().Add(24 * time.Hour).UTC().Truncate(time.Second),
+	}
+	if err := k.SetEscrow(ctx, escrow); err != nil {
+		t.Fatal(err)
+	}
+	k.RebuildEscrowIndex(ctx, escrow)
+
+	// Populate bonding curve
+	bcs := types.BondingCurveState{
+		AssetId:      "asset-1",
+		TotalShares:  math.NewInt(1000),
+		Reserve:      math.NewInt(500),
+		PriceFactor:  math.LegacyNewDec(1),
+		BuyerCount:   3,
+		ReserveDenom: "uoas",
+	}
+	if err := k.SetBondingCurveState(ctx, bcs); err != nil {
+		t.Fatal(err)
+	}
+
+	// === Export ===
+	var exportedEscrows []types.Escrow
+	k.IterateAllEscrows(ctx, func(e types.Escrow) bool {
+		exportedEscrows = append(exportedEscrows, e)
+		return false
+	})
+	var exportedBCS []types.BondingCurveState
+	k.IterateAllBondingCurves(ctx, func(s types.BondingCurveState) bool {
+		exportedBCS = append(exportedBCS, s)
+		return false
+	})
+	params := k.GetParams(ctx)
+
+	if len(exportedEscrows) != 1 {
+		t.Fatalf("export: expected 1 escrow, got %d", len(exportedEscrows))
+	}
+	if len(exportedBCS) != 1 {
+		t.Fatalf("export: expected 1 bonding curve, got %d", len(exportedBCS))
+	}
+
+	// === Import into new store ===
+	k2, ctx2, _ := setupKeeper(t)
+
+	if err := k2.SetParams(ctx2, params); err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range exportedEscrows {
+		if err := k2.SetEscrow(ctx2, e); err != nil {
+			t.Fatal(err)
+		}
+		k2.RebuildEscrowIndex(ctx2, e)
+	}
+	for _, s := range exportedBCS {
+		if err := k2.SetBondingCurveState(ctx2, s); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// === Verify primary data ===
+	gotEscrow, found := k2.GetEscrow(ctx2, "escrow-1")
+	if !found {
+		t.Fatal("escrow not found after import")
+	}
+	if gotEscrow.Creator != creator || gotEscrow.Provider != provider {
+		t.Fatal("escrow creator/provider mismatch")
+	}
+	if !gotEscrow.Amount.Amount.Equal(math.NewInt(5000)) {
+		t.Fatal("escrow amount mismatch")
+	}
+
+	gotBCS, found := k2.GetBondingCurveState(ctx2, "asset-1")
+	if !found {
+		t.Fatal("bonding curve not found after import")
+	}
+	if !gotBCS.TotalShares.Equal(math.NewInt(1000)) || !gotBCS.Reserve.Equal(math.NewInt(500)) {
+		t.Fatal("bonding curve state mismatch")
+	}
+	if gotBCS.ReserveDenom != "uoas" {
+		t.Fatal("bonding curve denom mismatch")
+	}
+
+	// === Verify secondary index (EscrowByCreator) ===
+	byCreator := k2.GetEscrowsByCreator(ctx2, creator)
+	if len(byCreator) != 1 {
+		t.Fatalf("EscrowByCreator: expected 1, got %d", len(byCreator))
+	}
+	if byCreator[0].Id != "escrow-1" {
+		t.Fatal("EscrowByCreator returned wrong escrow")
+	}
+}

@@ -116,11 +116,12 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		}
 	}
 
-	// Restore feedbacks.
+	// Restore feedbacks and rebuild secondary indexes.
 	for _, fb := range gs.Feedbacks {
 		if err := am.keeper.SetFeedback(ctx, fb); err != nil {
 			panic(fmt.Sprintf("failed to set feedback %s: %v", fb.Id, err))
 		}
+		am.keeper.RebuildFeedbackIndex(ctx, fb)
 	}
 
 	// Restore reports.

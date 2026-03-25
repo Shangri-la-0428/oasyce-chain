@@ -347,3 +347,121 @@ func TestQueryReputationDefaultZero(t *testing.T) {
 		t.Fatal("expected LastUpdated to be set (not zero time)")
 	}
 }
+
+func TestGenesisRoundTrip_Comprehensive(t *testing.T) {
+	k, ctx, _ := setupKeeper(t)
+	addrs := []string{
+		sdk.AccAddress([]byte("addr0_______________")).String(),
+		sdk.AccAddress([]byte("addr1_______________")).String(),
+		sdk.AccAddress([]byte("addr2_______________")).String(),
+	}
+
+	// Populate reputation score
+	score := types.ReputationScore{
+		Address:           addrs[0],
+		TotalScore:        450,
+		TotalFeedbacks:    10,
+		VerifiedFeedbacks: 7,
+		LastUpdated:       time.Now().UTC().Truncate(time.Second),
+	}
+	if err := k.SetReputation(ctx, score); err != nil {
+		t.Fatal(err)
+	}
+
+	// Populate feedback
+	fb := types.Feedback{
+		Id:           "fb-1",
+		InvocationId: "inv-1",
+		From:         addrs[1],
+		To:           addrs[0],
+		Rating:       400,
+		Comment:      "great service",
+		Verified:     true,
+		Timestamp:    time.Now().UTC().Truncate(time.Second),
+	}
+	if err := k.SetFeedback(ctx, fb); err != nil {
+		t.Fatal(err)
+	}
+
+	// Populate report
+	report := types.MisbehaviorReport{
+		Id:           "report-1",
+		Creator:      addrs[2],
+		Target:       addrs[0],
+		EvidenceType: "spam",
+		Evidence:     []byte("evidence data"),
+		Timestamp:    time.Now().Unix(),
+	}
+	if err := k.SetReport(ctx, report); err != nil {
+		t.Fatal(err)
+	}
+
+	// === Export ===
+	var scores []types.ReputationScore
+	k.IterateAllScores(ctx, func(s types.ReputationScore) bool {
+		scores = append(scores, s)
+		return false
+	})
+	var feedbacks []types.Feedback
+	k.IterateAllFeedbacks(ctx, func(f types.Feedback) bool {
+		feedbacks = append(feedbacks, f)
+		return false
+	})
+	var reports []types.MisbehaviorReport
+	k.IterateAllReports(ctx, func(r types.MisbehaviorReport) bool {
+		reports = append(reports, r)
+		return false
+	})
+	params := k.GetParams(ctx)
+
+	if len(scores) != 1 {
+		t.Fatalf("export: expected 1 score, got %d", len(scores))
+	}
+	if len(feedbacks) != 1 {
+		t.Fatalf("export: expected 1 feedback, got %d", len(feedbacks))
+	}
+	if len(reports) != 1 {
+		t.Fatalf("export: expected 1 report, got %d", len(reports))
+	}
+
+	// === Import into new store ===
+	k2, ctx2, _ := setupKeeper(t)
+
+	if err := k2.SetParams(ctx2, params); err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range scores {
+		if err := k2.SetReputation(ctx2, s); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, f := range feedbacks {
+		if err := k2.SetFeedback(ctx2, f); err != nil {
+			t.Fatal(err)
+		}
+		k2.RebuildFeedbackIndex(ctx2, f)
+	}
+	for _, r := range reports {
+		if err := k2.SetReport(ctx2, r); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// === Verify primary data ===
+	gotScore, found := k2.GetReputation(ctx2, addrs[0])
+	if !found {
+		t.Fatal("score not found after import")
+	}
+	if gotScore.TotalScore != 450 || gotScore.TotalFeedbacks != 10 {
+		t.Fatal("score mismatch after import")
+	}
+
+	// === Verify secondary index (FeedbackByTarget) ===
+	byTarget := k2.GetFeedbacksByTarget(ctx2, addrs[0])
+	if len(byTarget) != 1 {
+		t.Fatalf("FeedbacksByTarget: expected 1, got %d", len(byTarget))
+	}
+	if byTarget[0].Id != "fb-1" {
+		t.Fatal("FeedbacksByTarget returned wrong feedback")
+	}
+}
