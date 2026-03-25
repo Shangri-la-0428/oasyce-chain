@@ -289,6 +289,7 @@ if command -v ufw &>/dev/null; then
     ufw allow 1317/tcp comment "Oasyce REST" > /dev/null 2>&1
     ufw allow 9090/tcp comment "Oasyce gRPC" > /dev/null 2>&1
     ufw allow 26660/tcp comment "Prometheus" > /dev/null 2>&1
+    ufw allow 8080/tcp comment "Oasyce Faucet" > /dev/null 2>&1
     ufw --force enable > /dev/null 2>&1
     echo "    Firewall rules set."
 else
@@ -326,7 +327,58 @@ systemctl daemon-reload
 systemctl enable oasyced
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 9. Start
+# 8b. Journal log rotation
+# ══════════════════════════════════════════════════════════════════════════════
+echo "==> Configuring journal log limits..."
+mkdir -p /etc/systemd/journald.conf.d
+cat > /etc/systemd/journald.conf.d/oasyced.conf << EOF
+[Journal]
+SystemMaxUse=500M
+SystemMaxFileSize=50M
+MaxRetentionSec=7day
+Compress=yes
+EOF
+systemctl restart systemd-journald
+echo "    Journal: max 500MB, 7-day retention."
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 8c. Faucet service
+# ══════════════════════════════════════════════════════════════════════════════
+echo "==> Setting up faucet service..."
+
+cat > /etc/systemd/system/oasyce-faucet.service << EOF
+[Unit]
+Description=Oasyce Testnet Faucet
+After=oasyced.service
+Requires=oasyced.service
+
+[Service]
+User=${SERVICE_USER}
+Environment=FAUCET_PORT=8080
+Environment=FAUCET_AMOUNT=100
+Environment=CHAIN_ID=${CHAIN_ID}
+Environment=OASYCE_HOME=${NODE_HOME}
+Environment=FAUCET_KEY=faucet
+Environment=FAUCET_RATE_FILE=${HOME_DIR}/.faucet_rate.json
+ExecStart=/usr/bin/python3 ${INSTALL_DIR}/src/scripts/faucet_server.py
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable oasyce-faucet
+systemctl start oasyce-faucet
+echo "    Faucet running on :8080"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 9. Start node
 # ══════════════════════════════════════════════════════════════════════════════
 echo "==> Starting node..."
 systemctl start oasyced
@@ -355,6 +407,7 @@ if systemctl is-active --quiet oasyced; then
     echo "    RPC:         http://${PUBLIC_IP}:26657"
     echo "    REST API:    http://${PUBLIC_IP}:1317"
     echo "    gRPC:        ${PUBLIC_IP}:9090"
+    echo "    Faucet:      http://${PUBLIC_IP}:8080/faucet?address=oasyce1..."
     echo "    Prometheus:  http://${PUBLIC_IP}:26660"
     echo ""
     echo "  Genesis file:  ${HOME_DIR}/genesis.json"

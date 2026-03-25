@@ -61,7 +61,7 @@ Oasyce Testnet-1 现已上线。
 | RPC | `http://47.93.32.88:26657` |
 | REST | `http://47.93.32.88:1317` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
-| Binary 下载 | [v0.4.0 Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0) |
+| Binary 下载 | [v0.5.0 Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0) |
 
 ```bash
 # 一键加入（Docker）

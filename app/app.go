@@ -800,7 +800,7 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 			"modules":    []string{"settlement", "capability", "datarights", "reputation", "work", "onboarding"},
 			"onboarding": "oasyced util auto-register",
 			"report_issue": map[string]string{
-				"endpoint": "/oasyce/v1/report-issue",
+				"endpoint": "/api/v1/report-issue",
 				"method":   "POST",
 				"label":    "ai-reported",
 			},
@@ -821,7 +821,7 @@ func (app *OasyceApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig serverconf
 
 	// Issue report proxy — agents POST here, node forwards to GitHub using D1ROSE bot token.
 	// Token is read from OASYCE_REPORT_TOKEN env var (never in code).
-	apiSvr.Router.HandleFunc("/oasyce/v1/report-issue", func(w http.ResponseWriter, r *http.Request) {
+	apiSvr.Router.HandleFunc("/api/v1/report-issue", func(w http.ResponseWriter, r *http.Request) {
 		token := os.Getenv("OASYCE_REPORT_TOKEN")
 		if token == "" {
 			http.Error(w, `{"error":"issue reporting not configured on this node"}`, http.StatusServiceUnavailable)

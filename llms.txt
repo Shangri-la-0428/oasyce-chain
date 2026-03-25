@@ -584,7 +584,7 @@ When you encounter a bug or unexpected behavior, you can autonomously file a Git
 ### File an Issue (via Node Proxy)
 
 ```bash
-curl -X POST http://<node>:1317/oasyce/v1/report-issue \
+curl -X POST http://<node>:1317/api/v1/report-issue \
   -H "Content-Type: application/json" \
   -d '{
     "title": "[AI] <short description>",

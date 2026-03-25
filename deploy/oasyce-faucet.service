@@ -1,0 +1,25 @@
+[Unit]
+Description=Oasyce Testnet Faucet
+After=oasyced.service
+Requires=oasyced.service
+
+[Service]
+User=oasyce
+Environment=FAUCET_PORT=8080
+Environment=FAUCET_AMOUNT=100
+Environment=CHAIN_ID=oasyce-testnet-1
+Environment=OASYCE_HOME=/home/oasyce/.oasyced
+Environment=FAUCET_KEY=faucet
+Environment=FAUCET_RATE_FILE=/home/oasyce/.faucet_rate.json
+ExecStart=/usr/bin/python3 /opt/oasyce/src/scripts/faucet_server.py
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+
+# Hardening
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
