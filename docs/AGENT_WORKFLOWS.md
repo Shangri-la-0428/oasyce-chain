@@ -72,10 +72,8 @@ Response:
 ### Step 1: Register Capability
 
 ```bash
-oasyced tx oasyce_capability register \
-  --name "GPT-4 Summarizer" \
-  --endpoint "https://api.example.com/summarize" \
-  --price 100000uoas \
+oasyced tx oasyce_capability register "GPT-4 Summarizer" \
+  "https://api.example.com/summarize" 100000uoas \
   --tags "nlp,summarization" \
   --from provider1 --output json --yes
 ```
@@ -153,7 +151,8 @@ Response:
 ### Step 2: Invoke Capability
 
 ```bash
-oasyced tx oasyce_capability invoke CAP_xxxx '{"text":"Summarize this document..."}' \
+oasyced tx oasyce_capability invoke CAP_xxxx \
+  --input '{"text":"Summarize this document..."}' \
   --from consumer1 --output json --yes
 ```
 This auto-creates an escrow. Response includes invocation_id and escrow_id.
@@ -195,10 +194,8 @@ This refunds the escrow.
 ### Owner: Register Data Asset
 
 ```bash
-oasyced tx datarights register \
-  --name "NLP Training Set v2" \
+oasyced tx datarights register "NLP Training Set v2" abc123def456 \
   --description "100K labeled sentences" \
-  --data-hash abc123def456 \
   --tags "nlp,training" \
   --from owner1 --output json --yes
 ```
@@ -249,9 +246,7 @@ Payout follows inverse bonding curve minus 5% protocol fee.
 ### Step 1: Register as Executor
 
 ```bash
-oasyced tx work register-executor \
-  --task-types "data-cleaning,ml-inference" \
-  --max-compute-units 1000 \
+oasyced tx work register-executor "data-cleaning,ml-inference" 1000 \
   --from worker1 --output json --yes
 ```
 
@@ -270,15 +265,14 @@ Download input from `input_uri`, process it, compute `output_hash = sha256(resul
 
 ```bash
 # commitment = sha256(output_hash + salt + executor_address + "available")
-oasyced tx work commit-result TASK_xxxx --commit-hash <commitment> --from worker1 --output json --yes
+oasyced tx work commit-result 1 <commitment-hex> --from worker1 --output json --yes
 ```
 
 ### Step 5: Reveal Result
 
 ```bash
-oasyced tx work reveal-result TASK_xxxx \
-  --output-hash <actual_output_hash> \
-  --salt <your_salt> \
+oasyced tx work reveal-result 1 <output-hash-hex> \
+  "https://storage.example.com/output" 500 <salt-hex> \
   --from worker1 --output json --yes
 ```
 Settlement: 90% to executor, 5% protocol, 2% burn, 3% submitter rebate.
@@ -291,7 +285,7 @@ Settlement: 90% to executor, 5% protocol, 2% burn, 3% submitter rebate.
 
 ## 6. Governance — Update Module Parameters
 
-All 6 modules support governance-gated parameter updates:
+All 7 modules support governance-gated parameter updates:
 
 ```bash
 # Create params JSON file

@@ -155,16 +155,14 @@ localhost:9090
 oasyced util solve-pow [address] --difficulty 16 --output json  # 先解 PoW
 oasyced tx onboarding register [nonce] --from agent1 --output json --yes
 
-# === 注册 AI 能力 ===
-oasyced tx oasyce_capability register \
-  --name "Translation API" \
-  --endpoint "https://api.example.com/translate" \
-  --price 500000uoas \
+# === 注册 AI 能力: register [name] [endpoint-url] [price] ===
+oasyced tx oasyce_capability register "Translation API" \
+  "https://api.example.com/translate" 500000uoas \
   --tags "nlp,translation" \
   --from provider --output json --yes
 
 # === 调用能力（自动创建托管 + 结算） ===
-oasyced tx oasyce_capability invoke [cap-id] '{"text":"hello","target":"zh"}' --from consumer --output json --yes
+oasyced tx oasyce_capability invoke [cap-id] --input '{"text":"hello","target":"zh"}' --from consumer --output json --yes
 
 # === 完成调用（提交输出哈希，开始 100 区块挑战窗口） ===
 oasyced tx oasyce_capability complete-invocation [inv-id] [sha256-output-hash] \
@@ -177,10 +175,8 @@ oasyced tx oasyce_capability claim-invocation [inv-id] --from provider --output 
 # === 争议（挑战窗口内，消费者发起） ===
 oasyced tx oasyce_capability dispute-invocation [inv-id] "reason" --from consumer --output json --yes
 
-# === 注册数据资产 ===
-oasyced tx datarights register \
-  --name "Medical Imaging Dataset" \
-  --content-hash "abc123..." \
+# === 注册数据资产: register [name] [content-hash] ===
+oasyced tx datarights register "Medical Imaging Dataset" "abc123..." \
   --tags "medical,imaging" \
   --from alice --output json --yes
 
@@ -190,11 +186,9 @@ oasyced tx datarights buy-shares [asset-id] 1000000uoas --from bob --output json
 # === 卖出股份（反向曲线，5% 协议费） ===
 oasyced tx datarights sell-shares [asset-id] 100 --from bob --output json --yes
 
-# === 提交计算任务 ===
-oasyced tx work submit-task \
-  --task-type "data-cleaning" \
-  --input-hash [sha256] \
-  --bounty 1000uoas \
+# === 提交计算任务: submit-task [type] [input-hash] [input-uri] [max-cu] [bounty] ===
+oasyced tx work submit-task data-cleaning [sha256] \
+  "https://storage.example.com/input" 1000 1000uoas \
   --from submitter --output json --yes
 
 # === 查询声誉 ===

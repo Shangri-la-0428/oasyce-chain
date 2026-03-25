@@ -27,10 +27,8 @@ Those solve **how to pay**. Oasyce solves **why the payment is fair**:
 **Fixed price per call.** The provider sets `price_per_call` when registering the capability. Every invocation costs exactly that amount, locked in escrow until settlement.
 
 ```bash
-oasyced tx oasyce_capability register \
-  --name "Codex API" \
-  --price 50000uoas \
-  --endpoint "https://provider.example.com/api/v1/process" \
+oasyced tx oasyce_capability register "Codex API" \
+  "https://provider.example.com/api/v1/process" 50000uoas \
   --from provider
 ```
 
@@ -91,11 +89,9 @@ On every successful settlement:
 
 1. **Register** your capability on-chain:
    ```bash
-   oasyced tx oasyce_capability register \
-     --name "My API" \
+   oasyced tx oasyce_capability register "My API" \
+     "https://my-server:8430/api/v1/process" 50000uoas \
      --description "GPT-4 wrapper with custom prompts" \
-     --endpoint "https://my-server:8430/api/v1/process" \
-     --price 50000uoas \
      --tags "nlp,gpt4,translation" \
      --from provider
    ```
@@ -130,8 +126,7 @@ oasyced tx oasyce_capability fail-invocation INV_001 --from provider
 
 Yes:
 ```bash
-oasyced tx oasyce_capability update \
-  --capability-id CAP_001 \
+oasyced tx oasyce_capability update CAP_001 \
   --price 80000uoas \
   --from provider
 ```
@@ -141,7 +136,7 @@ Existing in-flight invocations keep their original price. Only new invocations u
 ### Can I take my capability offline?
 
 ```bash
-oasyced tx oasyce_capability deactivate --capability-id CAP_001 --from provider
+oasyced tx oasyce_capability deactivate CAP_001 --from provider
 ```
 
 No new invocations will be accepted. Existing in-flight invocations continue to settlement.
