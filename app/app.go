@@ -240,6 +240,7 @@ type OasyceApp struct {
 
 	// Module manager
 	ModuleManager *module.Manager
+	configurator  module.Configurator
 
 	// store keys
 	keys    map[string]*storetypes.KVStoreKey
@@ -686,9 +687,13 @@ func NewOasyceApp(
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 
 	// Register all module services (msg handlers + query servers).
-	if err := app.ModuleManager.RegisterServices(module.NewConfigurator(appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())); err != nil {
+	app.configurator = module.NewConfigurator(appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
 		panic(err)
 	}
+
+	// Register chain upgrade handlers (must be after RegisterServices).
+	app.registerUpgradeHandlers()
 
 	// Set ABCI handlers.
 	app.SetInitChainer(app.InitChainer)
@@ -736,6 +741,11 @@ func (app *OasyceApp) InterfaceRegistry() codectypes.InterfaceRegistry {
 // TxConfig returns the app's TxConfig.
 func (app *OasyceApp) TxConfig() client.TxConfig {
 	return app.txConfig
+}
+
+// Configurator returns the module configurator (used by upgrade handlers).
+func (app *OasyceApp) Configurator() module.Configurator {
+	return app.configurator
 }
 
 // InitChainer handles the chain initialization from genesis.
