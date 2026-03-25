@@ -4,7 +4,7 @@
 
 ## Overview
 
-Oasyce Chain is built on Cosmos SDK v0.50.10 + CometBFT consensus with 4 custom modules that together form a marketplace for AI capabilities and data rights.
+Oasyce Chain is built on Cosmos SDK v0.50.10 + CometBFT consensus with 7 custom modules that together form a marketplace for AI capabilities and data rights.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -17,15 +17,20 @@ Oasyce Chain is built on Cosmos SDK v0.50.10 + CometBFT consensus with 4 custom 
 │                                                       │
 │  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐ │
 │  │ x/datarights│  │x/capability │  │ x/reputation │ │
-│  │             │  │             │  │              │ │
 │  │ Assets      │  │ Endpoints   │  │ Feedback     │ │
 │  │ Shares      │  │ Invocations │  │ Scores       │ │
-│  │ Disputes    │  │             │  │ Reports      │ │
-│  │ Jury        │  │             │  │              │ │
-│  │ Access Gate │  │             │  │              │ │
+│  │ Disputes    │  │ Challenge   │  │ Reports      │ │
+│  │ Jury/Access │  │ Window      │  │ Cooldown     │ │
 │  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘ │
 │         │                │                │          │
-│  ┌──────▼────────────────▼────────────────▼───────┐  │
+│  ┌──────┴──┐  ┌─────────┴─────┐  ┌───────┴────────┐ │
+│  │ x/work  │  │x/onboarding   │  │ x/halving      │ │
+│  │ PoUW    │  │PoW Self-Reg   │  │Block Rewards   │ │
+│  │ Commit- │  │Airdrop Halving│  │4→2→1→0.5 OAS   │ │
+│  │ Reveal  │  │Anti-Sybil     │  │Deflationary    │ │
+│  └────┬────┘  └───────┬───────┘  └───────┬────────┘ │
+│       │               │                  │           │
+│  ┌────▼───────────────▼──────────────────▼────────┐  │
 │  │              x/settlement                       │  │
 │  │  Escrow Lifecycle  │  Bancor Bonding Curve      │  │
 │  │  2% Burn           │  Protocol Fees             │  │
@@ -43,12 +48,16 @@ Oasyce Chain is built on Cosmos SDK v0.50.10 + CometBFT consensus with 4 custom 
 ## Module Dependency Graph
 
 ```
-x/capability ──→ x/settlement (escrow for invocations)
-x/capability ──→ bank (stake validation)
-x/datarights ──→ x/settlement (bonding curve pricing)
-x/datarights ──→ bank (share payments, sell payouts)
-x/reputation ──→ x/capability (link feedback to invocations)
-x/settlement ──→ bank (escrow transfers, burns, fees)
+x/capability  ──→ x/settlement (escrow for invocations)
+x/capability  ──→ bank (stake validation)
+x/datarights  ──→ x/settlement (bonding curve pricing)
+x/datarights  ──→ bank (share payments, sell payouts)
+x/reputation  ──→ x/capability (link feedback to invocations)
+x/settlement  ──→ bank (escrow transfers, burns, fees)
+x/work        ──→ x/settlement (task bounty escrow)
+x/work        ──→ x/reputation (executor reputation for assignment)
+x/onboarding  ──→ bank (mint airdrop, burn repayment)
+x/halving     ──→ bank (mint block rewards → fee_collector)
 ```
 
 ## Module Details
@@ -106,6 +115,43 @@ Time-decayed reputation scoring based on invocation feedback.
 
 Key files:
 - `keeper/keeper.go` — SubmitFeedback, UpdateScore, ReportMisbehavior, GetReputation
+
+### x/work — Proof of Useful Work
+
+Verifiable off-chain computation with commit-reveal scheme.
+
+- **Task lifecycle**: Submit → Assign → Commit → Reveal → Settle/Expire/Dispute
+- **Commit-reveal**: `sha256(output_hash + salt + executor + unavailable)` prevents result copying
+- **Deterministic assignment**: `sha256(taskID + blockHash + addr) / log(1 + reputation)`
+- **BeginBlocker**: expires timed-out tasks and reveal windows
+- **Settlement**: 90% executor, 5% protocol, 2% burn, 3% submitter rebate
+
+Key files:
+- `keeper/task.go` — SubmitTask, AssignTask, CommitResult, RevealResult
+- `keeper/msg_server.go` — all 6 Msg handlers
+- `keeper/begin_blocker.go` — ExpireTimedOutTasks, ExpireRevealWindows
+
+### x/onboarding — PoW Self-Registration
+
+Permissionless identity registration with anti-sybil PoW.
+
+- **PoW**: `sha256(address || nonce)` with N leading zero bits
+- **Airdrop**: minted as repayable debt (20 OAS, halves with registrations)
+- **Halving economics**: difficulty and airdrop scale with total registrations (4 epochs)
+
+Key files:
+- `keeper/keeper.go` — SelfRegister, RepayDebt, HalvingEpoch
+
+### x/halving — Block Reward Halving
+
+Custom block rewards replacing standard Cosmos SDK inflation.
+
+- **Schedule**: 4→2→1→0.5 OAS/block, halving every 10M blocks
+- **BeginBlocker**: mint → halving module → fee_collector → distribution → validators
+- **Standard mint disabled**: inflation = 0%
+
+Key files:
+- `keeper/keeper.go` — BlockReward, BeginBlocker
 
 ## Data Flow Examples
 

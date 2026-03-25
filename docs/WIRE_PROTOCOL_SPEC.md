@@ -78,10 +78,10 @@ are denominated in OAS.
 | Unit  | Relation       | Example                |
 |-------|----------------|------------------------|
 | OAS   | 1 OAS          | Human-readable unit    |
-| uoas  | 10^-8 OAS      | Smallest on-chain unit |
+| uoas  | 10^-6 OAS      | Smallest on-chain unit |
 
 ```
-1 OAS = 100,000,000 uoas (10^8)
+1 OAS = 1,000,000 uoas (10^6)
 ```
 
 **Rule**: All on-chain amounts MUST be represented as unsigned 64-bit integers
@@ -92,9 +92,9 @@ consensus-critical code.
 
 - **No hard supply cap.** Block rewards follow a halving schedule that
   converges asymptotically.
-- **Asymptotic limit**: `halving_interval * base_reward * 2` total OAS.
-  With mainnet parameters (4.0 OAS/block, 1,000,000-block halving interval),
-  this converges toward ~8,000,000 OAS.
+- **Asymptotic limit**: Sum of `halving_interval × reward_per_interval`.
+  With mainnet parameters (4→2→1→0.5 OAS/block, 10,000,000-block intervals),
+  minting converges toward ~75M OAS from block rewards alone.
 - **Deflationary pressure**: Slashing burns and protocol fee burns reduce
   effective circulating supply.
 
@@ -104,7 +104,7 @@ The protocol supports additional asset types registered via `REGISTER_ASSET`:
 
 | Asset             | Decimals | Unit Relation          |
 |-------------------|----------|------------------------|
-| `OAS`             | 8        | 1 OAS = 10^8 units    |
+| `OAS`             | 6        | 1 OAS = 10^6 units    |
 | `USDC`            | 6        | 1 USDC = 10^6 units   |
 | `DATA_CREDIT`     | 0        | 1 DC = 1 unit          |
 | `CAPABILITY_TOKEN`| 0        | 1 CT = 1 unit          |
@@ -1162,10 +1162,10 @@ Vote {
 
 | Parameter           | Value  | Description                             |
 |---------------------|--------|-----------------------------------------|
-| Quorum              | 40%    | 4000 bps of total staked OAS must vote  |
-| Pass threshold      | 66.67% | 6667 bps of voting power must vote YES  |
-| Voting period       | 60,480 blocks | ~7 days at 10s block time         |
-| Minimum deposit     | 1,000 OAS | 100,000,000,000 uoas                |
+| Quorum              | 25%    | 2500 bps of total staked OAS must vote  |
+| Pass threshold      | 66.7%  | 6670 bps of voting power must vote YES  |
+| Voting period       | 7 days | ~120,960 blocks at 5s block time        |
+| Minimum deposit     | 100 OAS | 100,000,000 uoas                       |
 
 ```
 participation = (yes_votes + no_votes + abstain_votes) / snapshot_total_stake
@@ -1203,7 +1203,7 @@ governance parameter registry. The following keys are NOT governable:
 
 | Parameter                     | Value                | Unit    | Governable |
 |-------------------------------|----------------------|---------|-----------|
-| `OAS_DECIMALS`                | 10^8                 | -       | No        |
+| `OAS_DECIMALS`                | 10^6                 | -       | No        |
 | `MIN_STAKE`                   | 10,000 OAS           | uoas    | Yes       |
 | `MAX_COMMISSION_BPS`          | 5000                 | bps     | Yes       |
 | `UNBONDING_PERIOD`            | 28 days              | days    | Yes       |

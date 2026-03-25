@@ -3,8 +3,8 @@ info:
   title: Oasyce Chain REST API
   description: |
     REST API for the Oasyce L1 blockchain, built on Cosmos SDK v0.50.
-    Oasyce is a global AI intelligence and memory free market with four custom modules:
-    datarights, settlement, capability, and reputation.
+    Oasyce is a global AI intelligence and memory free market with seven custom modules:
+    datarights, settlement, capability, reputation, work, onboarding, and halving.
 
     All custom module endpoints are served via gRPC-Gateway.
     Standard Cosmos SDK, IBC, and bank endpoints are also available.
@@ -1027,7 +1027,7 @@ components:
         total_score:
           type: string
           format: uint64
-          description: Cumulative reputation score (scaled by 100 for precision)
+          description: Cumulative reputation score (0-500 range)
         total_feedbacks:
           type: string
           format: uint64

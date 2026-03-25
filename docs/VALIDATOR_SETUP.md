@@ -53,7 +53,7 @@ oasyced start --minimum-gas-prices 0uoas
 ### Option B: Build from Source
 
 ```bash
-# Requires Go 1.22+
+# Requires Go 1.21+
 git clone https://github.com/Shangri-la-0428/oasyce-chain.git && cd oasyce-chain
 CGO_ENABLED=0 make build
 # Then follow steps 2-6 above, replacing oasyced with ./build/oasyced
@@ -136,7 +136,7 @@ Unique to Oasyce — validators earn a cut of all economic activity on the chain
 
 ## Prerequisites
 
-- Go 1.22+
+- Go 1.21+
 - 4 CPU cores, 8 GB RAM, 100 GB SSD (minimum)
 - Stable network with open ports 26656 (P2P) and 26657 (RPC)
 

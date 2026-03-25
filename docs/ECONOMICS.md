@@ -116,7 +116,7 @@ This prevents new accounts from buying 10% and immediately accessing full data.
 
 ### Filing
 
-- **Deposit**: configurable (default 1000 OAS for testnet)
+- **Deposit**: configurable (default 10 OAS)
 - Deposit locked in module account during dispute
 
 ### Resolution
@@ -161,7 +161,7 @@ Every capability settlement burns 2% of the payment. As network usage grows:
 Annual burn = Total settlement volume × 2%
 ```
 
-There is no minting mechanism for OAS beyond initial genesis allocation, making the token supply strictly decreasing over time.
+OAS is minted via two mechanisms: **block rewards** (x/halving module, 4→2→1→0.5 OAS/block halving schedule) and **onboarding airdrops** (20→10→5→2.5 OAS, halving with registrations). Combined with the 2% burn on every settlement, the supply curve peaks and then contracts as burn volume exceeds minting.
 
 ## Summary
 

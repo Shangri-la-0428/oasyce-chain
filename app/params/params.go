@@ -2,7 +2,7 @@ package params
 
 const (
 	// BondDenom is the staking token denomination.
-	// 1 OAS = 10^8 uoas (micro-OAS).
+	// 1 OAS = 10^6 uoas (micro-OAS).
 	BondDenom = "uoas"
 
 	// AccountAddressPrefix is the Bech32 prefix for account addresses.
@@ -15,7 +15,7 @@ const (
 	DisplayDenom = "OAS"
 
 	// OASExponent is the exponent for converting uoas to OAS.
-	OASExponent = 8
+	OASExponent = 6
 )
 
 // Bech32 prefixes derived from the account address prefix.

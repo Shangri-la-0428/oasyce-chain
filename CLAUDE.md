@@ -52,7 +52,7 @@ Five economic/governance upgrades implemented and tested:
    - Files: `x/datarights/keeper/jury.go`
 
 ### End-to-End Verification — COMPLETE ✅
-All 4 modules verified with real transactions:
+All 7 modules verified with real transactions:
 - **datarights**: register asset, buy shares (Bancor curve), sell shares, access gating, jury voting
 - **settlement**: create escrow (LOCKED), release escrow (RELEASED, 5% fee + 2% burn)
 - **capability**: register capability, invoke (creates escrow + invocation), complete + challenge window + claim/dispute
@@ -61,8 +61,8 @@ All 4 modules verified with real transactions:
 - E2E test script: `scripts/e2e_test.sh`
 
 ### Known Genesis Param Issues
-- `oasyce_capability.min_provider_stake`: defaults to 10B uoas (10000 OAS) — set to 0 for testnet
-- `datarights.dispute_deposit`: 1B uoas (1000 OAS) — high for testing
+- `oasyce_capability.min_provider_stake`: defaults to 10,000,000,000 uoas (10,000 OAS) — set to 0 for testnet
+- `datarights.dispute_deposit`: 10,000,000 uoas (10 OAS)
 - Patch genesis.json after `init` before starting chain
 
 ### x/work Module (Proof of Useful Work) — COMPLETE ✅

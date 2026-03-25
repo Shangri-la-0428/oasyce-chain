@@ -102,7 +102,7 @@ bash scripts/start_testnet.sh
 ### 运行测试
 
 ```bash
-make test   # 55+ tests across 8 suites (including tx codec integration tests)
+make test   # 130+ tests across 10 suites
 ```
 
 ---

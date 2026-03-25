@@ -258,10 +258,10 @@ The escrow has a timeout (configurable, default from settlement params). After t
 Yes. After settlement, consumers can submit feedback:
 
 ```bash
-oasyced tx reputation submit-feedback INV_001 80 "fast and accurate"
+oasyced tx reputation submit-feedback INV_001 400 "fast and accurate"
 ```
 
-Score (0-100) feeds into the provider's on-chain reputation, which affects:
+Score (0-500) feeds into the provider's on-chain reputation, which affects:
 - Future visibility in capability search
 - Access level caps in datarights
 - Jury selection eligibility
