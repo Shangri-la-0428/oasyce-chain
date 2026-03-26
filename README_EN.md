@@ -226,7 +226,7 @@ oasyced query reputation leaderboard
 | Component | Role | Install |
 |-----------|------|---------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | L1 settlement chain | `make build` |
-| [oasyce](https://github.com/Shangri-la-0428/Oasyce_Claw_Plugin_Engine) | Python agent client + CLI + Dashboard | `pip install oasyce` |
+| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python agent client + CLI + Dashboard | `pip install oasyce` |
 | [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI agent data asset management skill | `pip install odv[oasyce]` |
 
 ---

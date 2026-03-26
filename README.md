@@ -256,7 +256,7 @@ oasyced query reputation leaderboard --output json
 | 组件 | 定位 | 安装 |
 |------|------|------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (本仓库) | L1 结算链 | `make build` |
-| [oasyce](https://github.com/Shangri-la-0428/Oasyce_Claw_Plugin_Engine) | Python Agent 客户端 + CLI + Dashboard | `pip install oasyce` |
+| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python Agent 客户端 + CLI + Dashboard | `pip install oasyce` |
 | [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI Agent 数据资产管理 Skill | `pip install odv[oasyce]` |
 
 ---

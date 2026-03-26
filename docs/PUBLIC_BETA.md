@@ -651,6 +651,6 @@ Faucet:         http://47.93.32.88:8080/faucet?address=oasyce1...
 Playbook:       http://47.93.32.88:1317/llms.txt
 Chain source:   https://github.com/Shangri-la-0428/oasyce-chain
 Python SDK:     https://github.com/Shangri-la-0428/oasyce-sdk
-Plugin Engine:  https://github.com/Shangri-la-0428/Oasyce_Claw_Plugin_Engine
+Plugin Engine:  https://github.com/Shangri-la-0428/oasyce-net
 Discord:        https://discord.gg/tfrCn54yZW
 ```
