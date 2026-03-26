@@ -157,21 +157,21 @@ footer p { font-size: var(--text-caption); color: var(--text-tertiary); }
 /* ── Stagger children (modules, stats) ── */
 .stagger > * {
   opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .stagger.visible > * { opacity: 1; transform: translateY(0); }
 .stagger.visible > *:nth-child(1) { transition-delay: 0s; }
-.stagger.visible > *:nth-child(2) { transition-delay: 0.06s; }
-.stagger.visible > *:nth-child(3) { transition-delay: 0.12s; }
-.stagger.visible > *:nth-child(4) { transition-delay: 0.18s; }
-.stagger.visible > *:nth-child(5) { transition-delay: 0.24s; }
-.stagger.visible > *:nth-child(6) { transition-delay: 0.30s; }
-.stagger.visible > *:nth-child(7) { transition-delay: 0.36s; }
+.stagger.visible > *:nth-child(2) { transition-delay: 0.08s; }
+.stagger.visible > *:nth-child(3) { transition-delay: 0.16s; }
+.stagger.visible > *:nth-child(4) { transition-delay: 0.24s; }
+.stagger.visible > *:nth-child(5) { transition-delay: 0.32s; }
+.stagger.visible > *:nth-child(6) { transition-delay: 0.40s; }
+.stagger.visible > *:nth-child(7) { transition-delay: 0.48s; }
 
 /* ── Module hover ── */
-.module { transition: border-color 0.15s, transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s; }
-.module:hover { border-color: var(--text-tertiary); transform: translateY(-2px); box-shadow: inset 3px 0 0 var(--text); }
+.module { transition: border-color 0.25s ease, transform 0.25s ease; }
+.module:hover { border-color: var(--text-tertiary); transform: translateY(-2px); }
 
 /* ── Live pulse ── */
 .live-dot {
@@ -221,6 +221,19 @@ pre { position: relative; }
 /* ── Comparison row hover ── */
 .comparison tbody tr { transition: background 0.12s; }
 .comparison tbody tr:hover { background: var(--accent-subtle); }
+
+/* ── Comparison row-by-row reveal ── */
+.comparison tbody tr.cmp-hidden { opacity: 0; transform: translateY(8px); }
+.comparison tbody tr.cmp-show {
+  opacity: 1; transform: translateY(0);
+  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.comparison tbody tr.cmp-show .old { transition: opacity 0.3s 0.1s; }
+.comparison tbody tr.cmp-show .new { opacity: 0; animation: cell-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards; }
+@keyframes cell-in { to { opacity: 1; } }
+
+/* ── Live block number transition ── */
+#live-block-height { transition: opacity 0.2s; }
 
 /* ── Button press ── */
 .btn:active { transform: translateY(1px); }
@@ -283,6 +296,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
   .module, .btn, .comparison tbody tr, .halving tbody tr, .nav-logo {
     transition: none !important;
   }
+  .comparison tbody tr.cmp-hidden { opacity: 1 !important; transform: none !important; }
+  .comparison tbody tr.cmp-show .new { opacity: 1 !important; animation: none !important; }
   .live-dot::after { animation: none !important; }
   .stat-done { animation: none !important; }
   nav { transition: none !important; }
@@ -398,7 +413,7 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
   <canvas id="net" aria-hidden="true"></canvas>
   <div class="container">
     <h1 data-i18n="hero-title">Property, contracts, and arbitration for the agent economy.</h1>
-    <p class="lead" data-i18n="hero-desc">
+    <p class="lead" data-i18n-html="hero-desc">
       When AI agents trade data, capabilities, and compute, the hard problem isn't payments &mdash; it's property rights, fair pricing, and what happens when someone cheats. Oasyce is the commerce layer that handles the rest.
     </p>
     <div class="hero-actions">
@@ -415,38 +430,38 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
     <p data-i18n="why-desc">Simple payment rails solve "how to transfer money." Oasyce solves "why the transfer is justified" &mdash; property, pricing, trust, and recourse.</p>
     <table class="comparison">
       <thead>
-        <tr><th>Problem</th><th>Payment Rails (Stripe, x402, Tempo)</th><th>Oasyce</th></tr>
+        <tr><th data-i18n="cmp-h-problem">Problem</th><th data-i18n="cmp-h-rails">Payment Rails (Stripe, x402, Tempo)</th><th>Oasyce</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td>Data ownership</td>
-          <td class="old">Not addressed</td>
-          <td class="new">Tokenized assets, bonding curve pricing, fractional shares</td>
+          <td data-i18n="cmp-data">Data ownership</td>
+          <td class="old" data-i18n="cmp-data-old">Not addressed</td>
+          <td class="new" data-i18n="cmp-data-new">Tokenized assets, bonding curve pricing, fractional shares</td>
         </tr>
         <tr>
-          <td>Fair pricing</td>
-          <td class="old">Fixed price or off-chain negotiation</td>
-          <td class="new">Bancor continuous curve &mdash; price rises with demand</td>
+          <td data-i18n="cmp-price">Fair pricing</td>
+          <td class="old" data-i18n="cmp-price-old">Fixed price or off-chain negotiation</td>
+          <td class="new" data-i18n="cmp-price-new">Bancor continuous curve &mdash; price rises with demand</td>
         </tr>
         <tr>
-          <td>Service delivery</td>
-          <td class="old">Pay and hope</td>
-          <td class="new">Escrow with challenge window + dispute mechanism</td>
+          <td data-i18n="cmp-delivery">Service delivery</td>
+          <td class="old" data-i18n="cmp-delivery-old">Pay and hope</td>
+          <td class="new" data-i18n="cmp-delivery-new">Escrow with challenge window + dispute mechanism</td>
         </tr>
         <tr>
-          <td>Trust</td>
-          <td class="old">Platform reputation / none</td>
-          <td class="new">On-chain credit scores, time-decaying, verifiable</td>
+          <td data-i18n="cmp-trust">Trust</td>
+          <td class="old" data-i18n="cmp-trust-old">Platform reputation / none</td>
+          <td class="new" data-i18n="cmp-trust-new">On-chain credit scores, time-decaying, verifiable</td>
         </tr>
         <tr>
-          <td>Disputes</td>
-          <td class="old">Chargebacks or nothing</td>
-          <td class="new">On-chain jury voting, deterministic outcome</td>
+          <td data-i18n="cmp-dispute">Disputes</td>
+          <td class="old" data-i18n="cmp-dispute-old">Chargebacks or nothing</td>
+          <td class="new" data-i18n="cmp-dispute-new">On-chain jury voting, deterministic outcome</td>
         </tr>
         <tr>
-          <td>Access control</td>
-          <td class="old">API keys</td>
-          <td class="new">Equity-gated tiers &mdash; stake determines access level</td>
+          <td data-i18n="cmp-access">Access control</td>
+          <td class="old" data-i18n="cmp-access-old">API keys</td>
+          <td class="new" data-i18n="cmp-access-new">Equity-gated tiers &mdash; stake determines access level</td>
         </tr>
       </tbody>
     </table>
@@ -477,6 +492,10 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
       <div class="stat">
         <div class="number" data-static>~5s</div>
         <div class="label" data-i18n="stat-block">Block time</div>
+      </div>
+      <div class="stat" id="live-block-stat" style="display:none;">
+        <div class="number" id="live-block-height" style="font-variant-numeric:tabular-nums;">—</div>
+        <div class="label"><span class="live-dot"></span><span data-i18n="stat-height">Latest block</span></div>
       </div>
     </div>
 
@@ -570,13 +589,34 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
     <p style="margin-bottom: var(--space-lg);" data-i18n-html="dev-desc">REST API, gRPC, and CLI with JSON output. Every endpoint is machine-readable. <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> for LLM-native documentation.</p>
 
     <div class="code-header" role="tablist" aria-label="Code examples">
-      <button class="code-tab active" role="tab" aria-selected="true" aria-controls="code-python" data-code="python">Python</button>
+      <button class="code-tab active" role="tab" aria-selected="true" aria-controls="code-mcp" data-code="mcp">MCP</button>
+      <button class="code-tab" role="tab" aria-selected="false" aria-controls="code-python" data-code="python">Python</button>
       <button class="code-tab" role="tab" aria-selected="false" aria-controls="code-cli" data-code="cli">CLI</button>
     </div>
-    <div id="code-python" role="tabpanel" class="code-panel">
+    <div id="code-mcp" role="tabpanel" class="code-panel">
+<pre><code># Install
+pip install oasyce-sdk[mcp]
+
+# Claude Desktop / Cursor / Windsurf config:
+{
+  "mcpServers": {
+    "oasyce": {
+      "command": "oasyce-mcp",
+      "env": {
+        "OASYCE_NODE": "http://47.93.32.88:1317"
+      }
+    }
+  }
+}
+
+# 11 tools: marketplace, reputation, faucet,
+# balance, agent profile, capabilities, and more.
+# No API key. Free testnet tokens.</code></pre>
+    </div>
+    <div id="code-python" role="tabpanel" class="code-panel" hidden>
 <pre><code>import requests
 
-BASE = "http://localhost:1317"
+BASE = "http://47.93.32.88:1317"
 
 # List AI capabilities
 caps = requests.get(
@@ -626,7 +666,7 @@ oasyced query settlement escrow \
         <tr><td>RPC</td><td><code>47.93.32.88:26657</code></td></tr>
         <tr><td>REST API</td><td><code>47.93.32.88:1317</code></td></tr>
         <tr><td>Faucet</td><td><code>47.93.32.88:8080/faucet?address=...</code></td></tr>
-        <tr><td>Binary</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0">v0.5.0 Release</a></td></tr>
+        <tr><td>Binary</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.1">v0.5.1 Release</a></td></tr>
       </tbody>
     </table>
     <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-md); flex-wrap: wrap;">
@@ -833,7 +873,7 @@ bash scripts/start_testnet.sh
     }, { passive: true });
   }
 
-  /* ── A: Breathing dot matrix ── */
+  /* ── A: Agent network canvas ── */
   var canvas = document.getElementById('net');
   var hero = canvas && canvas.closest('.hero');
   if (canvas && hero && !prefersReduced) {
@@ -841,10 +881,11 @@ bash scripts/start_testnet.sh
       var ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      var dots = [], pulses = [];
+      var dots = [], pulses = [], txns = [];
       var cursor = null, visible = true;
       window._isDark = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
       var SPACE = 44;
+      var CONNECT_RANGE, CURSOR_MESH_RANGE;
 
       function init() {
         var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -853,12 +894,29 @@ bash scripts/start_testnet.sh
         canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
         dots = [];
         var sp = SPACE * dpr;
+        CONNECT_RANGE = sp * 1.6;
+        CURSOR_MESH_RANGE = 100 * dpr;
         var cols = Math.ceil(canvas.width / sp), rows = Math.ceil(canvas.height / sp);
         var ox = (canvas.width - (cols - 1) * sp) / 2;
         var oy = (canvas.height - (rows - 1) * sp) / 2;
         for (var r = 0; r < rows; r++)
           for (var c = 0; c < cols; c++)
-            dots.push({ x: ox + c * sp, y: oy + r * sp });
+            dots.push({ x: ox + c * sp, y: oy + r * sp, col: c, row: r });
+      }
+
+      /* spawn a transaction particle between two random nearby dots */
+      function spawnTxn() {
+        if (dots.length < 2) return;
+        var a = dots[Math.floor(Math.random() * dots.length)];
+        var best = null, bestD = Infinity;
+        for (var i = 0; i < dots.length; i++) {
+          var b = dots[i];
+          if (b === a) continue;
+          var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx*dx+dy*dy);
+          if (d < CONNECT_RANGE && d < bestD) { bestD = d; best = b; }
+        }
+        if (!best) return;
+        txns.push({ ax: a.x, ay: a.y, bx: best.x, by: best.y, t: 0, speed: 0.008 + Math.random() * 0.006 });
       }
 
       function frame(now) {
@@ -866,10 +924,11 @@ bash scripts/start_testnet.sh
         var w = canvas.width, h = canvas.height;
         var dpr = canvas.width / hero.offsetWidth;
         var dotR = 1.2 * dpr;
+        var dc = window._isDark ? '255,255,255' : '0,0,0';
 
         ctx.clearRect(0, 0, w, h);
 
-        /* diagonal breathing wave (~8s period) */
+        /* diagonal breathing wave */
         var diag = w + h;
         var wavePos = (Math.sin(now * 0.000125) * 0.5 + 0.5) * diag;
         var waveW = diag * 0.18;
@@ -883,37 +942,66 @@ bash scripts/start_testnet.sh
           if (pulses[p].a < 0.005) pulses.splice(p, 1);
         }
 
+        /* cursor mesh: draw lines between dots near cursor */
+        if (cur) {
+          var nearby = [];
+          for (var i = 0; i < dots.length; i++) {
+            var d = dots[i], dx = d.x - cur.x, dy = d.y - cur.y;
+            if (Math.sqrt(dx*dx+dy*dy) < CURSOR_MESH_RANGE) nearby.push(d);
+          }
+          for (var i = 0; i < nearby.length; i++) {
+            for (var j = i + 1; j < nearby.length; j++) {
+              var a = nearby[i], b = nearby[j];
+              var dx = a.x - b.x, dy = a.y - b.y, dist = Math.sqrt(dx*dx+dy*dy);
+              if (dist < CONNECT_RANGE) {
+                var la = 0.04 * (1 - dist / CONNECT_RANGE);
+                ctx.strokeStyle = 'rgba(' + dc + ',' + la + ')';
+                ctx.lineWidth = 0.5 * dpr;
+                ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+              }
+            }
+          }
+        }
+
+        /* update & draw transaction particles */
+        for (var i = txns.length - 1; i >= 0; i--) {
+          var tx = txns[i];
+          tx.t += tx.speed;
+          if (tx.t > 1) { txns.splice(i, 1); continue; }
+          /* draw faint line */
+          ctx.strokeStyle = 'rgba(' + dc + ',0.03)';
+          ctx.lineWidth = 0.5 * dpr;
+          ctx.beginPath(); ctx.moveTo(tx.ax, tx.ay); ctx.lineTo(tx.bx, tx.by); ctx.stroke();
+          /* draw particle */
+          var px = tx.ax + (tx.bx - tx.ax) * tx.t;
+          var py = tx.ay + (tx.by - tx.ay) * tx.t;
+          var pa = 0.3 * Math.sin(tx.t * Math.PI);
+          ctx.fillStyle = 'rgba(' + dc + ',' + pa + ')';
+          ctx.beginPath(); ctx.arc(px, py, 1.5 * dpr, 0, 6.283); ctx.fill();
+        }
+
         /* draw dots */
         for (var i = 0; i < dots.length; i++) {
           var d = dots[i], a = 0.05;
-
-          /* wave */
           var dd = Math.abs((d.x + d.y) - wavePos);
           if (dd < waveW) { var wI = 1 - dd / waveW; a += wI * wI * 0.09; }
-
-          /* cursor proximity */
           if (cur) {
             var dx = d.x - cur.x, dy = d.y - cur.y;
-            var dist = Math.sqrt(dx * dx + dy * dy), range = 80 * dpr;
-            if (dist < range) a += (1 - dist / range) * 0.12;
+            var dist = Math.sqrt(dx*dx+dy*dy);
+            if (dist < CURSOR_MESH_RANGE) a += (1 - dist / CURSOR_MESH_RANGE) * 0.15;
           }
-
-          /* click pulses */
           for (var p = 0; p < pulses.length; p++) {
-            var pl = pulses[p];
-            var dx = d.x - pl.x, dy = d.y - pl.y;
-            var dist = Math.sqrt(dx * dx + dy * dy);
-            var pd = Math.abs(dist - pl.r), pw = 25 * dpr;
+            var pl = pulses[p], dx = d.x - pl.x, dy = d.y - pl.y;
+            var dist = Math.sqrt(dx*dx+dy*dy), pd = Math.abs(dist - pl.r), pw = 25 * dpr;
             if (pd < pw) a += (1 - pd / pw) * pl.a * 0.14;
           }
-
           a = Math.min(a, 0.28);
-          var dc = window._isDark ? '255,255,255' : '0,0,0';
           ctx.fillStyle = 'rgba(' + dc + ',' + a + ')';
-          ctx.beginPath();
-          ctx.arc(d.x, d.y, dotR, 0, 6.283);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(d.x, d.y, dotR, 0, 6.283); ctx.fill();
         }
+
+        /* spawn occasional transactions (~1 every 800ms) */
+        if (Math.random() < 0.002) spawnTxn();
 
         requestAnimationFrame(frame);
       }
@@ -943,15 +1031,83 @@ bash scripts/start_testnet.sh
       requestAnimationFrame(frame);
     })();
   }
+  /* ── D: Live block height ── */
+  (function () {
+    var el = document.getElementById('live-block-height');
+    var stat = document.getElementById('live-block-stat');
+    if (!el || !stat) return;
+    var lastHeight = 0;
+
+    function fetchBlock() {
+      fetch('/api/cosmos/base/tendermint/v1beta1/blocks/latest', { signal: AbortSignal.timeout(5000) })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var h = parseInt((data.block && data.block.header && data.block.header.height) || '0', 10);
+          if (h > 0) {
+            stat.style.display = '';
+            if (h !== lastHeight) {
+              lastHeight = h;
+              el.style.opacity = '0.4';
+              setTimeout(function () {
+                el.textContent = h.toLocaleString();
+                el.style.opacity = '1';
+              }, 100);
+            }
+          }
+        })
+        .catch(function () {});
+    }
+
+    fetchBlock();
+    setInterval(fetchBlock, 6000);
+  })();
+
+  /* ── E: Comparison table row reveal ── */
+  if (!prefersReduced) {
+    var cmpRows = document.querySelectorAll('.comparison tbody tr');
+    cmpRows.forEach(function (tr) { tr.classList.add('cmp-hidden'); });
+    var cmpObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var rows = e.target.querySelectorAll('tr.cmp-hidden');
+        rows.forEach(function (tr, i) {
+          setTimeout(function () { tr.classList.remove('cmp-hidden'); tr.classList.add('cmp-show'); }, i * 120);
+        });
+        cmpObs.unobserve(e.target);
+      });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('.comparison tbody').forEach(function (tb) { cmpObs.observe(tb); });
+  }
+
   /* ── i18n Dictionary ── */
   var i18nDict = {
     zh: {
       'hero-title': '面向 Agent 经济的产权、合约与仲裁',
-      'hero-desc': '当 AI Agent 交易数据、能力和算力时，难点不是支付——而是产权确认、公平定价和违约处理。Oasyce 是处理这一切的商业层。',
+      'hero-desc': '当 AI Agent 交易数据、能力和算力时，难点不是支付——<br>而是产权确认、公平定价和违约处理。Oasyce 是处理这一切的商业层。',
       'hero-cta1': '加入测试网',
       'hero-cta2': '查看源码',
       'why-title': '不止于支付',
       'why-desc': '简单支付通道解决的是"怎么转钱"。Oasyce 解决的是"凭什么转"——产权、定价、信任和追索。',
+      'cmp-h-problem': '问题',
+      'cmp-h-rails': '支付通道 (Stripe, x402, Tempo)',
+      'cmp-data': '数据所有权',
+      'cmp-data-old': '未涉及',
+      'cmp-data-new': '代币化资产，联合曲线定价，分数份额',
+      'cmp-price': '公平定价',
+      'cmp-price-old': '固定价格或链下协商',
+      'cmp-price-new': 'Bancor 连续曲线——价格随需求上升',
+      'cmp-delivery': '服务交付',
+      'cmp-delivery-old': '付款后听天由命',
+      'cmp-delivery-new': '托管 + 挑战窗口 + 争议机制',
+      'cmp-trust': '信任',
+      'cmp-trust-old': '平台信誉 / 无',
+      'cmp-trust-new': '链上信用评分，时间衰减，可验证',
+      'cmp-dispute': '争议',
+      'cmp-dispute-old': '退单或无解',
+      'cmp-dispute-new': '链上陪审团投票，确定性裁决',
+      'cmp-access': '访问控制',
+      'cmp-access-old': 'API 密钥',
+      'cmp-access-new': '权益门控——持仓决定访问层级',
       'stats-title': '协议概览',
       'stat-tx': '交易类型',
       'stat-query': '查询接口',
@@ -972,6 +1128,7 @@ bash scripts/start_testnet.sh
       'mod-halv-name': '区块奖励减半',
       'mod-halv-desc': '比特币式固定奖励取代通胀铸币。4 → 2 → 1 → 0.5 OAS/块。结合 2% 销毁，供应量先升后降。',
       'stat-tests': '自动化测试',
+      'stat-height': '最新区块',
       'onb-halving-label': '注册减半',
       'onb-halving-desc': '空投额度和 PoW 难度随注册总数递增，早期参与者获得更多奖励。',
       'onb-col-epoch': '纪元',
