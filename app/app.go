@@ -173,6 +173,7 @@ var (
 		worktypes.ModuleName:           {authtypes.Burner},
 		onboardingtypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 		halvingtypes.ModuleName:        {authtypes.Minter},
+		capabilitytypes.ModuleName:     nil, // holds provider stakes
 	}
 )
 

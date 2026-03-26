@@ -65,8 +65,16 @@ All 7 modules verified with real transactions:
 - **bank**: cross-account transfers work
 - E2E test script: `scripts/e2e_test.sh`
 
+### Provider Stake & Endpoint Liveness — COMPLETE ✅
+- **Real stake locking**: `min_provider_stake` now actually locks funds in module account (was: balance-check only)
+- **Stake return on deactivate**: `DeactivateCapability` returns locked stake to provider
+- **CLI liveness check**: `register` and `update --endpoint` ping the endpoint before broadcasting tx
+- **Bypass flag**: `--skip-liveness-check` for testing/special cases
+- Module account registered in `maccPerms` for holding provider stakes
+- Stake stored per capability at `ProviderStakePrefix + capID`
+
 ### Known Genesis Param Issues
-- `oasyce_capability.min_provider_stake`: defaults to 10,000,000,000 uoas (10,000 OAS) — set to 0 for testnet
+- `oasyce_capability.min_provider_stake`: defaults to 0 uoas — set to 5,000,000 (5 OAS) for testnet
 - `datarights.dispute_deposit`: 10,000,000 uoas (10 OAS)
 - Patch genesis.json after `init` before starting chain
 

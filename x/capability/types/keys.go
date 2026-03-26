@@ -20,6 +20,7 @@ var (
 	CapByProviderPrefix  = []byte{0x04}
 	InvocationCounterKey = []byte{0x05}
 	CapabilityCounterKey = []byte{0x06}
+	ProviderStakePrefix  = []byte{0x07} // capID → staked Coin
 )
 
 // CapabilityKey returns the store key for a capability by ID.
@@ -40,4 +41,9 @@ func CapByProviderKey(provider string) []byte {
 // CapByProviderCapKey returns the store key for a specific capability under a provider index.
 func CapByProviderCapKey(provider, capID string) []byte {
 	return append(CapByProviderKey(provider), []byte(capID)...)
+}
+
+// ProviderStakeKey returns the store key for a capability's locked stake.
+func ProviderStakeKey(capID string) []byte {
+	return append(ProviderStakePrefix, []byte(capID)...)
 }

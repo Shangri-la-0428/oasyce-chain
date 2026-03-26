@@ -2,8 +2,11 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -37,6 +40,22 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
+// checkEndpointLiveness performs an HTTP HEAD/GET to verify the endpoint is reachable.
+// Returns nil if the endpoint responds with any status code (even 4xx/5xx means the server is alive).
+func checkEndpointLiveness(endpointURL string) error {
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Head(endpointURL)
+	if err != nil {
+		// HEAD might not be supported, try GET
+		resp, err = client.Get(endpointURL)
+		if err != nil {
+			return fmt.Errorf("endpoint %s is unreachable: %w", endpointURL, err)
+		}
+	}
+	resp.Body.Close()
+	return nil
+}
+
 func CmdRegisterCapability() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register [name] [endpoint-url] [price]",
@@ -46,6 +65,18 @@ func CmdRegisterCapability() *cobra.Command {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
+			}
+
+			endpointURL := args[1]
+
+			// Endpoint liveness check (skip with --skip-liveness-check).
+			skipLiveness, _ := cmd.Flags().GetBool("skip-liveness-check")
+			if !skipLiveness {
+				fmt.Fprintf(cmd.ErrOrStderr(), "Checking endpoint liveness: %s ...\n", endpointURL)
+				if err := checkEndpointLiveness(endpointURL); err != nil {
+					return fmt.Errorf("liveness check failed: %w\nUse --skip-liveness-check to bypass", err)
+				}
+				fmt.Fprintf(cmd.ErrOrStderr(), "Endpoint is alive.\n")
 			}
 
 			price, err := sdk.ParseCoinNormalized(args[2])
@@ -65,7 +96,7 @@ func CmdRegisterCapability() *cobra.Command {
 			msg := &types.MsgRegisterCapability{
 				Creator:      clientCtx.GetFromAddress().String(),
 				Name:         args[0],
-				EndpointUrl:  args[1],
+				EndpointUrl:  endpointURL,
 				PricePerCall: price,
 				Description:  description,
 				Tags:         tags,
@@ -79,6 +110,7 @@ func CmdRegisterCapability() *cobra.Command {
 	cmd.Flags().String("description", "", "Capability description")
 	cmd.Flags().String("tags", "", "Comma-separated tags")
 	cmd.Flags().Uint64("rate-limit", 100, "Max calls per block")
+	cmd.Flags().Bool("skip-liveness-check", false, "Skip endpoint liveness verification")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -125,6 +157,19 @@ func CmdUpdateCapability() *cobra.Command {
 			description, _ := cmd.Flags().GetString("description")
 			priceStr, _ := cmd.Flags().GetString("price")
 			tagsStr, _ := cmd.Flags().GetString("tags")
+			endpointURL, _ := cmd.Flags().GetString("endpoint")
+
+			// Liveness check if endpoint is being updated.
+			if endpointURL != "" {
+				skipLiveness, _ := cmd.Flags().GetBool("skip-liveness-check")
+				if !skipLiveness {
+					fmt.Fprintf(cmd.ErrOrStderr(), "Checking endpoint liveness: %s ...\n", endpointURL)
+					if err := checkEndpointLiveness(endpointURL); err != nil {
+						return fmt.Errorf("liveness check failed: %w\nUse --skip-liveness-check to bypass", err)
+					}
+					fmt.Fprintf(cmd.ErrOrStderr(), "Endpoint is alive.\n")
+				}
+			}
 
 			var price *sdk.Coin
 			if priceStr != "" {
@@ -141,6 +186,7 @@ func CmdUpdateCapability() *cobra.Command {
 				Creator:      clientCtx.GetFromAddress().String(),
 				CapabilityId: args[0],
 				Description:  description,
+				EndpointUrl:  endpointURL,
 			}
 			if price != nil {
 				msg.PricePerCall = price
@@ -153,6 +199,8 @@ func CmdUpdateCapability() *cobra.Command {
 	cmd.Flags().String("description", "", "New description")
 	cmd.Flags().String("price", "", "New price (e.g. 200000uoas)")
 	cmd.Flags().String("tags", "", "New comma-separated tags")
+	cmd.Flags().String("endpoint", "", "New endpoint URL")
+	cmd.Flags().Bool("skip-liveness-check", false, "Skip endpoint liveness verification")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

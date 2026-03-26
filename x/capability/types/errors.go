@@ -13,4 +13,5 @@ var (
 	ErrInvalidStatus      = errors.Register(ModuleName, 9, "invalid invocation status")
 	ErrChallengeWindow    = errors.Register(ModuleName, 10, "challenge window violation")
 	ErrEmptyOutputHash    = errors.Register(ModuleName, 11, "output hash cannot be empty")
+	ErrEndpointUnreachable = errors.Register(ModuleName, 12, "endpoint unreachable")
 )

@@ -32,6 +32,14 @@ func (m mockBankKeeper) SpendableCoins(_ context.Context, _ sdk.AccAddress) sdk.
 	return sdk.NewCoins(sdk.NewCoin("uoas", math.NewInt(10000000000)))
 }
 
+func (m mockBankKeeper) SendCoinsFromAccountToModule(_ context.Context, _ sdk.AccAddress, _ string, _ sdk.Coins) error {
+	return nil
+}
+
+func (m mockBankKeeper) SendCoinsFromModuleToAccount(_ context.Context, _ string, _ sdk.AccAddress, _ sdk.Coins) error {
+	return nil
+}
+
 type mockSettlementKeeper struct {
 	escrowCounter int
 	released      map[string]bool

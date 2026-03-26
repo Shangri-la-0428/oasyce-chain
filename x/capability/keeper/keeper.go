@@ -176,18 +176,16 @@ func (k Keeper) RegisterCapability(ctx sdk.Context, msg *types.MsgRegisterCapabi
 		return "", types.ErrRateLimitExceeded.Wrapf("requested %d exceeds max %d", msg.RateLimit, params.MaxRateLimit)
 	}
 
-	// Check minimum provider stake if configured.
+	// Lock minimum provider stake if configured.
 	if params.MinProviderStake.IsPositive() {
 		providerAddr, err := sdk.AccAddressFromBech32(msg.Creator)
 		if err != nil {
 			return "", types.ErrInvalidInput.Wrapf("invalid provider address: %s", err)
 		}
-		spendable := k.bankKeeper.SpendableCoins(ctx, providerAddr)
-		if spendable.AmountOf(params.MinProviderStake.Denom).LT(params.MinProviderStake.Amount) {
+		stakeCoins := sdk.NewCoins(params.MinProviderStake)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, providerAddr, types.ModuleName, stakeCoins); err != nil {
 			return "", types.ErrInsufficientStake.Wrapf(
-				"require %s, have %s",
-				params.MinProviderStake,
-				spendable.AmountOf(params.MinProviderStake.Denom),
+				"require %s: %s", params.MinProviderStake, err,
 			)
 		}
 	}
@@ -213,11 +211,17 @@ func (k Keeper) RegisterCapability(ctx sdk.Context, msg *types.MsgRegisterCapabi
 		return "", err
 	}
 
+	// Record staked amount so we can return it on deactivation.
+	if params.MinProviderStake.IsPositive() {
+		k.setProviderStake(ctx, id, params.MinProviderStake)
+	}
+
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"capability_registered",
 		sdk.NewAttribute("capability_id", id),
 		sdk.NewAttribute("provider", msg.Creator),
 		sdk.NewAttribute("name", msg.Name),
+		sdk.NewAttribute("staked", params.MinProviderStake.String()),
 	))
 
 	return id, nil
@@ -551,7 +555,7 @@ func (k Keeper) UpdateCapability(ctx sdk.Context, msg *types.MsgUpdateCapability
 	return nil
 }
 
-// DeactivateCapability marks a capability as inactive. Only the owner can deactivate.
+// DeactivateCapability marks a capability as inactive and returns locked stake.
 func (k Keeper) DeactivateCapability(ctx sdk.Context, msg *types.MsgDeactivateCapability) error {
 	cap, err := k.GetCapability(ctx, msg.CapabilityId)
 	if err != nil {
@@ -566,13 +570,53 @@ func (k Keeper) DeactivateCapability(ctx sdk.Context, msg *types.MsgDeactivateCa
 		return err
 	}
 
+	// Return locked stake to provider.
+	stake, found := k.getProviderStake(ctx, msg.CapabilityId)
+	if found && stake.IsPositive() {
+		providerAddr, err := sdk.AccAddressFromBech32(cap.Provider)
+		if err == nil {
+			_ = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, providerAddr, sdk.NewCoins(stake))
+		}
+		k.deleteProviderStake(ctx, msg.CapabilityId)
+	}
+
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"capability_deactivated",
 		sdk.NewAttribute("capability_id", msg.CapabilityId),
 		sdk.NewAttribute("provider", msg.Creator),
+		sdk.NewAttribute("stake_returned", stake.String()),
 	))
 
 	return nil
+}
+
+// --- Provider stake helpers ---
+
+func (k Keeper) setProviderStake(ctx sdk.Context, capID string, coin sdk.Coin) {
+	store := ctx.KVStore(k.storeKey)
+	bz, err := k.cdc.Marshal(&coin)
+	if err != nil {
+		return
+	}
+	store.Set(types.ProviderStakeKey(capID), bz)
+}
+
+func (k Keeper) getProviderStake(ctx sdk.Context, capID string) (sdk.Coin, bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.ProviderStakeKey(capID))
+	if bz == nil {
+		return sdk.Coin{}, false
+	}
+	var coin sdk.Coin
+	if err := k.cdc.Unmarshal(bz, &coin); err != nil {
+		return sdk.Coin{}, false
+	}
+	return coin, true
+}
+
+func (k Keeper) deleteProviderStake(ctx sdk.Context, capID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.ProviderStakeKey(capID))
 }
 
 // --- Invocation helpers ---
