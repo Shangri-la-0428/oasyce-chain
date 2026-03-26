@@ -1,0 +1,67 @@
+name: Issue Responder
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Build prompt from issue
+        run: |
+          TITLE=$(jq -r '.issue.title' "$GITHUB_EVENT_PATH")
+          BODY=$(jq -r '.issue.body // "(empty)"' "$GITHUB_EVENT_PATH")
+          LABELS=$(jq -r '[.issue.labels[].name] | join(", ") // "none"' "$GITHUB_EVENT_PATH")
+          NUMBER=$(jq -r '.issue.number' "$GITHUB_EVENT_PATH")
+
+          cat > /tmp/prompt.txt << PROMPT_EOF
+          You are the Oasyce Chain issue responder. Analyze this GitHub issue against the codebase.
+
+          Rules:
+          - Be concise and technical. No filler.
+          - If you can identify the root cause, state it with file:line references.
+          - If the issue is a question, answer it directly.
+          - If label is ai-reported, check docs/error_codes.json and verify recovery action.
+          - If you can write a fix (<50 lines), include a diff under a Suggested Fix heading.
+          - If you cannot diagnose, say so and state what info is needed.
+          - Respond in the same language as the issue.
+
+          Issue #${NUMBER}: ${TITLE}
+          Labels: ${LABELS}
+
+          ${BODY}
+          PROMPT_EOF
+
+      - name: Run Claude Code
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p --max-turns 10 "$(cat /tmp/prompt.txt)" > /tmp/response.md
+
+      - name: Post comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            cat /tmp/response.md
+            echo ""
+            echo "---"
+            echo "*Automated diagnosis by Claude Code · maintainer will review shortly*"
+          } > /tmp/comment.md
+
+          gh issue comment "${{ github.event.issue.number }}" --body-file /tmp/comment.md
