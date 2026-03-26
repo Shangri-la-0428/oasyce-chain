@@ -67,11 +67,19 @@ All 7 modules verified with real transactions:
 
 ### Provider Stake & Endpoint Liveness — COMPLETE ✅
 - **Real stake locking**: `min_provider_stake` now actually locks funds in module account (was: balance-check only)
-- **Stake return on deactivate**: `DeactivateCapability` returns locked stake to provider
+- **Stake return on deactivate**: `DeactivateCapability` returns locked stake to provider (errors are propagated, not silently swallowed)
 - **CLI liveness check**: `register` and `update --endpoint` ping the endpoint before broadcasting tx
 - **Bypass flag**: `--skip-liveness-check` for testing/special cases
 - Module account registered in `maccPerms` for holding provider stakes
 - Stake stored per capability at `ProviderStakePrefix + capID`
+
+### Claude AI Proxy (VPS) — DEPLOYED ✅
+- **Script**: `scripts/claude_proxy.py` → deployed to VPS at `/home/oasyce/claude_proxy.py`
+- **Service**: systemd `claude-proxy`, internal port 8090, external via nginx `/proxy/`
+- **Endpoint**: `http://47.93.32.88/proxy/v1/chat` (POST)
+- **Format**: Accepts `{"prompt":"..."}` or `{"messages":[...]}`, forwards as Anthropic Messages API
+- **Response**: `{"text":"...", "model":"...", "usage":{"input_tokens":N,"output_tokens":N}, "raw":{...}}`
+- **On-chain**: `CAP_0000000000000008` "Claude AI (Opus 4.6)", 0.5 OAS/call, provider=validator
 
 ### Known Genesis Param Issues
 - `oasyce_capability.min_provider_stake`: defaults to 0 uoas — set to 5,000,000 (5 OAS) for testnet

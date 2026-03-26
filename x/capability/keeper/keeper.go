@@ -574,8 +574,11 @@ func (k Keeper) DeactivateCapability(ctx sdk.Context, msg *types.MsgDeactivateCa
 	stake, found := k.getProviderStake(ctx, msg.CapabilityId)
 	if found && stake.IsPositive() {
 		providerAddr, err := sdk.AccAddressFromBech32(cap.Provider)
-		if err == nil {
-			_ = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, providerAddr, sdk.NewCoins(stake))
+		if err != nil {
+			return types.ErrInvalidInput.Wrapf("invalid provider address: %s", err)
+		}
+		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, providerAddr, sdk.NewCoins(stake)); err != nil {
+			return types.ErrInsufficientStake.Wrapf("failed to return stake: %s", err)
 		}
 		k.deleteProviderStake(ctx, msg.CapabilityId)
 	}
