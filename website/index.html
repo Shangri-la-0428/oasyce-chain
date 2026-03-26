@@ -41,8 +41,9 @@
   --text-stat: clamp(1.75rem, 1.2rem + 2.75vw, 2.5rem);
 }
 
-html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
 body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.6; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
 a:hover { color: var(--text-secondary); }
@@ -169,8 +170,53 @@ footer p { font-size: var(--text-caption); color: var(--text-tertiary); }
 .stagger.visible > *:nth-child(7) { transition-delay: 0.36s; }
 
 /* ── Module hover ── */
-.module { transition: border-color 0.15s, transform 0.15s cubic-bezier(0.25, 1, 0.5, 1); }
-.module:hover { border-color: var(--text-tertiary); transform: translateY(-2px); }
+.module { transition: border-color 0.15s, transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s; }
+.module:hover { border-color: var(--text-tertiary); transform: translateY(-2px); box-shadow: inset 3px 0 0 var(--text); }
+
+/* ── Live pulse ── */
+.live-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); margin-right: 6px; vertical-align: middle;
+  position: relative;
+}
+.live-dot::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%;
+  border: 1.5px solid var(--green); opacity: 0;
+  animation: pulse-ring 2.4s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  70% { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Copy button on code ── */
+pre { position: relative; }
+.copy-btn {
+  position: absolute; top: 8px; right: 12px; z-index: 2;
+  background: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+  color: rgba(255,255,255,0.4); font-family: var(--mono); font-size: 11px;
+  padding: 2px 8px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+  line-height: 1.6;
+}
+.copy-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.3); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+/* ── Stat finish pulse ── */
+@keyframes stat-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.stat-done { animation: stat-pop 0.35s cubic-bezier(0.25, 1, 0.5, 1); }
+
+/* ── Nav logo ── */
+.nav-logo {
+  font-size: 1.25rem; font-family: var(--mono); letter-spacing: -0.03em;
+  transition: letter-spacing 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s;
+  cursor: default;
+}
+.nav-logo:hover { letter-spacing: 0.06em; }
 
 /* ── Comparison row hover ── */
 .comparison tbody tr { transition: background 0.12s; }
@@ -179,18 +225,15 @@ footer p { font-size: var(--text-caption); color: var(--text-tertiary); }
 /* ── Button press ── */
 .btn:active { transform: translateY(1px); }
 
+/* ── Focus-visible ── */
+.btn:focus-visible, .code-tab:focus-visible, .nav-tool:focus-visible, .copy-btn:focus-visible {
+  outline: 2px solid var(--text); outline-offset: 2px;
+}
+a:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 2px; }
+
 /* ── Nav scroll state ── */
 nav { position: sticky; top: 0; z-index: 100; background: var(--bg); transition: box-shadow 0.3s, background 0.3s; }
 nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,250,0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-
-/* ── Copy feedback ── */
-.copy-flash {
-  animation: flash-green 0.4s ease;
-}
-@keyframes flash-green {
-  0% { color: var(--green); }
-  100% { color: inherit; }
-}
 
 /* ── A: Agent network canvas ── */
 .hero { position: relative; overflow: hidden; }
@@ -237,9 +280,11 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
     animation: none !important;
     transition: none !important;
   }
-  .module, .btn, .comparison tbody tr, .halving tbody tr {
+  .module, .btn, .comparison tbody tr, .halving tbody tr, .nav-logo {
     transition: none !important;
   }
+  .live-dot::after { animation: none !important; }
+  .stat-done { animation: none !important; }
   nav { transition: none !important; }
   #net { display: none; }
   .scroll-progress { display: none; }
@@ -267,6 +312,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 [data-theme='dark'] .btn-primary:hover { box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
 [data-theme='dark'] .btn-secondary { background: var(--bg-card); }
 [data-theme='dark'] nav.scrolled { background: rgba(5,5,5,0.82); }
+[data-theme='dark'] .live-dot { background: #4ade80; }
+[data-theme='dark'] .live-dot::after { border-color: #4ade80; }
 
 /* System preference fallback (no JS or theme=system) */
 @media (prefers-color-scheme: dark) {
@@ -290,6 +337,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
   html:not([data-theme]) .btn-primary:hover { box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
   html:not([data-theme]) .btn-secondary { background: var(--bg-card); }
   html:not([data-theme]) nav.scrolled { background: rgba(5,5,5,0.82); }
+  html:not([data-theme]) .live-dot { background: #4ade80; }
+  html:not([data-theme]) .live-dot::after { border-color: #4ade80; }
 }
 
 /* ── Nav Tools (theme/lang toggles) ── */
@@ -305,12 +354,20 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 .nav-tool:hover { color: var(--text); }
 
 /* ── Responsive ── */
+.nav-links { display: flex; gap: var(--space-lg); font-size: var(--text-body); align-items: center; }
+
+@media (max-width: 768px) {
+  .nav-links > a:not([href="#testnet"]):not([data-i18n="nav-github"]) { display: none; }
+  .nav-links { gap: var(--space-md); }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-lg); }
+}
 @media (max-width: 640px) {
-  .stats { gap: var(--space-lg); }
   section { padding: var(--space-xl) 0; }
   .hero { padding: var(--space-xl) 0 var(--space-lg); }
   pre { padding: 2.5rem var(--space-md) var(--space-md); font-size: var(--text-label); }
   .comparison th, .comparison td { padding: 0.5rem; font-size: var(--text-label); }
+  .halving th, .halving td { padding: 0.375rem 0.5rem; font-size: var(--text-label); }
+  .footer-links { flex-wrap: wrap; gap: var(--space-md); }
 }
 </style>
 </head>
@@ -320,8 +377,8 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <!-- ── Nav ── -->
 <nav style="padding: var(--space-md) 0; border-bottom: 1px solid var(--border);">
   <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-    <strong style="font-size: 1.25rem; font-family: var(--mono); letter-spacing: -0.03em;">Oasyce</strong>
-    <div style="display: flex; gap: var(--space-lg); font-size: var(--text-body); align-items: center;">
+    <strong class="nav-logo">Oasyce</strong>
+    <div class="nav-links">
       <a href="https://github.com/Shangri-la-0428/oasyce-chain" data-i18n="nav-github">GitHub</a>
       <a href="#testnet" data-i18n="nav-testnet">Testnet</a>
       <a href="docs.html" data-i18n="nav-docs">Docs</a>
@@ -414,7 +471,7 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
         <div class="label" data-i18n="stat-modules">Custom modules</div>
       </div>
       <div class="stat">
-        <div class="number" data-count="130">0</div>
+        <div class="number" data-count="130" data-suffix="+">0</div>
         <div class="label" data-i18n="stat-tests">Automated tests</div>
       </div>
       <div class="stat">
@@ -560,7 +617,7 @@ oasyced query settlement escrow \
 <!-- ── Public Testnet ── -->
 <section class="reveal" id="testnet">
   <div class="container">
-    <h2 data-i18n="testnet-title">Public Testnet</h2>
+    <h2 data-i18n="testnet-title"><span class="live-dot" aria-label="Live"></span>Public Testnet</h2>
     <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Join as a validator or start building.</p>
     <table class="comparison" style="max-width: 640px;">
       <tbody>
@@ -572,9 +629,9 @@ oasyced query settlement escrow \
         <tr><td>Binary</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0">v0.5.0 Release</a></td></tr>
       </tbody>
     </table>
-    <div style="margin-top: var(--space-lg);">
+    <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-md); flex-wrap: wrap;">
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" class="btn btn-primary" data-i18n="testnet-validator">Validator Guide</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0" class="btn btn-secondary" style="margin-left: var(--space-sm);" data-i18n="testnet-download">Download Binary</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0" class="btn btn-secondary" data-i18n="testnet-download">Download Binary</a>
     </div>
   </div>
 </section>
@@ -667,18 +724,19 @@ bash scripts/start_testnet.sh
     var cio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) return;
-        var el = e.target, target = parseInt(el.dataset.count, 10), start = performance.now();
+        var el = e.target, target = parseInt(el.dataset.count, 10), suffix = el.dataset.suffix || '', start = performance.now();
         (function tick(now) {
           var t = Math.min((now - start) / 600, 1);
-          el.textContent = Math.round((1 - Math.pow(1 - t, 4)) * target);
+          el.textContent = Math.round((1 - Math.pow(1 - t, 4)) * target) + (t >= 1 ? suffix : '');
           if (t < 1) requestAnimationFrame(tick);
+          else el.classList.add('stat-done');
         })(performance.now());
         cio.unobserve(el);
       });
     }, { threshold: 0.5 });
     counters.forEach(function (el) { cio.observe(el); });
   } else {
-    counters.forEach(function (el) { el.textContent = el.dataset.count; });
+    counters.forEach(function (el) { el.textContent = el.dataset.count + (el.dataset.suffix || ''); });
   }
 
   /* ── C: Typewriter ── */
@@ -721,6 +779,24 @@ bash scripts/start_testnet.sh
       tio.observe(vp);
     }
   }
+
+  /* ── Copy buttons on code blocks ── */
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Copy code to clipboard');
+    pre.appendChild(btn);
+    btn.addEventListener('click', function () {
+      var code = pre.querySelector('code');
+      var text = code ? (code._full || code.textContent) : pre.textContent;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+      });
+    });
+  });
 
   /* ── Code tabs ── */
   document.querySelectorAll('.code-tab').forEach(function (tab) {
@@ -997,6 +1073,18 @@ bash scripts/start_testnet.sh
   // Initial apply
   applyTheme();
   applyLang();
+
+  /* ── Console easter egg ── */
+  console.log(
+    '%cOasyce',
+    'font-size:24px;font-weight:700;font-family:monospace;letter-spacing:-0.04em'
+  );
+  console.log(
+    '%cProperty, contracts, and arbitration for the agent economy.\n' +
+    'Curious? Read our agent playbook: /llms.txt\n' +
+    'Or just: pip install oasyce-sdk',
+    'color:#888;font-family:monospace'
+  );
 })();
 </script>
 

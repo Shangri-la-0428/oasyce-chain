@@ -13,7 +13,7 @@ Built on Cosmos SDK v0.50.10.
 | RPC | `http://47.93.32.88:26657` |
 | REST | `http://47.93.32.88:1317` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
-| Binary | [v0.5.0 Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0) |
+| Binary | [v0.5.1 Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.1) |
 
 ---
 
