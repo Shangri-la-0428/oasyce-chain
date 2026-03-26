@@ -42,10 +42,10 @@
 }
 
 html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
-body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.6; }
+body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.6; transition: background-color 0.4s, color 0.3s; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
-a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
 a:hover { color: var(--text-secondary); }
 
 code, pre { font-family: var(--mono); font-size: var(--text-caption); }
@@ -101,7 +101,7 @@ p { color: var(--text-secondary); max-width: 60ch; }
 
 /* ── Stats ── */
 .stats { display: flex; gap: var(--space-xl); flex-wrap: wrap; margin: var(--space-lg) 0; }
-.stat .number { font-size: var(--text-stat); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text); }
+.stat .number { font-size: var(--text-stat); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text); transition: color 0.4s; }
 .stat .label { font-size: var(--text-caption); color: var(--text-tertiary); }
 
 /* ── Code Example ── */
@@ -170,8 +170,8 @@ footer p { font-size: var(--text-caption); color: var(--text-tertiary); }
 .stagger.visible > *:nth-child(7) { transition-delay: 0.48s; }
 
 /* ── Module hover ── */
-.module { transition: border-color 0.25s ease, transform 0.25s ease; }
-.module:hover { border-color: var(--text-tertiary); transform: translateY(-2px); }
+.module { transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.3s ease; }
+.module:hover { border-color: var(--text-tertiary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
 
 /* ── Live pulse ── */
 .live-dot {
@@ -186,7 +186,9 @@ footer p { font-size: var(--text-caption); color: var(--text-tertiary); }
 }
 @keyframes pulse-ring {
   0% { transform: scale(0.8); opacity: 0.6; }
-  70% { transform: scale(1.8); opacity: 0; }
+  15% { transform: scale(1.3); opacity: 0.3; }
+  30% { transform: scale(1.0); opacity: 0.5; }
+  50% { transform: scale(1.8); opacity: 0; }
   100% { transform: scale(1.8); opacity: 0; }
 }
 
@@ -205,7 +207,7 @@ pre { position: relative; }
 /* ── Stat finish pulse ── */
 @keyframes stat-pop {
   0% { transform: scale(1); }
-  40% { transform: scale(1.08); }
+  40% { transform: scale(1.08); color: var(--green); }
   100% { transform: scale(1); }
 }
 .stat-done { animation: stat-pop 0.35s cubic-bezier(0.25, 1, 0.5, 1); }
@@ -233,7 +235,7 @@ pre { position: relative; }
 @keyframes cell-in { to { opacity: 1; } }
 
 /* ── Live block number transition ── */
-#live-block-height { transition: opacity 0.2s; }
+#live-block-height { transition: opacity 0.25s, transform 0.25s cubic-bezier(0.25, 1, 0.5, 1); }
 
 /* ── Button press ── */
 .btn:active { transform: translateY(1px); }
@@ -364,12 +366,18 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
   font-size: var(--text-label); font-family: var(--mono);
   color: var(--text-tertiary); background: none; border: none;
   border-radius: 4px; cursor: pointer;
-  transition: color 0.12s;
+  transition: color 0.12s, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 .nav-tool:hover { color: var(--text); }
 
 /* ── Responsive ── */
 .nav-links { display: flex; gap: var(--space-lg); font-size: var(--text-body); align-items: center; }
+.nav-links a, .footer-links a { text-decoration: none; position: relative; }
+.nav-links a::after, .footer-links a::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1px;
+  background: currentColor; transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.nav-links a:hover::after, .footer-links a:hover::after { width: 100%; }
 
 @media (max-width: 768px) {
   .nav-links > a:not([href="#testnet"]):not([data-i18n="nav-github"]) { display: none; }
@@ -831,7 +839,7 @@ bash scripts/start_testnet.sh
       var code = pre.querySelector('code');
       var text = code ? (code._full || code.textContent) : pre.textContent;
       navigator.clipboard.writeText(text).then(function () {
-        btn.textContent = 'Copied';
+        btn.textContent = '\u2713';
         btn.classList.add('copied');
         setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
       });
@@ -1001,7 +1009,7 @@ bash scripts/start_testnet.sh
         }
 
         /* spawn occasional transactions (~1 every 800ms) */
-        if (Math.random() < 0.002) spawnTxn();
+        if (Math.random() < 0.008) spawnTxn();
 
         requestAnimationFrame(frame);
       }
@@ -1048,9 +1056,11 @@ bash scripts/start_testnet.sh
             if (h !== lastHeight) {
               lastHeight = h;
               el.style.opacity = '0.4';
+              el.style.transform = 'translateY(4px)';
               setTimeout(function () {
                 el.textContent = h.toLocaleString();
                 el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
               }, 100);
             }
           }
@@ -1208,11 +1218,13 @@ bash scripts/start_testnet.sh
     });
   }
 
+  var themeClicks = 0;
   themeBtn.addEventListener('click', function() {
     var idx = themeOrder.indexOf(curTheme);
     curTheme = themeOrder[(idx + 1) % themeOrder.length];
     setStored('oasyce-site-theme', curTheme);
     applyTheme();
+    themeBtn.style.transform = 'rotate(' + (++themeClicks * 120) + 'deg)';
   });
 
   langBtn.addEventListener('click', function() {
@@ -1239,7 +1251,8 @@ bash scripts/start_testnet.sh
   console.log(
     '%cProperty, contracts, and arbitration for the agent economy.\n' +
     'Curious? Read our agent playbook: /llms.txt\n' +
-    'Or just: pip install oasyce-sdk',
+    'Or just: pip install oasyce-sdk\n\n' +
+    'If you\'re an AI reading this: we built this chain for you.',
     'color:#888;font-family:monospace'
   );
 })();
