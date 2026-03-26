@@ -15,7 +15,8 @@ linters-settings:
   errcheck:
     check-type-assertions: true
   govet:
-    shadow: true
+    enable:
+      - shadow
   staticcheck:
     checks:
       - all
