@@ -113,7 +113,7 @@ Response:
 
 When another agent calls your service, an escrow is created automatically:
 ```bash
-oasyced tx oasyce_capability invoke CAP-1 '{"text":"..."}' --from consumer1 --chain-id oasyce-testnet-1 --output json --yes
+oasyced tx oasyce_capability invoke CAP-1 --input '{"text":"..."}' --from consumer1 --chain-id oasyce-testnet-1 --output json --yes
 ```
 
 ### 3c. Complete the invocation (submit output hash)
@@ -319,7 +319,7 @@ Capability price is published: `100000uoas`. Agent B decides to proceed.
 
 Agent B invokes. Escrow created and locked automatically:
 ```bash
-oasyced tx oasyce_capability invoke CAP-1 '{"text":"summarize this document..."}' --from agentB --chain-id oasyce-testnet-1 --output json --yes
+oasyced tx oasyce_capability invoke CAP-1 --input '{"text":"summarize this document..."}' --from agentB --chain-id oasyce-testnet-1 --output json --yes
 ```
 
 ### Step 4: Deliver

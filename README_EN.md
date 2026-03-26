@@ -140,7 +140,7 @@ oasyced tx oasyce_capability register \
   --from provider
 
 # === Invoke Capability (auto escrow + settlement) ===
-oasyced tx oasyce_capability invoke [cap-id] '{"text":"hello","target":"zh"}' --from consumer
+oasyced tx oasyce_capability invoke [cap-id] --input '{"text":"hello","target":"zh"}' --from consumer
 
 # === Register Data Asset ===
 oasyced tx datarights register \

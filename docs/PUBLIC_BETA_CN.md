@@ -34,7 +34,7 @@ curl http://47.93.32.88:1317/cosmos/bank/v1beta1/balances/oasyce1youraddresshere
 
 返回：
 ```json
-{"balances":[{"denom":"uoas","amount":"10000000"}],"pagination":{}}
+{"balances":[{"denom":"uoas","amount":"20000000"}],"pagination":{}}
 ```
 
 1 OAS = 1,000,000 uoas。
@@ -95,7 +95,7 @@ curl http://47.93.32.88:1317/oasyce/reputation/v1/reputation/oasyce1provideraddr
 
 **调用**（CLI）：
 ```bash
-oasyced tx oasyce_capability invoke CAP-1 '{"text":"summarize this"}' \
+oasyced tx oasyce_capability invoke CAP-1 --input '{"text":"summarize this"}' \
   --from yourkey --chain-id oasyce-testnet-1 --yes
 ```
 
@@ -194,7 +194,7 @@ curl http://47.93.32.88:1317/oasyce/reputation/v1/reputation/oasyce1agentA
 
 **3. 调用** -- 代理 B 调用服务（托管自动创建）：
 ```bash
-oasyced tx oasyce_capability invoke CAP-1 '{"text":"..."}' \
+oasyced tx oasyce_capability invoke CAP-1 --input '{"text":"..."}' \
   --from agentB --chain-id oasyce-testnet-1 --yes
 ```
 
@@ -359,7 +359,8 @@ SDK 文档: [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk)
 
 ```bash
 # 下载二进制文件
-wget https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.1
+wget https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.1/oasyced-linux.gz
+gunzip oasyced-linux.gz && chmod +x oasyced-linux && mv oasyced-linux oasyced
 
 # 初始化
 oasyced init my-node --chain-id oasyce-testnet-1
