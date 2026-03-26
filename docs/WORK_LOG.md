@@ -10,7 +10,7 @@
 
 | 阶段 | 状态 | 说明 |
 |------|------|------|
-| 初始化 Cosmos SDK v0.50.10 | ✅ 完成 | app.go, go.mod, 4 custom modules |
+| 初始化 Cosmos SDK v0.50.10 | ✅ 完成 | app.go, go.mod, 7 custom modules |
 | 4 模块实现 (settlement/capability/reputation/datarights) | ✅ 完成 | keeper + msg_server + query_server |
 | Protobuf 迁移 | ✅ 完成 | 16 proto files, gRPC + REST |
 | CLI 命令 | ✅ 完成 | tx + query for all modules |

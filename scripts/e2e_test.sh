@@ -105,8 +105,13 @@ RESULT=$(check_latest_tx)
 CODE=$(echo "$RESULT" | cut -d'|' -f1)
 if [ "$CODE" = "0" ]; then pass "InvokeCapability"; else fail "InvokeCapability" "$RESULT"; fi
 
-# Find invocation ID (first invocation = INV_0000000000000001)
-INV_ID="INV_0000000000000001"
+# Find invocation ID dynamically (query latest invocation for this capability)
+INV_ID=$($OASYCED query oasyce_capability get "$CAP_ID" --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); invs=d.get('capability',{}).get('invocations',[]); print(invs[-1] if invs else '')" 2>/dev/null)
+if [ -z "$INV_ID" ]; then
+  # Fallback: scan invocations by querying all capabilities
+  INV_ID=$($OASYCED query oasyce_capability invocation "INV_0000000000000001" --node $NODE --output json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('invocation',{}).get('id',''))" 2>/dev/null)
+fi
+if [ -z "$INV_ID" ]; then INV_ID="INV_0000000000000001"; fi  # last resort fallback
 
 # --- Test 6b: Complete Invocation (provider submits output hash) ---
 echo "--- Test 6b: Complete Invocation (challenge window starts) ---"

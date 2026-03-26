@@ -1,6 +1,6 @@
 # Oasyce Chain
 
-[![CI](https://github.com/oasyce/chain/actions/workflows/ci.yml/badge.svg)](https://github.com/oasyce/chain/actions/workflows/ci.yml)
+[![CI](https://github.com/Shangri-la-0428/oasyce-chain/actions/workflows/ci.yml/badge.svg)](https://github.com/Shangri-la-0428/oasyce-chain/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
 [![Cosmos SDK](https://img.shields.io/badge/Cosmos%20SDK-v0.50.10-blue)](https://github.com/cosmos/cosmos-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)

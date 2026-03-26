@@ -3,7 +3,7 @@
 ## Phase A — Foundation (Complete ✅)
 
 - [x] Cosmos SDK v0.50.10 chain initialization
-- [x] 4 custom modules: settlement, capability, reputation, datarights
+- [x] 7 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving
 - [x] Protobuf migration (16 proto files, gRPC + REST)
 - [x] CLI commands for all modules (tx + query)
 - [x] Bancor continuous bonding curve (CW=0.5)
@@ -15,7 +15,7 @@
 - [x] E2E verification with real transactions
 - [x] CI/CD (GitHub Actions), Docker, 4-node testnet
 - [x] Open-source infrastructure (README, LICENSE, CONTRIBUTING, etc.)
-- [x] 40+ tests across 5 suites
+- [x] 152+ tests across 10 suites
 
 ## Phase B — Production Readiness (In Progress)
 
@@ -23,7 +23,7 @@
 - [x] IBC integration — ibc-go v8.8.0, cross-chain OAS transfers, Tendermint light client
 - [x] Governance module — fully wired (7d voting, 40% quorum, param change proposals)
 - [x] Mainnet genesis configuration — all modules with default params
-- [x] Swagger/OpenAPI documentation — REST API spec for all 4 custom modules + IBC
+- [x] Swagger/OpenAPI documentation — REST API spec for all 7 custom modules + IBC
 - [x] IBC guide — channel setup, cross-chain transfer walkthrough
 - [ ] Security audit (external)
 - [ ] Validator incentive program
