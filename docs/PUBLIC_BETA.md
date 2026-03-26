@@ -277,7 +277,7 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 
 ```bash
 # Download binary
-wget https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0
+wget https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.1
 
 # Initialize
 oasyced init my-node --chain-id oasyce-testnet-1
