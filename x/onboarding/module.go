@@ -128,6 +128,12 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 	return cdc.MustMarshalJSON(&gs)
 }
 
+// EndBlock marks expired PoW debts as DEFAULTED.
+func (am AppModule) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
+	am.keeper.ExpireDebts(ctx)
+	return nil
+}
+
 func (am AppModule) ConsensusVersion() uint64 { return 3 }
 
 func (am AppModule) IsOnePerModuleType() {}

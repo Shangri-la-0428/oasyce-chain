@@ -400,10 +400,28 @@ func (k Keeper) DisputeInvocation(ctx sdk.Context, invocationID, caller, reason 
 		)
 	}
 
-	// Refund escrow to consumer.
+	// Dispute resolution: refund escrow to consumer, then transfer dispute
+	// deposit (10% of escrow value) from consumer to provider as compensation.
+	// This prevents zero-cost disputes where the consumer receives the output
+	// off-chain and then disputes to reclaim the full payment.
+	var depositAmount math.Int
 	if inv.Amount.IsPositive() && inv.EscrowId != "" {
+		// Step 1: Full refund to consumer (existing settlement mechanism).
 		if err := k.settlementKeeper.RefundEscrow(ctx, inv.EscrowId, caller); err != nil {
 			return err
+		}
+
+		// Step 2: Transfer dispute deposit from consumer to provider.
+		depositAmount = inv.Amount.Amount.Mul(math.NewIntFromUint64(types.DisputeDepositRate)).Quo(math.NewInt(10000))
+		if depositAmount.IsPositive() {
+			consumerAddr, _ := sdk.AccAddressFromBech32(inv.Consumer)
+			providerAddr, _ := sdk.AccAddressFromBech32(inv.Provider)
+			depositCoins := sdk.NewCoins(sdk.NewCoin(inv.Amount.Denom, depositAmount))
+			if err := k.bankKeeper.SendCoins(ctx, consumerAddr, providerAddr, depositCoins); err != nil {
+				// If consumer can't cover the deposit (e.g. spent the refund),
+				// the dispute still proceeds but without provider compensation.
+				depositAmount = math.ZeroInt()
+			}
 		}
 	}
 
@@ -434,6 +452,7 @@ func (k Keeper) DisputeInvocation(ctx sdk.Context, invocationID, caller, reason 
 		sdk.NewAttribute("invocation_id", invocationID),
 		sdk.NewAttribute("capability_id", inv.CapabilityId),
 		sdk.NewAttribute("consumer", inv.Consumer),
+		sdk.NewAttribute("provider_compensation", depositAmount.String()),
 		sdk.NewAttribute("reason", reason),
 	))
 

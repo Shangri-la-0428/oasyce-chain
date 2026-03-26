@@ -19,6 +19,12 @@ const (
 // the consumer can dispute the invocation output.
 const ChallengeWindow int64 = 100
 
+// DisputeDepositRate is the percentage of escrow value the consumer
+// forfeits to the provider when disputing (basis points, 1000 = 10%).
+// This prevents zero-cost disputes where the consumer receives the output
+// and then disputes to reclaim the full payment.
+const DisputeDepositRate uint64 = 1000
+
 // DefaultParams returns the default module parameters.
 func DefaultParams() Params {
 	return Params{

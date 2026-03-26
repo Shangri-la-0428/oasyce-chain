@@ -330,3 +330,32 @@ func (k Keeper) RepayDebt(ctx context.Context, msg types.MsgRepayDebt) (math.Int
 
 	return newRemaining, nil
 }
+
+// ExpireDebts iterates all active registrations and marks those past their
+// deadline as DEFAULTED. Called from EndBlocker.
+func (k Keeper) ExpireDebts(ctx sdk.Context) {
+	now := ctx.BlockTime()
+
+	k.IterateAllRegistrations(ctx, func(reg types.Registration) bool {
+		if reg.Status != types.REGISTRATION_STATUS_ACTIVE {
+			return false
+		}
+		if now.Before(reg.Deadline) {
+			return false
+		}
+
+		// Deadline passed — mark as DEFAULTED.
+		reg.Status = types.REGISTRATION_STATUS_DEFAULTED
+		if err := k.SetRegistration(ctx, reg); err != nil {
+			return false
+		}
+
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			"debt_defaulted",
+			sdk.NewAttribute("address", reg.Address),
+			sdk.NewAttribute("outstanding", reg.AirdropAmount.Sub(reg.RepaidAmount).String()),
+		))
+
+		return false
+	})
+}
