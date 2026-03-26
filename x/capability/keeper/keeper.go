@@ -404,7 +404,7 @@ func (k Keeper) DisputeInvocation(ctx sdk.Context, invocationID, caller, reason 
 	// deposit (10% of escrow value) from consumer to provider as compensation.
 	// This prevents zero-cost disputes where the consumer receives the output
 	// off-chain and then disputes to reclaim the full payment.
-	var depositAmount math.Int
+	depositAmount := math.ZeroInt()
 	if inv.Amount.IsPositive() && inv.EscrowId != "" {
 		// Step 1: Full refund to consumer (existing settlement mechanism).
 		if err := k.settlementKeeper.RefundEscrow(ctx, inv.EscrowId, caller); err != nil {
