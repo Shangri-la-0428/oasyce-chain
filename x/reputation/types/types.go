@@ -27,9 +27,7 @@ func (p Params) Validate() error {
 	if p.MaxRating <= p.MinRating {
 		return fmt.Errorf("max_rating (%d) must be greater than min_rating (%d)", p.MaxRating, p.MinRating)
 	}
-	if p.FeedbackCooldownSeconds < 0 {
-		return fmt.Errorf("feedback_cooldown_seconds must be non-negative, got %d", p.FeedbackCooldownSeconds)
-	}
+	// FeedbackCooldownSeconds is uint64, always >= 0; no check needed.
 	if p.VerifiedWeight.IsNegative() {
 		return fmt.Errorf("verified_weight must be non-negative")
 	}
