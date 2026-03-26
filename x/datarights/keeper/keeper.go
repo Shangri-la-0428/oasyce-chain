@@ -93,6 +93,16 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) (types.DataAsset, bool
 	return asset, true
 }
 
+// GetAssetTotalShares returns the total shares for an asset.
+// Satisfies settlement.DatarightsKeeper interface.
+func (k Keeper) GetAssetTotalShares(ctx sdk.Context, assetID string) (math.Int, bool) {
+	asset, found := k.GetAsset(ctx, assetID)
+	if !found {
+		return math.Int{}, false
+	}
+	return asset.TotalShares, true
+}
+
 // SetAsset persists a data asset to the store.
 func (k Keeper) SetAsset(ctx sdk.Context, asset types.DataAsset) error {
 	bz, err := k.cdc.Marshal(&asset)

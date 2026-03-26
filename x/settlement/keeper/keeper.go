@@ -17,10 +17,11 @@ import (
 
 // Keeper manages the settlement module's state.
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   storetypes.StoreKey
-	bankKeeper types.BankKeeper
-	authority  string // module authority address for governance
+	cdc              codec.BinaryCodec
+	storeKey         storetypes.StoreKey
+	bankKeeper       types.BankKeeper
+	datarightsKeeper types.DatarightsKeeper
+	authority        string // module authority address for governance
 }
 
 // NewKeeper creates a new settlement Keeper.
@@ -36,6 +37,11 @@ func NewKeeper(
 		bankKeeper: bankKeeper,
 		authority:  authority,
 	}
+}
+
+// SetDatarightsKeeper sets the datarights keeper reference (called after both keepers are created).
+func (k *Keeper) SetDatarightsKeeper(dk types.DatarightsKeeper) {
+	k.datarightsKeeper = dk
 }
 
 // Authority returns the module authority address.

@@ -546,6 +546,7 @@ func NewOasyceApp(
 		app.BankKeeper,
 		govAuthority,
 	)
+	app.SettlementKeeper.SetDatarightsKeeper(&app.DataRightsKeeper)
 
 	app.WorkKeeper = workkeeper.NewKeeper(
 		appCodec,

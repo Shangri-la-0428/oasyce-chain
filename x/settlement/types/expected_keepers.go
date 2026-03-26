@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,4 +14,11 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt sdk.Coins) error
 	BurnCoins(ctx context.Context, moduleName string, amt sdk.Coins) error
+}
+
+// DatarightsKeeper defines the read-only interface settlement needs from datarights.
+type DatarightsKeeper interface {
+	GetAssetReserve(ctx sdk.Context, assetID string) math.Int
+	GetAssetReserveDenom(ctx sdk.Context, assetID string) string
+	GetAssetTotalShares(ctx sdk.Context, assetID string) (math.Int, bool)
 }
