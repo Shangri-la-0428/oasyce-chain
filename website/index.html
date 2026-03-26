@@ -166,6 +166,7 @@ footer p { font-size: var(--text-caption); color: var(--text-tertiary); }
 .stagger.visible > *:nth-child(4) { transition-delay: 0.18s; }
 .stagger.visible > *:nth-child(5) { transition-delay: 0.24s; }
 .stagger.visible > *:nth-child(6) { transition-delay: 0.30s; }
+.stagger.visible > *:nth-child(7) { transition-delay: 0.36s; }
 
 /* ── Module hover ── */
 .module { transition: border-color 0.15s, transform 0.15s cubic-bezier(0.25, 1, 0.5, 1); }
@@ -401,16 +402,20 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
     <h2 data-i18n="stats-title">Protocol at a glance</h2>
     <div class="stats stagger">
       <div class="stat">
-        <div class="number" data-count="32">0</div>
+        <div class="number" data-count="35">0</div>
         <div class="label" data-i18n="stat-tx">Transaction types</div>
       </div>
       <div class="stat">
-        <div class="number" data-count="33">0</div>
+        <div class="number" data-count="34">0</div>
         <div class="label" data-i18n="stat-query">Query endpoints</div>
       </div>
       <div class="stat">
         <div class="number" data-count="7">0</div>
         <div class="label" data-i18n="stat-modules">Custom modules</div>
+      </div>
+      <div class="stat">
+        <div class="number" data-count="130">0</div>
+        <div class="label" data-i18n="stat-tests">Automated tests</div>
       </div>
       <div class="stat">
         <div class="number" data-static>~5s</div>
@@ -456,6 +461,11 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
         <div class="name" data-i18n="mod-onb-name">Permissionless Access</div>
         <p data-i18n="mod-onb-desc">PoW puzzle to enter the economy. No KYC, no approval. Airdrop-as-debt with halving economics.</p>
       </div>
+      <div class="module">
+        <h3>x/halving</h3>
+        <div class="name" data-i18n="mod-halv-name">Block Reward Halving</div>
+        <p data-i18n="mod-halv-desc">Bitcoin-style fixed rewards replacing inflationary minting. 4 &rarr; 2 &rarr; 1 &rarr; 0.5 OAS/block. Combined with 2% burn, supply peaks then contracts.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -479,6 +489,20 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
     <p style="margin-top: var(--space-md); font-size: var(--text-caption);">
       Fee split on settlement: 90% provider, 5% protocol, 2% burn, 3% treasury. Sell fee: 5% protocol fee.
     </p>
+
+    <h3 class="section-label" data-i18n="onb-halving-label">Onboarding halving</h3>
+    <p style="margin-bottom: var(--space-md);" data-i18n="onb-halving-desc">Airdrop and PoW difficulty scale with total registrations, making early participation more rewarding.</p>
+    <table class="halving">
+      <thead>
+        <tr><th style="text-align:left" data-i18n="onb-col-epoch">Epoch</th><th data-i18n="onb-col-reg">Registrations</th><th data-i18n="onb-col-airdrop">Airdrop</th><th data-i18n="onb-col-pow">PoW difficulty</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0</td><td>0 &ndash; 10,000</td><td>20 OAS</td><td>16 bits</td></tr>
+        <tr><td>1</td><td>10K &ndash; 50K</td><td>10 OAS</td><td>18 bits</td></tr>
+        <tr><td>2</td><td>50K &ndash; 200K</td><td>5 OAS</td><td>20 bits</td></tr>
+        <tr><td>3</td><td>200K+</td><td>2.5 OAS</td><td>22 bits</td></tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
@@ -545,12 +569,12 @@ oasyced query settlement escrow \
         <tr><td>RPC</td><td><code>47.93.32.88:26657</code></td></tr>
         <tr><td>REST API</td><td><code>47.93.32.88:1317</code></td></tr>
         <tr><td>Faucet</td><td><code>47.93.32.88:8080/faucet?address=...</code></td></tr>
-        <tr><td>Binary</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0">v0.4.0 Release</a></td></tr>
+        <tr><td>Binary</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0">v0.5.0 Release</a></td></tr>
       </tbody>
     </table>
     <div style="margin-top: var(--space-lg);">
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" class="btn btn-primary" data-i18n="testnet-validator">Validator Guide</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.4.0" class="btn btn-secondary" style="margin-left: var(--space-sm);" data-i18n="testnet-download">Download Binary</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0" class="btn btn-secondary" style="margin-left: var(--space-sm);" data-i18n="testnet-download">Download Binary</a>
     </div>
   </div>
 </section>
@@ -869,6 +893,15 @@ bash scripts/start_testnet.sh
       'mod-work-desc': 'Commit-reveal 任务验证。基于信誉的确定性分配。多执行者共识保障结果完整性。',
       'mod-onb-name': '无许可准入',
       'mod-onb-desc': '工作量证明即可加入经济体。无 KYC，无审批。空投即债务，减半经济学。',
+      'mod-halv-name': '区块奖励减半',
+      'mod-halv-desc': '比特币式固定奖励取代通胀铸币。4 → 2 → 1 → 0.5 OAS/块。结合 2% 销毁，供应量先升后降。',
+      'stat-tests': '自动化测试',
+      'onb-halving-label': '注册减半',
+      'onb-halving-desc': '空投额度和 PoW 难度随注册总数递增，早期参与者获得更多奖励。',
+      'onb-col-epoch': '纪元',
+      'onb-col-reg': '累计注册',
+      'onb-col-airdrop': '空投',
+      'onb-col-pow': 'PoW 难度',
       'econ-title': '代币经济学',
       'econ-desc': '固定区块奖励 + 比特币式减半。结合每笔托管释放的 2% 销毁机制，供应量先升后降。',
       'dev-title': '机器可读设计',

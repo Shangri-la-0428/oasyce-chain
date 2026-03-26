@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -16,6 +18,20 @@ func DefaultParams() Params {
 		PowDifficulty:         16,                                         // 16 leading zero bits (~65536 attempts avg)
 		RepaymentDeadlineDays: 90,                                         // 90 days
 	}
+}
+
+// Validate checks that Params fields are sane.
+func (p Params) Validate() error {
+	if !p.AirdropAmount.IsValid() || p.AirdropAmount.IsZero() {
+		return fmt.Errorf("airdrop_amount must be a positive valid coin")
+	}
+	if p.PowDifficulty == 0 || p.PowDifficulty > 32 {
+		return fmt.Errorf("pow_difficulty must be in [1, 32], got %d", p.PowDifficulty)
+	}
+	if p.RepaymentDeadlineDays <= 0 {
+		return fmt.Errorf("repayment_deadline_days must be positive, got %d", p.RepaymentDeadlineDays)
+	}
+	return nil
 }
 
 // DefaultGenesisState returns the default genesis state.

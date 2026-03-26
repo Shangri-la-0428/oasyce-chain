@@ -149,6 +149,9 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 	if m.keeper.Authority() != msg.Authority {
 		return nil, fmt.Errorf("unauthorized: expected %s, got %s", m.keeper.Authority(), msg.Authority)
 	}
+	if err := msg.Params.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid params: %w", err)
+	}
 	if err := m.keeper.SetParams(ctx, msg.Params); err != nil {
 		return nil, err
 	}

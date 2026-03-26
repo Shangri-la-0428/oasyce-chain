@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -61,6 +63,23 @@ func DefaultParams() Params {
 		DisputeTimeoutDays:      30,
 		ShutdownCooldownSeconds: 604800, // 7 days
 	}
+}
+
+// Validate checks that Params fields are sane.
+func (p Params) Validate() error {
+	if p.MaxCoCreators == 0 {
+		return fmt.Errorf("max_co_creators must be positive")
+	}
+	if !p.DisputeDeposit.IsValid() || p.DisputeDeposit.IsZero() {
+		return fmt.Errorf("dispute_deposit must be a positive valid coin")
+	}
+	if p.DisputeTimeoutDays <= 0 {
+		return fmt.Errorf("dispute_timeout_days must be positive, got %d", p.DisputeTimeoutDays)
+	}
+	if p.ShutdownCooldownSeconds <= 0 {
+		return fmt.Errorf("shutdown_cooldown_seconds must be positive, got %d", p.ShutdownCooldownSeconds)
+	}
+	return nil
 }
 
 // DefaultGenesisState returns the default genesis state.

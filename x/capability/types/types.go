@@ -28,6 +28,17 @@ func DefaultParams() Params {
 	}
 }
 
+// Validate checks that Params fields are sane.
+func (p Params) Validate() error {
+	if !p.MinProviderStake.IsValid() {
+		return fmt.Errorf("invalid min_provider_stake: %s", p.MinProviderStake)
+	}
+	if p.ProtocolFeeRate > 10000 {
+		return fmt.Errorf("protocol_fee_rate %d exceeds 10000 (100%%)", p.ProtocolFeeRate)
+	}
+	return nil
+}
+
 // DefaultGenesisState returns the default genesis state.
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{

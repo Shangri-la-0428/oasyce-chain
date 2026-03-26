@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"cosmossdk.io/math"
 	proto "github.com/cosmos/gogoproto/proto"
 )
@@ -15,9 +17,26 @@ func DefaultParams() Params {
 		MinRating:               0,
 		MaxRating:               500,
 		FeedbackCooldownSeconds: 3600,
-		VerifiedWeight:          math.LegacyNewDec(1),                    // 1.0
-		UnverifiedWeight:        math.LegacyNewDecWithPrec(1, 1),        // 0.1
+		VerifiedWeight:          math.LegacyNewDec(1),             // 1.0
+		UnverifiedWeight:        math.LegacyNewDecWithPrec(1, 1), // 0.1
 	}
+}
+
+// Validate checks that Params fields are sane.
+func (p Params) Validate() error {
+	if p.MaxRating <= p.MinRating {
+		return fmt.Errorf("max_rating (%d) must be greater than min_rating (%d)", p.MaxRating, p.MinRating)
+	}
+	if p.FeedbackCooldownSeconds < 0 {
+		return fmt.Errorf("feedback_cooldown_seconds must be non-negative, got %d", p.FeedbackCooldownSeconds)
+	}
+	if p.VerifiedWeight.IsNegative() {
+		return fmt.Errorf("verified_weight must be non-negative")
+	}
+	if p.UnverifiedWeight.IsNegative() {
+		return fmt.Errorf("unverified_weight must be non-negative")
+	}
+	return nil
 }
 
 // DefaultGenesisState returns the default genesis state.

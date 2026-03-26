@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"cosmossdk.io/math"
 	proto "github.com/cosmos/gogoproto/proto"
 )
@@ -48,6 +50,17 @@ func DefaultParams() Params {
 		EscrowTimeoutSeconds: 300, // 5 minutes
 		ProtocolFeeRate:      math.LegacyNewDecWithPrec(5, 2), // 5% = 0.05 (protocol fee)
 	}
+}
+
+// Validate checks that Params fields are sane.
+func (p Params) Validate() error {
+	if p.EscrowTimeoutSeconds <= 0 {
+		return fmt.Errorf("escrow_timeout_seconds must be positive, got %d", p.EscrowTimeoutSeconds)
+	}
+	if p.ProtocolFeeRate.IsNegative() || p.ProtocolFeeRate.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("protocol_fee_rate must be in [0, 1], got %s", p.ProtocolFeeRate)
+	}
+	return nil
 }
 
 // DefaultGenesisState returns the default genesis state.

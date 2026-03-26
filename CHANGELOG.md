@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.1] - 2026-03-26
+
+### Added
+
+- **REST params endpoints** — `GET /oasyce/reputation/v1/params` and `GET /oasyce/capability/v1/params` (proto + keeper + CLI)
+- **7 missing CLI query commands** — settlement `params`/`bonding-curve-price`, datarights `params`/`shares`/`access-level`/`disputes`, capability `by-provider`
+- **Params validation** — All 6 modules validate `Params` struct in `UpdateParams` handler before persisting
+- **Cross-compile target** — `make build-linux` for VPS deployment with version ldflags + strip
+- **Testnet reset script** — `scripts/reset_testnet.sh` for full VPS chain reset with key recovery
+
+### Fixed
+
+- **SuccessRate uint32 overflow** — Capability success rate calculation now uses uint64 arithmetic (prevents silent truncation after 4.3B calls)
+- **Website version** — Download links updated from v0.4.0 to v0.5.0
+- **Stale root llms.txt** — Removed root `llms.txt` (referenced `oasyce-localnet-1`); `docs/llms.txt` is the single source of truth
+- **Endpoint count** — llms.txt query endpoint count corrected from 33 to 35
+- **All docs updated** — Node ID, genesis SHA256, and network params synced across README, JOIN_TESTNET, VALIDATOR_SETUP, website
+
+### Security
+
+- **Governance params guard** — `UpdateParams` now calls `Params.Validate()` in all 6 modules, preventing invalid parameter values via governance proposals
+
+---
+
 ## [0.5.0] - 2026-03-26
 
 ### Added

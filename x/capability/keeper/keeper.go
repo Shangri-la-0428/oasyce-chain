@@ -360,7 +360,7 @@ func (k Keeper) ClaimInvocation(ctx sdk.Context, invocationID, caller string) er
 		if cap.TotalCalls == 1 {
 			cap.SuccessRate = 10000
 		} else {
-			cap.SuccessRate = (cap.SuccessRate*(uint32(cap.TotalCalls)-1) + 10000) / uint32(cap.TotalCalls)
+			cap.SuccessRate = uint32((uint64(cap.SuccessRate)*(cap.TotalCalls-1) + 10000) / cap.TotalCalls)
 		}
 		if err := k.setCapability(ctx, cap); err != nil {
 			ctx.EventManager().EmitEvent(sdk.NewEvent("capability_stats_update_failed",
@@ -419,7 +419,7 @@ func (k Keeper) DisputeInvocation(ctx sdk.Context, invocationID, caller, reason 
 		if cap.TotalCalls == 1 {
 			cap.SuccessRate = 0
 		} else {
-			cap.SuccessRate = (cap.SuccessRate * (uint32(cap.TotalCalls) - 1)) / uint32(cap.TotalCalls)
+			cap.SuccessRate = uint32(uint64(cap.SuccessRate) * (cap.TotalCalls - 1) / cap.TotalCalls)
 		}
 		if err := k.setCapability(ctx, cap); err != nil {
 			ctx.EventManager().EmitEvent(sdk.NewEvent("capability_stats_update_failed",
@@ -470,11 +470,10 @@ func (k Keeper) FailInvocation(ctx sdk.Context, invocationID, caller string) err
 	cap, err := k.GetCapability(ctx, inv.CapabilityId)
 	if err == nil {
 		cap.TotalCalls++
-		// successRate = (oldRate * (totalCalls-1) + 0) / totalCalls
 		if cap.TotalCalls == 1 {
 			cap.SuccessRate = 0
 		} else {
-			cap.SuccessRate = (cap.SuccessRate * (uint32(cap.TotalCalls) - 1)) / uint32(cap.TotalCalls)
+			cap.SuccessRate = uint32(uint64(cap.SuccessRate) * (cap.TotalCalls - 1) / cap.TotalCalls)
 		}
 		if err := k.setCapability(ctx, cap); err != nil {
 			ctx.EventManager().EmitEvent(sdk.NewEvent("capability_stats_update_failed",

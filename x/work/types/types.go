@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"cosmossdk.io/math"
 	proto "github.com/cosmos/gogoproto/proto"
 )
@@ -24,6 +26,24 @@ func DefaultParams() Params {
 		MaxTasksPerBlock:      100,
 		ReputationCapPerEpoch: 100,
 	}
+}
+
+// Validate checks that Params fields are sane.
+func (p Params) Validate() error {
+	if p.MinTimeoutBlocks == 0 {
+		return fmt.Errorf("min_timeout_blocks must be positive")
+	}
+	if p.MaxTimeoutBlocks < p.MinTimeoutBlocks {
+		return fmt.Errorf("max_timeout_blocks (%d) must be >= min_timeout_blocks (%d)", p.MaxTimeoutBlocks, p.MinTimeoutBlocks)
+	}
+	if p.MinBounty.IsNegative() {
+		return fmt.Errorf("min_bounty must be non-negative")
+	}
+	shares := p.ExecutorShare.Add(p.ProtocolShare).Add(p.BurnShare).Add(p.SubmitterRebate)
+	if !shares.Equal(math.LegacyOneDec()) {
+		return fmt.Errorf("fee shares must sum to 1.0, got %s", shares)
+	}
+	return nil
 }
 
 func DefaultGenesisState() *GenesisState {
