@@ -140,10 +140,12 @@ if "work" in g["app_state"]:
     g["app_state"]["work"]["params"]["min_executor_reputation"] = 0
     print("    work: min_executor_reputation = 0")
 
-# --- Onboarding: lower PoW difficulty for testnet ---
-if "onboarding" in g["app_state"]:
-    g["app_state"]["onboarding"]["params"]["pow_difficulty"] = 8  # 8 bits (easy)
-    print("    onboarding: pow_difficulty = 8 bits")
+# --- Reputation: lower feedback cooldown for testnet ---
+if "reputation" in g["app_state"]:
+    g["app_state"]["reputation"]["params"]["feedback_cooldown_seconds"] = 60
+    print("    reputation: feedback_cooldown = 60s")
+
+# onboarding: pow_difficulty stays at code default (16) — matches Epoch 0 halving
 
 with open("$GENESIS", "w") as f:
     json.dump(g, f, indent=2)

@@ -44,6 +44,13 @@ func (q queryServer) Feedback(goCtx context.Context, req *types.QueryFeedbackReq
 	return &types.QueryFeedbackResponse{Feedbacks: feedbacks}, nil
 }
 
+// ReputationParams returns the module parameters.
+func (q queryServer) ReputationParams(goCtx context.Context, _ *types.QueryReputationParamsRequest) (*types.QueryReputationParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := q.Keeper.GetParams(ctx)
+	return &types.QueryReputationParamsResponse{Params: params}, nil
+}
+
 // Leaderboard returns the top reputation scores.
 func (q queryServer) Leaderboard(goCtx context.Context, req *types.QueryLeaderboardRequest) (*types.QueryLeaderboardResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

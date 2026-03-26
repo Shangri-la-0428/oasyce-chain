@@ -20,6 +20,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdGetReputation(),
 		CmdLeaderboard(),
+		CmdReputationParams(),
 	)
 	return cmd
 }
@@ -38,6 +39,28 @@ func CmdGetReputation() *cobra.Command {
 			res, err := queryClient.Reputation(cmd.Context(), &types.QueryReputationRequest{
 				Address: args[0],
 			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdReputationParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query reputation module parameters",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ReputationParams(cmd.Context(), &types.QueryReputationParamsRequest{})
 			if err != nil {
 				return err
 			}

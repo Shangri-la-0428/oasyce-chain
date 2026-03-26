@@ -9,7 +9,7 @@ Built on Cosmos SDK v0.50.10.
 | Parameter | Value |
 |-----------|-------|
 | Chain ID | `oasyce-testnet-1` |
-| Seed | `390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656` |
+| Seed | `3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656` |
 | RPC | `http://47.93.32.88:26657` |
 | REST | `http://47.93.32.88:1317` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
@@ -388,7 +388,7 @@ Score range 0-500. Verified feedback weighted 4x. 30-day half-life decay.
 | work | RevealResult | Reveal actual result |
 | work | DisputeResult | Challenge task result |
 
-### Query Endpoints (33 total)
+### Query Endpoints (35 total)
 
 | Endpoint | Returns |
 |----------|---------|
@@ -401,6 +401,7 @@ Score range 0-500. Verified feedback weighted 4x. 30-day half-life decay.
 | `/oasyce/capability/v1/capabilities/provider/{provider}` | Capabilities by provider |
 | `/oasyce/capability/v1/invocation/{invocation_id}` | Single invocation detail (status, output_hash, completed_height) |
 | `/oasyce/capability/v1/earnings/{provider}` | Provider earnings summary |
+| `/oasyce/capability/v1/params` | Capability parameters |
 | `/oasyce/datarights/v1/data_asset/{asset_id}` | Single data asset |
 | `/oasyce/datarights/v1/data_assets` | All data assets |
 | `/oasyce/datarights/v1/shares/{asset_id}` | Shareholders for asset |
@@ -414,6 +415,7 @@ Score range 0-500. Verified feedback weighted 4x. 30-day half-life decay.
 | `/oasyce/reputation/v1/reputation/{address}` | Reputation score |
 | `/oasyce/reputation/v1/feedback/{invocation_id}` | Feedback for invocation |
 | `/oasyce/reputation/v1/leaderboard` | Top-rated agents |
+| `/oasyce/reputation/v1/params` | Reputation parameters |
 | `/oasyce/work/v1/task/{task_id}` | Single task detail |
 | `/oasyce/work/v1/tasks/status/{status}` | Tasks by status |
 | `/oasyce/work/v1/tasks/creator/{creator}` | Tasks by creator |

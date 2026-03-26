@@ -231,8 +231,9 @@ if "datarights" in g["app_state"]:
     g["app_state"]["datarights"]["params"]["dispute_deposit"] = {"denom": "uoas", "amount": "1000000"}
 if "work" in g["app_state"]:
     g["app_state"]["work"]["params"]["min_executor_reputation"] = 0
-if "onboarding" in g["app_state"]:
-    g["app_state"]["onboarding"]["params"]["pow_difficulty"] = 8
+if "reputation" in g["app_state"]:
+    g["app_state"]["reputation"]["params"]["feedback_cooldown_seconds"] = 60
+# onboarding: pow_difficulty stays at code default (16) — matches Epoch 0 halving
 with open("${GENESIS}", "w") as f:
     json.dump(g, f, indent=2)
 print("    Genesis patched.")

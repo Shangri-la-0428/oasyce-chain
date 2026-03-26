@@ -57,7 +57,7 @@ Oasyce Testnet-1 现已上线。
 | 项目 | 值 |
 |------|-----|
 | Chain ID | `oasyce-testnet-1` |
-| Seed | `390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656` |
+| Seed | `3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656` |
 | RPC | `http://47.93.32.88:26657` |
 | REST | `http://47.93.32.88:1317` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |

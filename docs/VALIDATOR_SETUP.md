@@ -8,9 +8,9 @@
 |-----------|-------|
 | Chain ID | `oasyce-testnet-1` |
 | Genesis | [GitHub Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/testnet-1) |
-| Genesis SHA256 | `dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739` |
+| Genesis SHA256 | `4afed71e80aad3cddd553df514c77d46bc324932bb3807752b4135893f3f20b4` |
 | Min hardware | 2 CPU, 2 GB RAM, 40 GB SSD |
-| Seed node | `390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656` |
+| Seed node | `3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
 | RPC | `http://47.93.32.88:26657` |
 | REST API | `http://47.93.32.88:1317` |
@@ -37,10 +37,10 @@ curl -L -o ~/.oasyced/config/genesis.json \
   https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json
 
 # Verify checksum
-echo "dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739  $HOME/.oasyced/config/genesis.json" | sha256sum -c
+echo "4afed71e80aad3cddd553df514c77d46bc324932bb3807752b4135893f3f20b4  $HOME/.oasyced/config/genesis.json" | sha256sum -c
 
 # 4. Configure seed peer
-sed -i.bak 's/persistent_peers = ""/persistent_peers = "390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656"/' \
+sed -i.bak 's/persistent_peers = ""/persistent_peers = "3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656"/' \
   ~/.oasyced/config/config.toml
 
 # 5. Enable API
@@ -171,7 +171,7 @@ curl -L -o ~/.oasyced/config/genesis.json \
   https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json
 
 # Verify checksum
-echo "dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739  $HOME/.oasyced/config/genesis.json" | sha256sum -c
+echo "4afed71e80aad3cddd553df514c77d46bc324932bb3807752b4135893f3f20b4  $HOME/.oasyced/config/genesis.json" | sha256sum -c
 ```
 
 For **local development**, generate genesis:
@@ -217,7 +217,7 @@ sed -i.bak 's/minimum-gas-prices = ""/minimum-gas-prices = "0.025uoas"/' ~/.oasy
 
 ```bash
 # Add persistent peers
-sed -i.bak 's/persistent_peers = ""/persistent_peers = "390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656"/' ~/.oasyced/config/config.toml
+sed -i.bak 's/persistent_peers = ""/persistent_peers = "3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656"/' ~/.oasyced/config/config.toml
 
 # Optional: enable Prometheus metrics
 sed -i.bak 's/prometheus = false/prometheus = true/' ~/.oasyced/config/config.toml

@@ -20,8 +20,10 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdGetCapability(),
 		CmdListCapabilities(),
+		CmdCapabilitiesByProvider(),
 		CmdEarnings(),
 		CmdGetInvocation(),
+		CmdCapabilityParams(),
 	)
 	return cmd
 }
@@ -72,6 +74,30 @@ func CmdListCapabilities() *cobra.Command {
 	return cmd
 }
 
+func CmdCapabilitiesByProvider() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "by-provider [provider-address]",
+		Short: "Query all capabilities for a provider",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.CapabilitiesByProvider(cmd.Context(), &types.QueryCapabilitiesByProviderRequest{
+				Provider: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
 func CmdGetInvocation() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "invocation [invocation-id]",
@@ -86,6 +112,28 @@ func CmdGetInvocation() *cobra.Command {
 			res, err := queryClient.Invocation(cmd.Context(), &types.QueryInvocationRequest{
 				InvocationId: args[0],
 			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdCapabilityParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query capability module parameters",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.CapabilityParams(cmd.Context(), &types.QueryCapabilityParamsRequest{})
 			if err != nil {
 				return err
 			}

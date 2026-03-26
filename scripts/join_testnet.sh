@@ -24,7 +24,7 @@ set -euo pipefail
 # ── Configuration (edit these for your testnet) ──
 CHAIN_ID="${CHAIN_ID:-oasyce-testnet-1}"
 MONIKER="${MONIKER:-oasyce-node-$(openssl rand -hex 3)}"
-SEED_NODE="${SEED_NODE:-390f9b726d7ab105aade989f444f06585bc06186@47.93.32.88:26656}"
+SEED_NODE="${SEED_NODE:-3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656}"
 GENESIS_URL="${GENESIS_URL:-https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json}"
 IMAGE="${IMAGE:-ghcr.io/shangri-la-0428/oasyce-chain:latest}"
 DATA_DIR="$HOME/.oasyce-docker"

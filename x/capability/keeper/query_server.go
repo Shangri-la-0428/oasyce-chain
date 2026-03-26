@@ -55,6 +55,13 @@ func (q queryServer) Invocation(goCtx context.Context, req *types.QueryInvocatio
 	return &types.QueryInvocationResponse{Invocation: inv}, nil
 }
 
+// CapabilityParams returns the module parameters.
+func (q queryServer) CapabilityParams(goCtx context.Context, _ *types.QueryCapabilityParamsRequest) (*types.QueryCapabilityParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := q.keeper.GetParams(ctx)
+	return &types.QueryCapabilityParamsResponse{Params: params}, nil
+}
+
 // Earnings queries the total earnings for a provider across all capabilities.
 func (q queryServer) Earnings(goCtx context.Context, req *types.QueryEarningsRequest) (*types.QueryEarningsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

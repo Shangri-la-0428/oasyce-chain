@@ -7,6 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "oasyce/reputation/v1/types.proto";
+import "oasyce/reputation/v1/genesis.proto";
 
 // Query defines the reputation module's gRPC query service.
 service Query {
@@ -25,6 +26,11 @@ service Query {
   // Leaderboard queries the top-rated providers.
   rpc Leaderboard(QueryLeaderboardRequest) returns (QueryLeaderboardResponse) {
     option (google.api.http).get = "/oasyce/reputation/v1/leaderboard";
+  }
+
+  // ReputationParams queries the module parameters.
+  rpc ReputationParams(QueryReputationParamsRequest) returns (QueryReputationParamsResponse) {
+    option (google.api.http).get = "/oasyce/reputation/v1/params";
   }
 }
 
@@ -57,4 +63,12 @@ message QueryLeaderboardRequest {
 message QueryLeaderboardResponse {
   repeated ReputationScore scores = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryReputationParamsRequest is the request type for the Query/ReputationParams RPC.
+message QueryReputationParamsRequest {}
+
+// QueryReputationParamsResponse is the response type for the Query/ReputationParams RPC.
+message QueryReputationParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
 }

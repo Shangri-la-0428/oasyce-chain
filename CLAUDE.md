@@ -23,7 +23,12 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 7 cu
 - `oasyced tx oasyce_capability register|invoke|complete-invocation|fail-invocation|claim-invocation|dispute-invocation`
 - `oasyced tx reputation submit-feedback|report`
 - `oasyced tx send` (bank transfers)
-- Query commands: `oasyced query <module> <subcommand>`
+- Query: `oasyced query settlement escrow|escrows|bonding-curve-price|params`
+- Query: `oasyced query datarights asset|list|shares|access-level|dispute|disputes|migration-path|migration-paths|children|params`
+- Query: `oasyced query oasyce_capability get|list|by-provider|earnings|invocation|params`
+- Query: `oasyced query reputation show|leaderboard|params`
+- Query: `oasyced query work task|tasks-by-status|executor|executors|params|epoch`
+- Query: `oasyced query onboarding registration|debt|params`
 
 ### Chain Upgrades — COMPLETE ✅
 Five economic/governance upgrades implemented and tested:

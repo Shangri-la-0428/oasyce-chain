@@ -20,6 +20,8 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdGetEscrow(),
 		CmdEscrowsByCreator(),
+		CmdBondingCurvePrice(),
+		CmdSettlementParams(),
 	)
 	return cmd
 }
@@ -62,6 +64,52 @@ func CmdEscrowsByCreator() *cobra.Command {
 			res, err := queryClient.EscrowsByCreator(cmd.Context(), &types.QueryEscrowsByCreatorRequest{
 				Creator: args[0],
 			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdBondingCurvePrice() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bonding-curve-price [asset-id]",
+		Short: "Query the current bonding curve price for an asset",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.BondingCurvePrice(cmd.Context(), &types.QueryBondingCurvePriceRequest{
+				AssetId: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdSettlementParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query settlement module parameters",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.SettlementParams(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}

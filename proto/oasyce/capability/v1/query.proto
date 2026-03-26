@@ -8,6 +8,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "oasyce/capability/v1/types.proto";
+import "oasyce/capability/v1/genesis.proto";
 
 // Query defines the capability module's gRPC query service.
 service Query {
@@ -40,6 +41,11 @@ service Query {
   rpc Invocation(QueryInvocationRequest) returns (QueryInvocationResponse) {
     option (google.api.http).get =
         "/oasyce/capability/v1/invocation/{invocation_id}";
+  }
+
+  // CapabilityParams queries the module parameters.
+  rpc CapabilityParams(QueryCapabilityParamsRequest) returns (QueryCapabilityParamsResponse) {
+    option (google.api.http).get = "/oasyce/capability/v1/params";
   }
 }
 
@@ -101,4 +107,12 @@ message QueryInvocationRequest {
 // QueryInvocationResponse is the response type for the Query/Invocation RPC.
 message QueryInvocationResponse {
   Invocation invocation = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryCapabilityParamsRequest is the request type for the Query/CapabilityParams RPC.
+message QueryCapabilityParamsRequest {}
+
+// QueryCapabilityParamsResponse is the response type for the Query/CapabilityParams RPC.
+message QueryCapabilityParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
 }
