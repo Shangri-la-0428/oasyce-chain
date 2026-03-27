@@ -1,0 +1,70 @@
+syntax = "proto3";
+package oasyce.anchor.v1;
+
+option go_package = "github.com/oasyce/chain/x/anchor/types";
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+// Msg defines the anchor module's gRPC message service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // AnchorTrace anchors a single trace on-chain.
+  rpc AnchorTrace(MsgAnchorTrace) returns (MsgAnchorTraceResponse);
+
+  // AnchorBatch anchors multiple traces in a single transaction.
+  rpc AnchorBatch(MsgAnchorBatch) returns (MsgAnchorBatchResponse);
+}
+
+// MsgAnchorTrace anchors a single trace record on-chain.
+message MsgAnchorTrace {
+  option (cosmos.msg.v1.signer) = "signer";
+  option (amino.name) = "oasyce/anchor/MsgAnchorTrace";
+
+  // signer is the address of the account submitting the anchor.
+  string signer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // trace_id is the unique identifier of the trace.
+  bytes trace_id = 2;
+
+  // node_pubkey is the ed25519 public key of the node.
+  bytes node_pubkey = 3;
+
+  // capability is the capability identifier.
+  string capability = 4;
+
+  // outcome is the numeric outcome code.
+  uint32 outcome = 5;
+
+  // timestamp is the trace creation time (unix ms).
+  uint64 timestamp = 6;
+
+  // trace_signature is the original ed25519 signature.
+  bytes trace_signature = 7;
+}
+
+// MsgAnchorTraceResponse is the response for MsgAnchorTrace.
+message MsgAnchorTraceResponse {}
+
+// MsgAnchorBatch anchors multiple traces in a single transaction.
+message MsgAnchorBatch {
+  option (cosmos.msg.v1.signer) = "signer";
+  option (amino.name) = "oasyce/anchor/MsgAnchorBatch";
+
+  // signer is the address of the account submitting the batch.
+  string signer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // anchors is the list of traces to anchor (max 50).
+  repeated MsgAnchorTrace anchors = 2;
+}
+
+// MsgAnchorBatchResponse is the response for MsgAnchorBatch.
+message MsgAnchorBatchResponse {
+  // anchored is the number of traces successfully anchored.
+  uint32 anchored = 1;
+
+  // skipped is the number of duplicate traces skipped.
+  uint32 skipped = 2;
+}

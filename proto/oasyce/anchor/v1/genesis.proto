@@ -1,0 +1,13 @@
+syntax = "proto3";
+package oasyce.anchor.v1;
+
+option go_package = "github.com/oasyce/chain/x/anchor/types";
+
+import "gogoproto/gogo.proto";
+import "oasyce/anchor/v1/types.proto";
+
+// GenesisState defines the anchor module's genesis state.
+message GenesisState {
+  // anchors is the list of all anchor records at genesis.
+  repeated AnchorRecord anchors = 1 [(gogoproto.nullable) = false];
+}

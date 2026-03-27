@@ -1,0 +1,33 @@
+syntax = "proto3";
+package oasyce.anchor.v1;
+
+option go_package = "github.com/oasyce/chain/x/anchor/types";
+
+import "gogoproto/gogo.proto";
+
+// AnchorRecord represents a trace anchored on-chain.
+message AnchorRecord {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // trace_id is the unique identifier of the trace.
+  bytes trace_id = 1;
+
+  // node_pubkey is the ed25519 public key of the node that produced the trace.
+  bytes node_pubkey = 2;
+
+  // capability is the capability identifier used in the trace.
+  string capability = 3;
+
+  // outcome is the numeric outcome code of the trace.
+  uint32 outcome = 4;
+
+  // timestamp is the trace creation time (unix ms).
+  uint64 timestamp = 5;
+
+  // anchor_height is the block height when the trace was anchored.
+  int64 anchor_height = 6;
+
+  // trace_signature is the original ed25519 signature over the trace.
+  bytes trace_signature = 7;
+}

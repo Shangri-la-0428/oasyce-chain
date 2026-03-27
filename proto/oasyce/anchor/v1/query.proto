@@ -1,0 +1,82 @@
+syntax = "proto3";
+package oasyce.anchor.v1;
+
+option go_package = "github.com/oasyce/chain/x/anchor/types";
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/anchor/v1/types.proto";
+
+// Query defines the anchor module's gRPC query service.
+service Query {
+  // Anchor queries an anchor record by trace_id.
+  rpc Anchor(QueryAnchorRequest) returns (QueryAnchorResponse) {
+    option (google.api.http).get =
+        "/oasyce/anchor/v1/anchor/{trace_id}";
+  }
+
+  // IsAnchored checks whether a trace_id has been anchored.
+  rpc IsAnchored(QueryIsAnchoredRequest) returns (QueryIsAnchoredResponse) {
+    option (google.api.http).get =
+        "/oasyce/anchor/v1/is_anchored/{trace_id}";
+  }
+
+  // AnchorsByCapability queries anchors by capability with pagination.
+  rpc AnchorsByCapability(QueryAnchorsByCapabilityRequest)
+      returns (QueryAnchorsByCapabilityResponse) {
+    option (google.api.http).get =
+        "/oasyce/anchor/v1/by_capability/{capability}";
+  }
+
+  // AnchorsByNode queries anchors by node public key with pagination.
+  rpc AnchorsByNode(QueryAnchorsByNodeRequest)
+      returns (QueryAnchorsByNodeResponse) {
+    option (google.api.http).get =
+        "/oasyce/anchor/v1/by_node/{node_pubkey}";
+  }
+}
+
+// QueryAnchorRequest is the request type for the Query/Anchor RPC.
+message QueryAnchorRequest {
+  bytes trace_id = 1;
+}
+
+// QueryAnchorResponse is the response type for the Query/Anchor RPC.
+message QueryAnchorResponse {
+  AnchorRecord anchor = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryIsAnchoredRequest is the request type for the Query/IsAnchored RPC.
+message QueryIsAnchoredRequest {
+  bytes trace_id = 1;
+}
+
+// QueryIsAnchoredResponse is the response type for the Query/IsAnchored RPC.
+message QueryIsAnchoredResponse {
+  bool anchored = 1;
+}
+
+// QueryAnchorsByCapabilityRequest is the request type for the Query/AnchorsByCapability RPC.
+message QueryAnchorsByCapabilityRequest {
+  string capability = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAnchorsByCapabilityResponse is the response type for the Query/AnchorsByCapability RPC.
+message QueryAnchorsByCapabilityResponse {
+  repeated AnchorRecord anchors = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryAnchorsByNodeRequest is the request type for the Query/AnchorsByNode RPC.
+message QueryAnchorsByNodeRequest {
+  bytes node_pubkey = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAnchorsByNodeResponse is the response type for the Query/AnchorsByNode RPC.
+message QueryAnchorsByNodeResponse {
+  repeated AnchorRecord anchors = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
