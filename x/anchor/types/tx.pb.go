@@ -682,15 +682,15 @@ func sovTx(x uint64) (n int) {
 }
 
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
-	offset--
-	dAtA[offset] = uint8(v)
+	offset -= sovTx(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
-		offset--
+		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset
+	return base
 }
 
 // Unmarshal methods

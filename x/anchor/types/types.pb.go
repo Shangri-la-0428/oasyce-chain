@@ -206,15 +206,15 @@ func (m *AnchorRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 }
 
 func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
-	offset--
-	dAtA[offset] = uint8(v)
+	offset -= sovTypes(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
-		offset--
+		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset
+	return base
 }
 
 func (m *AnchorRecord) Size() (n int) {
