@@ -1,7 +1,7 @@
 # Oasyce L1 Chain
 
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 7 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 8 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving, anchor.
 
 ## Current Status
 
@@ -17,7 +17,7 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 7 cu
 - All custom module queries work
 
 ### CLI Commands — COMPLETE ✅
-- All 6 modules have CLI tx + query commands (`x/*/cli/`)
+- All 7 modules have CLI tx + query commands (`x/*/cli/`)
 - `oasyced tx datarights register|buy-shares|file-dispute|resolve-dispute`
 - `oasyced tx settlement create-escrow|release-escrow|refund-escrow`
 - `oasyced tx oasyce_capability register|invoke|complete-invocation|fail-invocation|claim-invocation|dispute-invocation`
@@ -29,6 +29,8 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 7 cu
 - Query: `oasyced query reputation show|leaderboard|params`
 - Query: `oasyced query work task|tasks-by-status|executor|executors|params|epoch`
 - Query: `oasyced query onboarding registration|debt|params`
+- `oasyced tx anchor anchor-trace`
+- Query: `oasyced query anchor get|is-anchored|by-capability|by-node`
 
 ### Chain Upgrades — COMPLETE ✅
 Five economic/governance upgrades implemented and tested:
@@ -57,7 +59,7 @@ Five economic/governance upgrades implemented and tested:
    - Files: `x/datarights/keeper/jury.go`
 
 ### End-to-End Verification — COMPLETE ✅
-All 7 modules verified with real transactions:
+All 8 modules verified with real transactions:
 - **datarights**: register asset, buy shares (Bancor curve), sell shares, access gating, jury voting
 - **settlement**: create escrow (LOCKED), release escrow (RELEASED, 5% fee + 2% burn)
 - **capability**: register capability, invoke (creates escrow + invocation), complete + challenge window + claim/dispute
@@ -115,6 +117,27 @@ All 7 modules verified with real transactions:
   - Provider agent auto-extracts from OpenAI-compatible upstream responses
 - 5 new tests (complete flow, dispute flow, expired window, early claim rejection, short hash rejection)
 
+### x/anchor Module (Thronglets Trace Anchoring) — COMPLETE ✅
+- **Purpose**: Optional trust layer for the Thronglets P2P network — stores trace hash + ed25519 signature on-chain as immutable proof
+- **Design**: Content-addressed records, ~110 bytes per anchor, secondary indexes by capability and node
+- **Signer verification**: `sha256(ed25519_pubkey)[:20]` must match the bech32-decoded signer address bytes
+- **Msg types**:
+  - `MsgAnchorTrace` — anchor a single trace record on-chain
+  - `MsgAnchorBatch` — anchor up to 50 traces in one tx (`MaxBatchSize = 50`); skips duplicates and validation errors, returns anchored/skipped counts
+- **Query types**:
+  - `Anchor` — get anchor record by trace_id
+  - `IsAnchored` — boolean check for trace_id existence
+  - `AnchorsByCapability` — list anchors by capability string (paginated, default limit 100)
+  - `AnchorsByNode` — list anchors by node ed25519 pubkey (paginated, default limit 100)
+- CLI tx: `oasyced tx anchor anchor-trace [trace-id-hex] [node-pubkey-hex] [capability] [outcome] [timestamp-ms] [signature-hex]`
+- CLI query: `oasyced query anchor get|is-anchored|by-capability|by-node`
+- **Store key prefixes**: `0x01` (primary: trace_id -> AnchorRecord), `0x02` (by capability index), `0x03` (by node pubkey index)
+- **No gRPC-gateway REST**: Query types use raw bytes fields that don't map to REST path params; use gRPC or CLI
+- **Genesis**: full export/import of all anchor records via `IterateAllAnchors`
+- **File descriptor generation**: `tools/gen_anchor_fd` — generates file descriptors for hand-written protobuf types
+- ConsensusVersion = 1
+- Files: `x/anchor/`, `proto/oasyce/anchor/v1/`
+
 ### AccessLevel Query Endpoint — COMPLETE ✅
 - REST: `GET /oasyce/datarights/v1/access_level/{asset_id}/{address}`
 - Returns: access_level (L0-L3 or empty), equity_bps, shares, total_shares
@@ -133,6 +156,7 @@ go test ./...   ✅ (130+ tests across 10 suites)
   x/work/keeper         — 13 tests (executor, task CRUD, commit-reveal, assignment, settlement, minority penalty)
   x/onboarding/keeper   — 4 tests (invite+claim, repay, cancel, default settlement)
   x/halving/keeper      — 13 tests (block reward boundaries, halving transitions, cumulative supply)
+  x/anchor/keeper       — (trace anchoring, batch, signer verification, duplicate handling, index queries)
 ```
 
 ### Datarights Lifecycle + Versioning + Migration — COMPLETE ✅
