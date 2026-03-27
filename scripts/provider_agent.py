@@ -279,6 +279,11 @@ def call_upstream(input_data):
 _upstream_ok = True
 _upstream_check_ts = 0
 
+# Consecutive failure tracking — auto-deactivate after MAX_CONSECUTIVE_FAILS
+_consecutive_fails = 0
+MAX_CONSECUTIVE_FAILS = int(os.environ.get("MAX_CONSECUTIVE_FAILS", "3"))
+_deactivated = False
+
 def _check_upstream_cached():
     """Return whether upstream is reachable. Cached for 60 seconds."""
     global _upstream_ok, _upstream_check_ts
@@ -369,13 +374,22 @@ class ProviderHandler(BaseHTTPRequestHandler):
         if self.path == "/health":
             # Check upstream reachability (cached 60s)
             upstream_ok = _check_upstream_cached()
-            status = "ok" if upstream_ok else "degraded"
-            code = 200 if upstream_ok else 503
+            if _deactivated:
+                status = "deactivated"
+                code = 503
+            elif upstream_ok:
+                status = "ok"
+                code = 200
+            else:
+                status = "degraded"
+                code = 503
             self._respond_json(code, {
                 "status": status,
                 "capability_id": CAPABILITY_ID,
                 "upstream": UPSTREAM_API_URL or "(not configured)",
                 "upstream_ok": upstream_ok,
+                "consecutive_fails": _consecutive_fails,
+                "deactivated": _deactivated,
             })
             return
 
@@ -437,11 +451,19 @@ class ProviderHandler(BaseHTTPRequestHandler):
         if err:
             log.error("[%s] Upstream call failed: %s", invocation_id, err)
             # Mark upstream as unhealthy so /health reflects reality
-            global _upstream_ok, _upstream_check_ts
+            global _upstream_ok, _upstream_check_ts, _consecutive_fails, _deactivated
             _upstream_ok = False
             _upstream_check_ts = time.time()
+            _consecutive_fails += 1
+            log.warning("[%s] Consecutive failures: %d/%d", invocation_id, _consecutive_fails, MAX_CONSECUTIVE_FAILS)
             # Report failure on-chain
             oasyced_tx(["oasyce_capability", "fail-invocation", invocation_id])
+            # Auto-deactivate after too many consecutive failures
+            if _consecutive_fails >= MAX_CONSECUTIVE_FAILS and not _deactivated:
+                log.error("Upstream failed %d consecutive times — auto-deactivating capability %s",
+                          _consecutive_fails, CAPABILITY_ID)
+                oasyced_tx(["oasyce_capability", "deactivate", CAPABILITY_ID])
+                _deactivated = True
             self._respond_json(502, {"error": f"upstream error: {err}"})
             return
 
@@ -460,6 +482,9 @@ class ProviderHandler(BaseHTTPRequestHandler):
             pass
 
         # Step 4: Complete invocation on-chain (starts challenge window)
+        # Upstream succeeded — reset failure counter
+        _consecutive_fails = 0
+
         log.info("[%s] Submitting complete-invocation on-chain...", invocation_id)
         complete_args = [
             "oasyce_capability", "complete-invocation",
