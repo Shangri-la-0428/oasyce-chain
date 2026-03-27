@@ -1,0 +1,31 @@
+[Unit]
+Description=Oasyce Provider Agent
+After=oasyced.service claude-proxy.service
+BindsTo=oasyced.service
+PartOf=oasyced.service
+
+[Service]
+User=oasyce
+ExecStart=/usr/bin/python3 /opt/oasyce/src/scripts/provider_agent.py
+Restart=always
+RestartSec=10
+
+# Chain config
+Environment=OASYCED_CHAIN_ID=oasyce-testnet-1
+Environment=OASYCED_KEYRING=test
+Environment=OASYCE_PROVIDER_KEY=validator
+Environment=OASYCE_CHAIN_REST=http://127.0.0.1:11317
+Environment=OASYCE_CHAIN_RPC=http://127.0.0.1:26667
+Environment=OASYCE_CAPABILITY_ID=CAP_0000000000000008
+Environment=PROVIDER_PORT=8430
+
+# Upstream: local Claude proxy
+Environment=UPSTREAM_API_URL=http://127.0.0.1:8090/v1/chat
+Environment=UPSTREAM_API_KEY=
+
+# Hardening
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

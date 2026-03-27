@@ -60,6 +60,7 @@ import threading
 import time
 import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import socketserver
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
@@ -75,7 +76,7 @@ UPSTREAM_API_KEY = os.environ.get("UPSTREAM_API_KEY", "")
 CAPABILITY_ID = os.environ.get("OASYCE_CAPABILITY_ID", "")
 PROVIDER_PORT = int(os.environ.get("PROVIDER_PORT", "8430"))
 OASYCED = os.environ.get("OASYCED_BIN", "oasyced")
-CHAIN_ID = os.environ.get("OASYCED_CHAIN_ID", "oasyce-local-1")
+CHAIN_ID = os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
 KEYRING = os.environ.get("OASYCED_KEYRING", "test")
 
 CHALLENGE_WINDOW = 100  # blocks
@@ -580,7 +581,9 @@ def main():
     t.start()
 
     # Start HTTP server
-    server = HTTPServer(("0.0.0.0", PROVIDER_PORT), ProviderHandler)
+    class ReuseServer(HTTPServer):
+        allow_reuse_address = True
+    server = ReuseServer(("0.0.0.0", PROVIDER_PORT), ProviderHandler)
     log.info("Provider agent listening on :%d", PROVIDER_PORT)
     log.info("  POST /api/v1/process   -- process invocations")
     log.info("  GET  /health           -- health check")
