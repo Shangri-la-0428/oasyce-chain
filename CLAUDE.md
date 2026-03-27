@@ -18,7 +18,7 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 8 cu
 
 ### CLI Commands — COMPLETE ✅
 - All 7 modules have CLI tx + query commands (`x/*/cli/`)
-- `oasyced tx datarights register|buy-shares|file-dispute|resolve-dispute`
+- `oasyced tx datarights register|buy-shares|file-dispute|resolve-dispute|update-service-url`
 - `oasyced tx settlement create-escrow|release-escrow|refund-escrow`
 - `oasyced tx oasyce_capability register|invoke|complete-invocation|fail-invocation|claim-invocation|dispute-invocation`
 - `oasyced tx reputation submit-feedback|report`
@@ -176,6 +176,10 @@ go test ./...   ✅ (130+ tests across 10 suites)
   - `max_migrated_shares` caps dilution; no reserve transfer (accepted dilution)
 - CLI: `initiate-shutdown`, `claim-settlement`, `create-migration`, `disable-migration`, `migrate`
 - Query: `migration-path`, `migration-paths`, `children` (asset version tree)
+- **ServiceUrl**: DataAsset `service_url` field (proto field 17), set at registration via `--service-url` flag
+  - `MsgUpdateServiceUrl` — owner-only endpoint update, empty string clears
+  - CLI: `oasyced tx datarights update-service-url [asset-id] [service-url]`
+  - Content integrity via `content_hash` (immutable), access endpoint via `service_url` (mutable)
 - Dead code cleanup: removed unused SettlementKeeper interface from datarights module
 
 ### x/onboarding Module (PoW Self-Registration) — COMPLETE ✅

@@ -222,6 +222,9 @@ func patchModule(root string, m moduleInfo) error {
 				fd.MessageType = append(fd.MessageType, def)
 			} else if method == "UpdateParams" {
 				addUpdateParamsMessages(&fd, pkg)
+			} else if method == "UpdateServiceUrl" {
+				// Messages are hand-written in tx.pb.go with RegisterType;
+				// do NOT add to file descriptor to avoid double-registration.
 			} else {
 				fmt.Printf("  WARNING: no message definition for %s\n", reqName)
 				continue
@@ -234,6 +237,8 @@ func patchModule(root string, m moduleInfo) error {
 				fd.MessageType = append(fd.MessageType, def)
 			} else if method == "UpdateParams" {
 				// Already added by addUpdateParamsMessages
+			} else if method == "UpdateServiceUrl" {
+				// Hand-written in tx.pb.go, skip
 			} else {
 				fd.MessageType = append(fd.MessageType, emptyMessage(respName))
 			}
@@ -420,6 +425,20 @@ func addUpdateParamsMessages(fd *descriptorpb.FileDescriptorProto, pkg string) {
 			},
 		},
 		emptyMessage("MsgUpdateParamsResponse"),
+	)
+}
+
+func addUpdateServiceUrlMessages(fd *descriptorpb.FileDescriptorProto) {
+	fd.MessageType = append(fd.MessageType,
+		&descriptorpb.DescriptorProto{
+			Name: proto.String("MsgUpdateServiceUrl"),
+			Field: []*descriptorpb.FieldDescriptorProto{
+				stringField("creator", 1),
+				stringField("asset_id", 2),
+				stringField("service_url", 3),
+			},
+		},
+		emptyMessage("MsgUpdateServiceUrlResponse"),
 	)
 }
 

@@ -123,6 +123,10 @@ message DataAsset {
 
   // migration_enabled indicates whether shareholders of the parent can migrate shares.
   bool migration_enabled = 16;
+
+  // service_url is the endpoint where buyers can access the data after purchasing shares.
+  // Mutable by the owner. Content integrity is verified by content_hash, not service_url.
+  string service_url = 17;
 }
 
 // MigrationPath represents a migration path between two asset versions.

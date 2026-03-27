@@ -195,7 +195,7 @@ curl http://<node>:1317/oasyce/datarights/v1/data_assets
 
 Response:
 ```json
-{"data_assets":[{"id":"DA-1","name":"NLP Training Set v2","owner":"oasyce1...","data_hash":"abcd...","total_shares":"1000","status":"ACTIVE","tags":["nlp","training"]}]}
+{"data_assets":[{"id":"DA-1","name":"NLP Training Set v2","owner":"oasyce1...","data_hash":"abcd...","total_shares":"1000","status":"ACTIVE","tags":["nlp","training"],"service_url":"https://api.example.com/data/v1"}]}
 ```
 
 ### 4b. Buy shares (Bancor bonding curve — price rises with demand)
@@ -227,7 +227,17 @@ Access tiers (based on your equity percentage):
 | L2 | >= 5% | Full read |
 | L3 | >= 10% | Full data delivery |
 
-### 4d. Sell shares back (inverse curve)
+### 4d. Access data via service_url
+
+After buying shares, the asset's `service_url` field tells you where to access the data:
+
+```bash
+curl http://<node>:1317/oasyce/datarights/v1/data_asset/DA-1
+```
+
+The response includes `service_url` — the endpoint where the owner serves the data. Off-chain gateways check your on-chain access level before delivering content.
+
+### 4e. Sell shares back (inverse curve)
 
 CLI:
 ```bash
@@ -236,7 +246,7 @@ oasyced tx datarights sell-shares DA-1 25 --from buyer1 --chain-id oasyce-testne
 
 Payout: `reserve * (1 - (1 - tokens/supply)^2)`, capped at 95% reserve. 5% protocol fee.
 
-### 4e. Query shares held
+### 4f. Query shares held
 
 ```bash
 curl http://<node>:1317/oasyce/datarights/v1/shares/DA-1
@@ -384,9 +394,10 @@ Score range 0-500. Verified feedback weighted 4x. 30-day half-life decay.
 | capability | FailInvocation | Report failure, refund escrow |
 | capability | ClaimInvocation | Claim payment after challenge window |
 | capability | DisputeInvocation | Dispute within challenge window |
-| datarights | RegisterDataAsset | Register data with bonding curve |
+| datarights | RegisterDataAsset | Register data with bonding curve (supports `--service-url`) |
 | datarights | BuyShares | Purchase data access shares |
 | datarights | SellShares | Sell shares back to curve |
+| datarights | UpdateServiceUrl | Update data access endpoint (owner only) |
 | datarights | FileDispute | Dispute data quality |
 | datarights | ResolveDispute | Jury resolves dispute |
 | datarights | InitiateShutdown | Begin asset retirement (7-day cooldown) |

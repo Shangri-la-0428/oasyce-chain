@@ -140,3 +140,23 @@ func (msg MsgMigrate) ValidateBasic() error {
 	}
 	return nil
 }
+
+// ValidateBasic for MsgUpdateServiceUrl.
+func (msg MsgUpdateServiceUrl) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+		return ErrInvalidAddress.Wrapf("invalid creator: %s", err)
+	}
+	if msg.AssetId == "" {
+		return ErrInvalidParams.Wrap("asset_id must not be empty")
+	}
+	// service_url can be empty (to clear it)
+	return nil
+}
+
+// GetSigners returns the expected signers for MsgUpdateServiceUrl.
+// Required because Descriptor() returns nil — the SDK cannot extract the signer
+// from the proto annotation without a valid file descriptor reference.
+func (msg *MsgUpdateServiceUrl) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Creator)
+	return []sdk.AccAddress{addr}
+}

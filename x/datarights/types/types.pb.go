@@ -211,6 +211,8 @@ type DataAsset struct {
 	Version uint32 `protobuf:"varint,15,opt,name=version,proto3" json:"version,omitempty"`
 	// migration_enabled indicates whether shareholders of the parent can migrate shares.
 	MigrationEnabled bool `protobuf:"varint,16,opt,name=migration_enabled,json=migrationEnabled,proto3" json:"migration_enabled,omitempty"`
+	// service_url is the endpoint where buyers can access the data after purchasing shares.
+	ServiceUrl string `protobuf:"bytes,17,opt,name=service_url,json=serviceUrl,proto3" json:"service_url,omitempty"`
 }
 
 func (m *DataAsset) Reset()         { *m = DataAsset{} }

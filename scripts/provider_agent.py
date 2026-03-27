@@ -206,7 +206,7 @@ def verify_invocation_on_chain(inv_id, capability_id):
         inv = inv_data["invocation"]
         if inv.get("capability_id") != capability_id:
             return False, f"invocation belongs to capability {inv.get('capability_id')}, not {capability_id}"
-        if inv.get("status") != "PENDING":
+        if "PENDING" not in inv.get("status", ""):
             return False, f"invocation status is {inv.get('status')}, expected PENDING"
         # Verify we are the provider
         provider_addr = get_provider_address()
@@ -275,6 +275,39 @@ def call_upstream(input_data):
 # Background claim scheduler
 # ---------------------------------------------------------------------------
 
+# Upstream health cache (avoid hammering upstream on every /health)
+_upstream_ok = True
+_upstream_check_ts = 0
+
+def _check_upstream_cached():
+    """Return whether upstream is reachable. Cached for 60 seconds."""
+    global _upstream_ok, _upstream_check_ts
+    now = time.time()
+    if now - _upstream_check_ts < 60:
+        return _upstream_ok
+    _upstream_check_ts = now
+    if not UPSTREAM_API_URL:
+        _upstream_ok = False
+        return False
+    try:
+        req = Request(UPSTREAM_API_URL, method="HEAD")
+        with urlopen(req, timeout=5) as resp:
+            _upstream_ok = True
+    except Exception:
+        # HEAD might not be supported, try a minimal POST
+        try:
+            body = json.dumps({"prompt": ""}).encode()
+            req = Request(UPSTREAM_API_URL, data=body,
+                          headers={"Content-Type": "application/json"}, method="POST")
+            with urlopen(req, timeout=10) as resp:
+                _upstream_ok = True
+        except HTTPError as e:
+            # 4xx means upstream is reachable, just rejected our test
+            _upstream_ok = e.code < 500
+        except Exception:
+            _upstream_ok = False
+    return _upstream_ok
+
 # Track pending claims: {invocation_id: completed_height}
 _pending_claims = {}
 _pending_lock = threading.Lock()
@@ -334,10 +367,15 @@ class ProviderHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
-            self._respond_json(200, {
-                "status": "ok",
+            # Check upstream reachability (cached 60s)
+            upstream_ok = _check_upstream_cached()
+            status = "ok" if upstream_ok else "degraded"
+            code = 200 if upstream_ok else 503
+            self._respond_json(code, {
+                "status": status,
                 "capability_id": CAPABILITY_ID,
                 "upstream": UPSTREAM_API_URL or "(not configured)",
+                "upstream_ok": upstream_ok,
             })
             return
 
@@ -398,6 +436,10 @@ class ProviderHandler(BaseHTTPRequestHandler):
         upstream_resp, err = call_upstream(input_data)
         if err:
             log.error("[%s] Upstream call failed: %s", invocation_id, err)
+            # Mark upstream as unhealthy so /health reflects reality
+            global _upstream_ok, _upstream_check_ts
+            _upstream_ok = False
+            _upstream_check_ts = time.time()
             # Report failure on-chain
             oasyced_tx(["oasyce_capability", "fail-invocation", invocation_id])
             self._respond_json(502, {"error": f"upstream error: {err}"})

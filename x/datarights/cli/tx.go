@@ -38,6 +38,7 @@ func GetTxCmd() *cobra.Command {
 		CmdCreateMigrationPath(),
 		CmdDisableMigration(),
 		CmdMigrate(),
+		CmdUpdateServiceUrl(),
 		CmdUpdateParams(),
 	)
 	return cmd
@@ -82,6 +83,8 @@ func CmdRegisterDataAsset() *cobra.Command {
 
 			parentAssetId, _ := cmd.Flags().GetString("parent")
 
+			serviceUrl, _ := cmd.Flags().GetString("service-url")
+
 			msg := &types.MsgRegisterDataAsset{
 				Creator:       clientCtx.GetFromAddress().String(),
 				Name:          name,
@@ -90,6 +93,7 @@ func CmdRegisterDataAsset() *cobra.Command {
 				Description:   description,
 				Tags:          tags,
 				ParentAssetId: parentAssetId,
+				ServiceUrl:    serviceUrl,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -100,6 +104,7 @@ func CmdRegisterDataAsset() *cobra.Command {
 	cmd.Flags().String("rights-type", "original", "Rights type: original|co_creation|licensed|collection")
 	cmd.Flags().String("tags", "", "Comma-separated tags")
 	cmd.Flags().String("parent", "", "Parent asset ID (for versioned assets)")
+	cmd.Flags().String("service-url", "", "Data access endpoint URL")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -401,6 +406,32 @@ func CmdMigrate() *cobra.Command {
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdUpdateServiceUrl creates a transaction to update the data access endpoint.
+func CmdUpdateServiceUrl() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-service-url [asset-id] [service-url]",
+		Short: "Update data access endpoint for an asset (owner only)",
+		Long:  "Update the service_url where buyers can access data after purchasing shares. Pass empty string to clear.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgUpdateServiceUrl{
+				Creator:    clientCtx.GetFromAddress().String(),
+				AssetId:    args[0],
+				ServiceUrl: args[1],
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

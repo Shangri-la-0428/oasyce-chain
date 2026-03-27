@@ -20,6 +20,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateMigrationPath{}, "oasyce/datarights/MsgCreateMigrationPath", nil)
 	cdc.RegisterConcrete(&MsgDisableMigration{}, "oasyce/datarights/MsgDisableMigration", nil)
 	cdc.RegisterConcrete(&MsgMigrate{}, "oasyce/datarights/MsgMigrate", nil)
+	cdc.RegisterConcrete(&MsgUpdateServiceUrl{}, "oasyce/datarights/MsgUpdateServiceUrl", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "oasyce/datarights/MsgUpdateParams", nil)
 }
 
@@ -37,6 +38,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgCreateMigrationPath{},
 		&MsgDisableMigration{},
 		&MsgMigrate{},
+		&MsgUpdateServiceUrl{},
 		&MsgUpdateParams{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

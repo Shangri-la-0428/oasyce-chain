@@ -44,6 +44,20 @@ if [ "$FAUCET_ACTIVE" != "active" ]; then
     fi
 fi
 
+# 0b. Self-heal provider + claude-proxy
+for SVC in oasyce-provider claude-proxy; do
+    if [ "$(systemctl is-active $SVC 2>/dev/null)" != "active" ]; then
+        echo "$(date): $SVC down, restarting..." >> /var/log/oasyce-alert.log
+        systemctl restart $SVC
+        sleep 2
+        if [ "$(systemctl is-active $SVC)" = "active" ]; then
+            send_alert "$SVC was DOWN — auto-restarted successfully"
+        else
+            send_alert "$SVC DOWN — auto-restart FAILED"
+        fi
+    fi
+done
+
 # 1. Check chain health
 HEALTH=$(curl -s --max-time 5 "$API/health" 2>/dev/null)
 STATUS=$(echo "$HEALTH" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("status",""))' 2>/dev/null)
@@ -73,3 +87,49 @@ if [ -n "$BAL" ] && [ "$BAL" -lt "$FAUCET_MIN_UOAS" ] 2>/dev/null; then
     OAS=$(python3 -c "print($BAL / 1000000)")
     send_alert "Faucet LOW — only ${OAS} OAS remaining"
 fi
+
+# 4. Economic metrics — provider earnings + settlement rate
+PROVIDER_ADDR="oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en4gyv5"
+ECON=$(curl -s --max-time 5 "$API/oasyce/capability/v1/earnings/$PROVIDER_ADDR" 2>/dev/null)
+TOTAL_CALLS=$(echo "$ECON" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("total_calls","0"))' 2>/dev/null)
+TOTAL_EARNED=$(echo "$ECON" | python3 -c 'import sys,json; e=json.load(sys.stdin).get("total_earned",[]); print(e[0]["amount"] if e else "0")' 2>/dev/null)
+
+# Track call growth — alert if zero new calls in 2 hours (4 checks)
+PREV_CALLS=$(cat "${STATE_FILE}_calls" 2>/dev/null || echo 0)
+STALE_COUNT=$(cat "${STATE_FILE}_stale" 2>/dev/null || echo 0)
+if [ -n "$TOTAL_CALLS" ] && [ "$TOTAL_CALLS" -gt 0 ] 2>/dev/null; then
+    if [ "$TOTAL_CALLS" -le "$PREV_CALLS" ] 2>/dev/null; then
+        STALE_COUNT=$((STALE_COUNT + 1))
+        if [ "$STALE_COUNT" -ge 4 ]; then
+            send_alert "Economy STALE — no new invocations in 2+ hours (total_calls=$TOTAL_CALLS)"
+            STALE_COUNT=0
+        fi
+    else
+        STALE_COUNT=0
+    fi
+    echo "$TOTAL_CALLS" > "${STATE_FILE}_calls"
+    echo "$STALE_COUNT" > "${STATE_FILE}_stale"
+fi
+
+# 5. Consumer agent liveness — alert if last_run > 90 min ago
+CONSUMER_STATE="/tmp/consumer_agent_state.json"
+if [ -f "$CONSUMER_STATE" ]; then
+    LAST_RUN=$(python3 -c 'import sys,json; print(json.load(open("'"$CONSUMER_STATE"'")).get("last_run",""))' 2>/dev/null)
+    if [ -n "$LAST_RUN" ]; then
+        AGE_MIN=$(python3 -c 'from datetime import datetime; d=datetime.strptime("'"$LAST_RUN"'","%Y-%m-%d %H:%M:%S"); print(int((datetime.now()-d).total_seconds()/60))' 2>/dev/null)
+        if [ -n "$AGE_MIN" ] && [ "$AGE_MIN" -gt 90 ] 2>/dev/null; then
+            send_alert "Consumer agent STALE — last run ${AGE_MIN}min ago (expected every 30min)"
+        fi
+    fi
+fi
+
+# 6. Provider HTTP health
+PROV_HEALTH=$(curl -s --max-time 5 "http://127.0.0.1:8430/health" 2>/dev/null)
+PROV_OK=$(echo "$PROV_HEALTH" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("status",""))' 2>/dev/null)
+if [ "$PROV_OK" != "ok" ]; then
+    send_alert "Provider agent HTTP health FAILED (systemd may be active but HTTP unresponsive)"
+fi
+
+# 7. Log economic summary (no alert, just for dashboarding)
+CONSUMER_INV=$(python3 -c 'import json; d=json.load(open("'"$CONSUMER_STATE"'")); print(d.get("total_invocations",0), d.get("total_settlements",0))' 2>/dev/null)
+echo "$(date '+%Y-%m-%d %H:%M:%S') height=$HEIGHT calls=$TOTAL_CALLS earned=${TOTAL_EARNED}uoas consumer=$CONSUMER_INV" >> /var/log/oasyce-econ.log

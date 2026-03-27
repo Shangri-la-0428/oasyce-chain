@@ -115,6 +115,13 @@ func (m msgServer) Migrate(ctx context.Context, msg *types.MsgMigrate) (*types.M
 	return &types.MsgMigrateResponse{SharesReceived: sharesReceived}, nil
 }
 
+func (m msgServer) UpdateServiceUrl(ctx context.Context, msg *types.MsgUpdateServiceUrl) (*types.MsgUpdateServiceUrlResponse, error) {
+	if err := m.Keeper.UpdateServiceUrl(ctx, *msg); err != nil {
+		return nil, err
+	}
+	return &types.MsgUpdateServiceUrlResponse{}, nil
+}
+
 // UpdateParams handles MsgUpdateParams — governance-gated parameter updates.
 func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

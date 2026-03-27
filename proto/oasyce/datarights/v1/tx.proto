@@ -48,6 +48,9 @@ service Msg {
 
   // Migrate converts shares from source asset to target asset via migration path.
   rpc Migrate(MsgMigrate) returns (MsgMigrateResponse);
+
+  // UpdateServiceUrl updates the data access endpoint for an asset (owner only).
+  rpc UpdateServiceUrl(MsgUpdateServiceUrl) returns (MsgUpdateServiceUrlResponse);
 }
 
 // MsgRegisterDataAsset registers a new data asset on-chain.
@@ -78,6 +81,9 @@ message MsgRegisterDataAsset {
 
   // parent_asset_id is the ID of the parent asset (empty for original v1 assets).
   string parent_asset_id = 8;
+
+  // service_url is the endpoint where buyers can access the data (optional).
+  string service_url = 9;
 }
 
 // MsgRegisterDataAssetResponse is the response for MsgRegisterDataAsset.
@@ -334,3 +340,21 @@ message MsgMigrateResponse {
     (gogoproto.nullable) = false
   ];
 }
+
+// MsgUpdateServiceUrl updates the data access endpoint for an asset.
+message MsgUpdateServiceUrl {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "oasyce/datarights/MsgUpdateServiceUrl";
+
+  // creator is the address of the asset owner.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // asset_id is the ID of the data asset.
+  string asset_id = 2;
+
+  // service_url is the new data access endpoint.
+  string service_url = 3;
+}
+
+// MsgUpdateServiceUrlResponse is the response for MsgUpdateServiceUrl.
+message MsgUpdateServiceUrlResponse {}

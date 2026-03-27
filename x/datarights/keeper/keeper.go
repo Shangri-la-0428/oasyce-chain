@@ -437,8 +437,10 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 		TotalShares:   math.ZeroInt(),
 		CreatedAt:     sdkCtx.BlockTime(),
 		Status:        types.ASSET_STATUS_ACTIVE,
-		Version:       version,
-		ParentAssetId: parentAssetId,
+		Version:        version,
+		ParentAssetId:  parentAssetId,
+		ServiceUrl:     msg.ServiceUrl,
+		MigrationEnabled: false,
 	}
 
 	if err := k.SetAsset(sdkCtx, asset); err != nil {
@@ -455,6 +457,28 @@ func (k Keeper) RegisterDataAsset(ctx context.Context, msg types.MsgRegisterData
 	))
 
 	return assetID, nil
+}
+
+// UpdateServiceUrl updates the data access endpoint for an asset (owner only).
+func (k Keeper) UpdateServiceUrl(ctx context.Context, msg types.MsgUpdateServiceUrl) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	asset, found := k.GetAsset(sdkCtx, msg.AssetId)
+	if !found {
+		return types.ErrAssetNotFound.Wrapf("asset %s not found", msg.AssetId)
+	}
+	if asset.Owner != msg.Creator {
+		return types.ErrUnauthorized.Wrap("only asset owner can update service_url")
+	}
+	asset.ServiceUrl = msg.ServiceUrl
+	if err := k.SetAsset(sdkCtx, asset); err != nil {
+		return err
+	}
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		"service_url_updated",
+		sdk.NewAttribute("asset_id", msg.AssetId),
+		sdk.NewAttribute("service_url", msg.ServiceUrl),
+	))
+	return nil
 }
 
 // BuyShares purchases shares of a data asset via the Bancor bonding curve.

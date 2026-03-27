@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.3] - 2026-03-28
+
+### Added
+
+- **DataAsset `service_url` field** — Buyers can now discover where to access data after purchasing shares. Set at registration via `--service-url` flag, updatable via `update-service-url` command (owner only). Content integrity still guaranteed by `content_hash`.
+- **`MsgUpdateServiceUrl`** — New transaction type for updating data access endpoints. Owner-only, empty string clears the URL.
+- **Consumer Agent** — `scripts/consumer_agent.py` autonomous consumer for cron-based economic cycles (faucet → discover → invoke → feedback)
+- **Provider health degradation** — Provider agent returns HTTP 503 "degraded" when upstream is down; consumer pre-checks and skips cycle
+- **Economic metrics in healthcheck** — Provider earnings tracking, call growth stall detection, consumer liveness monitoring, economic summary log
+
+### Fixed
+
+- **GetSigners for MsgUpdateServiceUrl** — Added explicit `GetSigners()` method since `Descriptor()` returns nil; without it, TX signer extraction would fail on live chain
+- **Consumer state PermissionError** — Fallback delete+recreate when cron user differs from file owner
+- **Gas auto sequence mismatch** — Changed `--gas auto` to fixed `--gas 200000` to avoid account sequence errors (code 19)
+
+---
+
 ## [0.5.1] - 2026-03-26
 
 ### Added
