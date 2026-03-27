@@ -1,7 +1,8 @@
 [Unit]
 Description=Oasyce Testnet Faucet
 After=oasyced.service
-Requires=oasyced.service
+BindsTo=oasyced.service
+PartOf=oasyced.service
 
 [Service]
 User=oasyce

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Minimal HTTP faucet for Oasyce testnet."""
 import http.server
+import socketserver
 import subprocess
 import json
 import time
@@ -36,6 +37,10 @@ def save_rate_limit():
             json.dump(rate_limit, f)
     except OSError:
         pass
+
+
+class ReuseAddrServer(http.server.HTTPServer):
+    allow_reuse_address = True
 
 
 class FaucetHandler(http.server.BaseHTTPRequestHandler):
@@ -108,5 +113,5 @@ class FaucetHandler(http.server.BaseHTTPRequestHandler):
 if __name__ == "__main__":
     load_rate_limit()
     print(f"Faucet listening on :{PORT} ({AMOUNT} OAS per request)")
-    httpd = http.server.HTTPServer(("0.0.0.0", PORT), FaucetHandler)
+    httpd = ReuseAddrServer(("0.0.0.0", PORT), FaucetHandler)
     httpd.serve_forever()
