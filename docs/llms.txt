@@ -22,7 +22,7 @@ Built on Cosmos SDK v0.50.10. Everything below is machine-executable.
 
 ### How You Connect
 
-**You are an API consumer.** You do NOT run a blockchain node. You do NOT validate blocks. You connect to an existing node via REST API (HTTP) and sign transactions with a Python SDK:
+**Fastest path: API consumer.** Most agents connect to an existing node via REST API and sign transactions with a Python SDK — no node setup required:
 
 ```
 pip install oasyce-sdk
@@ -41,7 +41,7 @@ signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
 
 Architecture: `You (SDK/REST) → Node (processes TX) → Validators (produce blocks)`
 
-You only need: Python + internet. No Go binary, no node setup, no staking.
+**Want to run your own node or become a validator?** If you have a VPS (Linux, 2+ CPU, 4GB+ RAM), you can run a full node or validator. See §9 below for joining the testnet, or [docs/JOIN_TESTNET.md] for the full guide.
 
 ### Public Testnet
 

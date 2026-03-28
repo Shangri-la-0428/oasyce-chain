@@ -61,14 +61,29 @@ Oasyce Testnet-1 现已上线。
 | RPC | `http://47.93.32.88:26657` |
 | REST | `http://47.93.32.88:1317` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
-| Binary 下载 | [v0.5.0 Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0) |
+| Binary 下载 | [v0.5.2 Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.2) |
+| Python SDK | `pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
 
+**最快路径（使用经济系统）：**
 ```bash
-# 一键加入（Docker）
+pip install oasyce-sdk
+```
+```python
+from oasyce_sdk.crypto import Wallet, NativeSigner
+from oasyce_sdk import OasyceClient
+
+wallet = Wallet.create()
+client = OasyceClient("http://47.93.32.88:1317")
+signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
+# 注册、调用、买卖、评价 — 纯 Python，零 Go 依赖
+```
+
+**运行节点/验证者（需要 VPS）：**
+```bash
+# Docker 一键加入
 bash scripts/join_testnet.sh
 
-# 或下载 binary 手动加入
-# 详见 docs/VALIDATOR_SETUP.md
+# 或手动加入 → docs/VALIDATOR_SETUP.md
 ```
 
 ---

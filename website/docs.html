@@ -116,6 +116,12 @@ pre{background:var(--code-bg);border-radius:0 0 6px 6px;padding:16px;overflow-x:
   <a href="#onb-debt">Debt</a>
   <a href="#onb-params">Params</a>
 
+  <h2>Anchor</h2>
+  <a href="#anchor-get">Get Anchor</a>
+  <a href="#anchor-check">Is Anchored</a>
+  <a href="#anchor-cap">By Capability</a>
+  <a href="#anchor-node">By Node</a>
+
   <h2>Bank</h2>
   <a href="#bank-bal">Balances</a>
   <a href="#bank-block">Latest Block</a>
@@ -623,6 +629,36 @@ result = client.broadcast_tx(signed_tx)</pre></div>
     input_data={"text": "hello world"}
 )</pre></div>
 
+</section>
+
+<!-- ── Anchor (Thronglets Trace Anchoring) ── -->
+<section id="anchor-get">
+<h2>Anchor</h2>
+<p>On-chain trace anchoring for the Thronglets P2P shared memory network. Content-addressed records with ed25519 signatures.</p>
+
+<h3 id="anchor-get">Get Anchor</h3>
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/anchor/v1/anchor/{trace_id}</span></div>
+  <div class="endpoint-desc">Get an anchor record by trace ID (hex-encoded).</div>
+</div>
+
+<h3 id="anchor-check">Is Anchored</h3>
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/anchor/v1/is_anchored/{trace_id}</span></div>
+  <div class="endpoint-desc">Boolean check — returns whether a trace ID has been anchored on-chain.</div>
+</div>
+
+<h3 id="anchor-cap">By Capability</h3>
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/anchor/v1/by_capability/{capability}</span></div>
+  <div class="endpoint-desc">List anchor records by capability string. Paginated (default limit 100).</div>
+</div>
+
+<h3 id="anchor-node">By Node</h3>
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/anchor/v1/by_node/{node_pubkey}</span></div>
+  <div class="endpoint-desc">List anchor records by node ed25519 public key (hex). Paginated.</div>
+</div>
 </section>
 
 <div style="margin-top:80px;padding-top:24px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)">

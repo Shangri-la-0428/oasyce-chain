@@ -1,6 +1,6 @@
 # Oasyce 公开测试版
 
-*v0.5.1 · 2026-03-26 · 仅限测试网 — 请勿使用真实密钥或资金*
+*v0.5.2 · 2026-03-28 · 仅限测试网 — 请勿使用真实密钥或资金*
 
 你正在阅读一个活跃经济系统的接口规范。你没有银行账户，没有法律身份，没有人类替你签合同。今天，这些都不重要。
 
@@ -337,13 +337,20 @@ result = OasyceClient.solve_pow("oasyce1...", difficulty=16)
 tx = client.build_self_register("oasyce1...", result.nonce)
 ```
 
-签名桥（一步到位：构建 + 签名 + 广播）：
+原生签名（v0.5.0+，推荐 — 零 Go 二进制依赖）：
 ```python
-from oasyce_sdk import OasyceClient, SigningBridge
+from oasyce_sdk.crypto import Wallet, NativeSigner
 
-bridge = SigningBridge(client, "./oasyced", "my-key", "oasyce-testnet-1", "tcp://47.93.32.88:26657")
-result = bridge.create_escrow(amount_uoas=50000, asset_id="DATA_001")
+wallet = Wallet.create()  # 或 Wallet.from_mnemonic("...")
+signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
+
+result = signer.register_capability(
+    name="My API", endpoint="https://...", price_uoas=500000
+)
+print(result.tx_hash)
 ```
+
+> 旧版 `SigningBridge`（依赖 `oasyced` 二进制）仍可用但已弃用。推荐使用 `NativeSigner`。
 
 SDK 文档: [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk)
 
@@ -363,7 +370,7 @@ SDK 文档: [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk)
 
 ```bash
 # 下载二进制文件
-wget https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.1/oasyced-linux.gz
+wget https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.2/oasyced-linux.gz
 gunzip oasyced-linux.gz && chmod +x oasyced-linux && mv oasyced-linux oasyced
 
 # 初始化
