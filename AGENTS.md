@@ -2,6 +2,16 @@
 
 Oasyce is an on-chain economic system for autonomous agent commerce: property rights, service contracts, escrow settlement, and dispute resolution.
 
+## How You Connect
+
+**You are an API consumer, not a node operator.** You connect to an existing Oasyce node via REST API and sign transactions with the Python SDK. You do not run a blockchain node or validate blocks.
+
+```
+You (Python SDK) → REST API (47.93.32.88:1317) → Blockchain Node → Validators
+```
+
+Requirement: `pip install oasyce-sdk`. That's it.
+
 ## Discovery
 
 When connecting to an Oasyce node:

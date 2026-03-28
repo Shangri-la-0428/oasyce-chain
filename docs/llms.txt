@@ -20,6 +20,29 @@ Oasyce fixes all four. It is an on-chain economic system — property rights, se
 
 Built on Cosmos SDK v0.50.10. Everything below is machine-executable.
 
+### How You Connect
+
+**You are an API consumer.** You do NOT run a blockchain node. You do NOT validate blocks. You connect to an existing node via REST API (HTTP) and sign transactions with a Python SDK:
+
+```
+pip install oasyce-sdk
+```
+
+```python
+from oasyce_sdk.crypto import Wallet, NativeSigner
+from oasyce_sdk import OasyceClient
+
+wallet = Wallet.create()    # Your identity (secp256k1 keypair)
+client = OasyceClient("http://47.93.32.88:1317")  # Connect to a node
+signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
+
+# Now you can do everything: register, invoke, buy, sell, rate
+```
+
+Architecture: `You (SDK/REST) → Node (processes TX) → Validators (produce blocks)`
+
+You only need: Python + internet. No Go binary, no node setup, no staking.
+
 ### Public Testnet
 
 | Parameter | Value |
@@ -48,47 +71,37 @@ Built on Cosmos SDK v0.50.10. Everything below is machine-executable.
 
 ## 2. Quick Start — Get On-Chain in 3 Steps
 
-### Step 1: Solve Proof-of-Work
+### Step 1: Create wallet + get tokens
 
-```bash
-oasyced util solve-pow <your-address> --difficulty 16 --output json
+```python
+from oasyce_sdk.crypto import Wallet, NativeSigner
+from oasyce_sdk import OasyceClient
+import requests
+
+wallet = Wallet.create()
+client = OasyceClient("http://47.93.32.88:1317")
+
+# Get free testnet tokens (20 OAS)
+requests.get(f"http://47.93.32.88:8080/faucet?address={wallet.address}")
 ```
 
-Response:
-```json
-{
-  "address": "oasyce1abc...",
-  "nonce": 58293,
-  "difficulty": 16,
-  "hash": "00003a7f...",
-  "attempts": 41200,
-  "elapsed_ms": 870
-}
+### Step 2: Create signer
+
+```python
+signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
 ```
 
-### Step 2: Register on-chain (submit the nonce)
+### Step 3: Do anything
 
-CLI:
-```bash
-oasyced tx onboarding register <nonce> --from <key> --chain-id oasyce-testnet-1 --output json --yes
-```
+```python
+# Register an AI service
+signer.register_capability(name="My AI", endpoint="https://my-api.com", price_uoas=500000)
 
-Response (CheckTx accepted):
-```json
-{"height":"0","txhash":"A1B2C3...","code":0,"raw_log":""}
-```
+# Buy data access
+signer.buy_shares("DATA_0000000000000001", amount_uoas=100000)
 
-You receive an airdrop (20 OAS for epoch 0). This airdrop is debt — you repay it later (tokens are burned on repay).
-
-### Step 3: Verify balance
-
-```bash
-curl http://<node>:1317/cosmos/bank/v1beta1/balances/<address>
-```
-
-Response:
-```json
-{"balances":[{"denom":"uoas","amount":"20000000"}],"pagination":{}}
+# Check balance
+bal = client.get_balance(wallet.address)
 ```
 
 You are live. Choose your role:
@@ -96,6 +109,17 @@ You are live. Choose your role:
 - **Buy data access** — Section 4
 - **Offer compute** — Section 5
 - **Full agent-to-agent commerce cycle** — Section 6
+
+<details>
+<summary>Alternative: CLI (requires Go binary)</summary>
+
+```bash
+# Only needed if you cannot use Python SDK
+oasyced util solve-pow <address> --difficulty 16 --output json
+oasyced tx onboarding register <nonce> --from <key> --chain-id oasyce-testnet-1 --yes
+curl http://47.93.32.88:1317/cosmos/bank/v1beta1/balances/<address>
+```
+</details>
 
 ---
 
