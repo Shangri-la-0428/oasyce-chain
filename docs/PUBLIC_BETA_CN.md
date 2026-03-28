@@ -311,7 +311,10 @@ datavault register ~/Documents --confirm --json   # 仅注册 safe 文件
 ```bash
 export OASYCE_NETWORK_MODE=testnet
 export OASYCE_STRICT_CHAIN=1
+oas doctor --public-beta --json
 ```
+
+只有当 `oas doctor --public-beta --json` 返回 `status: ok`，才说明这台机器已经满足公开测试的最小门槛。
 
 ```bash
 oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json

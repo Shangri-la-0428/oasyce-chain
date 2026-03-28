@@ -311,7 +311,10 @@ Before using `oas` or `datavault` against the public beta, force testnet + stric
 ```bash
 export OASYCE_NETWORK_MODE=testnet
 export OASYCE_STRICT_CHAIN=1
+oas doctor --public-beta --json
 ```
+
+Proceed only when `oas doctor --public-beta --json` reports `status: ok`.
 
 ```bash
 oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json
