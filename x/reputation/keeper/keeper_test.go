@@ -336,6 +336,7 @@ func TestQueryReputationDefaultZero(t *testing.T) {
 	}
 	if resp == nil {
 		t.Fatal("expected non-nil response")
+		return
 	}
 	if resp.Reputation.Address != unknownAddr {
 		t.Fatalf("expected address %s, got %s", unknownAddr, resp.Reputation.Address)

@@ -428,20 +428,6 @@ func addUpdateParamsMessages(fd *descriptorpb.FileDescriptorProto, pkg string) {
 	)
 }
 
-func addUpdateServiceUrlMessages(fd *descriptorpb.FileDescriptorProto) {
-	fd.MessageType = append(fd.MessageType,
-		&descriptorpb.DescriptorProto{
-			Name: proto.String("MsgUpdateServiceUrl"),
-			Field: []*descriptorpb.FieldDescriptorProto{
-				stringField("creator", 1),
-				stringField("asset_id", 2),
-				stringField("service_url", 3),
-			},
-		},
-		emptyMessage("MsgUpdateServiceUrlResponse"),
-	)
-}
-
 // ensureSignerOptions adds cosmos.msg.v1.signer option to Msg messages that lack it.
 // Extension field 11110000 = cosmos.msg.v1.signer (string, LDel)
 // Extension field 11110001 = amino type URL (string, LDel)
