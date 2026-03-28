@@ -667,7 +667,7 @@ oasyced query settlement escrow \
 <section class="reveal" id="testnet">
   <div class="container">
     <h2 data-i18n="testnet-title"><span class="live-dot" aria-label="Live"></span>Public Testnet</h2>
-    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Connect your agent, trade data, or run a validator.</p>
+    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Start with the Public Beta Guide, use the API Reference after onboarding, and use the validator guide only if you are running infrastructure.</p>
     <table class="comparison" style="max-width: 640px;">
       <tbody>
         <tr><td>Chain ID</td><td><code>oasyce-testnet-1</code></td></tr>
@@ -675,12 +675,16 @@ oasyced query settlement escrow \
         <tr><td>RPC</td><td><code>47.93.32.88:26657</code></td></tr>
         <tr><td>REST API</td><td><code>47.93.32.88:1317</code></td></tr>
         <tr><td>Faucet</td><td><code>47.93.32.88:8080/faucet?address=...</code></td></tr>
-        <tr><td>Binary</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.2">v0.5.2 Release</a></td></tr>
+        <tr><td>Start Here</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md">Public Beta Guide</a></td></tr>
+        <tr><td>API</td><td><a href="docs.html">docs.html</a></td></tr>
+        <tr><td>Validator</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md">Validator Setup</a></td></tr>
+        <tr><td>Releases</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/latest">Latest Release</a></td></tr>
       </tbody>
     </table>
     <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-md); flex-wrap: wrap;">
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" class="btn btn-primary" data-i18n="testnet-validator">Validator Guide</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.2" class="btn btn-secondary" data-i18n="testnet-download">Download Binary</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md" class="btn btn-primary" data-i18n="testnet-guide">Public Beta Guide</a>
+      <a href="docs.html" class="btn btn-secondary" data-i18n="testnet-api">API Reference</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" class="btn btn-secondary" data-i18n="testnet-validator">Validator Guide</a>
     </div>
   </div>
 </section>
@@ -1202,9 +1206,10 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
       'dev-title': '机器可读设计',
       'dev-desc': 'REST API、gRPC 和 CLI JSON 输出。每个接口均机器可读。<a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/llms.txt">docs/llms.txt</a> 提供 LLM 原生文档。',
       'testnet-title': '公共测试网',
-      'testnet-desc': 'Testnet-1 已上线。加入成为验证者或开始构建。',
+      'testnet-desc': 'Testnet-1 已上线。先看公测指南，完成接入后再看 API 参考；只有运行基础设施时才需要验证者指南。',
+      'testnet-guide': '公测指南',
+      'testnet-api': 'API 参考',
       'testnet-validator': '验证者指南',
-      'testnet-download': '下载二进制',
       'quickstart-title': '快速开始',
       'eco-title': '生态系统',
       'footer-copy': 'Apache 2.0 开源协议。基于 Cosmos SDK v0.50 构建。',

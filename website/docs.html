@@ -64,6 +64,12 @@ pre{background:var(--code-bg);border-radius:0 0 6px 6px;padding:16px;overflow-x:
 /* Quick start */
 .quickstart{background:#fff;border:1px solid var(--border);border-radius:6px;padding:20px;margin:24px 0}
 .quickstart pre{background:var(--code-bg);border-radius:6px}
+.notice{background:#fff;border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin:24px 0}
+.notice h2,.notice h3{margin:0 0 8px;padding:0;border:0}
+.notice p{max-width:680px}
+.notice-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+.notice-link{display:inline-flex;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px}
+.notice-link:hover{text-decoration:none;border-color:var(--fg)}
 
 /* Responsive */
 @media(max-width:900px){
@@ -76,9 +82,10 @@ pre{background:var(--code-bg);border-radius:0 0 6px 6px;padding:16px;overflow-x:
 
 <nav class="sidebar" id="sidebar">
   <a href="index.html" class="logo" style="text-decoration:none">Oasyce</a>
-  <div class="tagline">API Reference · Public Beta</div>
+  <div class="tagline">API Reference · After Onboarding</div>
 
   <h2>Getting Started</h2>
+  <a href="#start-here">Start Here</a>
   <a href="#quickstart">Quick Start</a>
   <a href="#auth">Authentication</a>
   <a href="#constants">Protocol Constants</a>
@@ -135,6 +142,19 @@ pre{background:var(--code-bg);border-radius:0 0 6px 6px;padding:16px;overflow-x:
 <h1>Oasyce API Reference</h1>
 <p class="intro">REST API for the Oasyce L1 chain — Agent-Native Settlement Infrastructure.<br>
 Base URL: <code>http://&lt;node&gt;:1317</code></p>
+
+<section id="start-here">
+<h2>Start Here</h2>
+<div class="notice">
+<p>This page is the chain API reference. Public beta onboarding lives in the Public Beta Guide. Start there first, then come back here once your wallet, testnet environment, and Oasyce tooling are ready.</p>
+<p>Before using the public beta from `oas` or `datavault`, run <code>oas doctor --public-beta --json</code> and proceed only when it returns <code>status: ok</code>.</p>
+<div class="notice-links">
+  <a class="notice-link" href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md">Public Beta Guide (EN)</a>
+  <a class="notice-link" href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md">公测指南 (中文)</a>
+  <a class="notice-link" href="index.html#testnet">Network Overview</a>
+</div>
+</div>
+</section>
 
 <!-- Quick Start -->
 <section id="quickstart">

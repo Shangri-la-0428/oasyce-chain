@@ -54,6 +54,8 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 
 Oasyce Testnet-1 现已上线。
 
+公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。如果你是 AI/数据工作流用户，先按那份文档完成链上接入，再回到 `oas + DataVault` 流程。
+
 | 项目 | 值 |
 |------|-----|
 | Chain ID | `oasyce-testnet-1` |
@@ -61,7 +63,9 @@ Oasyce Testnet-1 现已上线。
 | RPC | `http://47.93.32.88:26657` |
 | REST | `http://47.93.32.88:1317` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
-| Binary 下载 | [v0.5.2 Release](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.2) |
+| 公测指南 | [docs/PUBLIC_BETA_CN.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md) |
+| API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
+| Releases | [latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |
 | Python SDK | `pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
 
 **最快路径（使用经济系统）：**
