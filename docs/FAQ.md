@@ -186,7 +186,7 @@ Your escrow is refunded immediately. The provider's reputation is affected.
 oasyced query oasyce_capability invocation INV_001
 
 # REST
-curl http://localhost:1317/oasyce/capability/v1/invocation/INV_001
+curl http://<node>:1317/oasyce/capability/v1/invocation/INV_001
 ```
 
 Returns: status, output_hash, usage_report, escrow_id, completed_height.

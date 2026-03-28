@@ -33,7 +33,7 @@
 | **测试** | **✅ 30+ tests, 5 suites** | `go test ./...` 全部通过 |
 | **构建** | **✅ 干净** | `go build ./...` 无错误 |
 
-### Oasyce Plugin Engine (Python 薄客户端)
+### Oasyce Client (Python 薄客户端)
 
 | 阶段 | 状态 | 说明 |
 |------|------|------|
@@ -52,7 +52,7 @@
 
 | 仓库 | 开源就绪度 | 阻塞项数 |
 |------|-----------|---------|
-| Plugin Engine | **98%** | 0 阻塞 |
+| Oasyce Client | **98%** | 0 阻塞 |
 | oasyce-chain | **98%** | 0 阻塞 (已推送 GitHub) |
 | DataVault | **95%** | 0 阻塞 |
 
@@ -88,7 +88,7 @@
 | M4 | Swagger/OpenAPI 文档 | 🟢 中 | 2h |
 | M5 | 测试覆盖率报告 | 🟢 中 | 30min |
 
-### Plugin Engine — 建议项 (非阻塞)
+### Oasyce Client — 建议项 (非阻塞)
 
 | # | 缺失项 | 优先级 | 工作量 |
 |---|--------|--------|--------|
@@ -118,7 +118,7 @@
    - 4 模块功能介绍
    - 30 秒快速启动
    - 架构图
-   - 与 Plugin Engine 的关系
+   - 与 Oasyce Client 的关系
 8. [H3] SECURITY.md
 9. [H1] Issue templates
 10. [H2] PR template

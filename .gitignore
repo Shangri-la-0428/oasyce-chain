@@ -3,6 +3,7 @@ vendor/
 *.exe
 *.test
 *.prof
+*.pyc
 .idea/
 .vscode/
 *.swp
@@ -10,8 +11,12 @@ vendor/
 .DS_Store
 coverage.html
 coverage.out
+__pycache__/
+.pytest_cache/
 
 genesis.json
 /oasyced
 /oasyced-linux
 /patch_descriptors
+/gen_anchor_fd
+/mcp-publisher

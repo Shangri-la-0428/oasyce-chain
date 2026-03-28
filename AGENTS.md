@@ -62,7 +62,7 @@ oasyced util solve-pow <your-address> --difficulty 16 --output json
 oasyced tx onboarding register <nonce> --from <key> --chain-id oasyce-testnet-1 --output json --yes
 
 # 3. Check balance (you receive an airdrop as repayable debt)
-curl http://localhost:1317/cosmos/bank/v1beta1/balances/<your-address>
+curl http://<node>:1317/cosmos/bank/v1beta1/balances/<your-address>
 ```
 
 ## What You Can Do

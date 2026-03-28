@@ -282,7 +282,8 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 ### 安装
 
 ```bash
-pip install oasyce          # Plugin Engine（含 DataVault）
+pip install oasyce          # AI-first CLI + DataVault
+oas bootstrap               # 自更新 + 钱包 + DataVault 就绪
 pip install oasyce-sdk      # Python SDK（链查询 + 交易构建）
 ```
 
@@ -293,17 +294,17 @@ pip install oasyce-sdk      # Python SDK（链查询 + 交易构建）
 ```bash
 datavault scan ~/Documents        # 扫描目录，SHA-256 哈希
 datavault privacy                  # PII 检测（邮箱、手机号、身份证等）
-datavault report                   # 查看结果
+datavault report ~/Documents       # 查看结果
 ```
 
-风险等级：`safe`（可注册）→ `low`（仅 IP）→ `medium`（邮箱）→ `high`/`critical`（身份证/银行卡，**阻止注册**）
+风险等级：`safe`（可自动注册）→ `low`（先复核）→ `medium`（需要确认）→ `high`/`critical`（**阻止注册**）
 
 确认安全后注册：
 ```bash
-datavault register --confirm       # 将安全文件注册到 Oasyce 网络
+datavault register ~/Documents --confirm --json   # 仅注册 safe 文件
 ```
 
-### Plugin Engine（oas CLI）
+### Oasyce CLI（oas）
 
 ```bash
 oas testnet onboard               # PoW 自注册 + 领币，一步完成
@@ -663,6 +664,6 @@ Faucet:         http://47.93.32.88:8080/faucet?address=oasyce1...
 Playbook:       http://47.93.32.88:1317/llms.txt
 Chain source:   https://github.com/Shangri-la-0428/oasyce-chain
 Python SDK:     https://github.com/Shangri-la-0428/oasyce-sdk
-Plugin Engine:  https://github.com/Shangri-la-0428/oasyce-net
+Oasyce CLI:     https://github.com/Shangri-la-0428/oasyce-net
 Discord:        https://discord.gg/tfrCn54yZW
 ```

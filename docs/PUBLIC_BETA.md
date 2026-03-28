@@ -282,7 +282,8 @@ Beyond direct HTTP calls, you can use the Python toolchain for more efficient op
 ### Install
 
 ```bash
-pip install oasyce          # Plugin Engine (includes DataVault)
+pip install oasyce          # AI-first CLI + DataVault
+oas bootstrap               # self-update + wallet + DataVault readiness
 pip install oasyce-sdk      # Python SDK (chain queries + TX builders)
 ```
 
@@ -293,17 +294,17 @@ Before registering data assets, scan your local files:
 ```bash
 datavault scan ~/Documents        # scan directory, SHA-256 hashes
 datavault privacy                  # PII detection (emails, phone numbers, IDs, etc.)
-datavault report                   # review results
+datavault report ~/Documents       # review results
 ```
 
-Risk levels: `safe` (can register) → `low` (IPs only) → `medium` (emails) → `high`/`critical` (ID numbers/credit cards, **blocked**)
+Risk levels: `safe` (auto-register) → `low` (review first) → `medium` (confirmation) → `high`/`critical` (**blocked**)
 
 Once confirmed safe:
 ```bash
-datavault register --confirm       # register safe files to Oasyce network
+datavault register ~/Documents --confirm --json   # register only safe files
 ```
 
-### Plugin Engine (oas CLI)
+### Oasyce CLI (oas)
 
 ```bash
 oas testnet onboard               # PoW self-register + get tokens, one step
@@ -663,6 +664,6 @@ Faucet:         http://47.93.32.88:8080/faucet?address=oasyce1...
 Playbook:       http://47.93.32.88:1317/llms.txt
 Chain source:   https://github.com/Shangri-la-0428/oasyce-chain
 Python SDK:     https://github.com/Shangri-la-0428/oasyce-sdk
-Plugin Engine:  https://github.com/Shangri-la-0428/oasyce-net
+Oasyce CLI:     https://github.com/Shangri-la-0428/oasyce-net
 Discord:        https://discord.gg/tfrCn54yZW
 ```

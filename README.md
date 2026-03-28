@@ -5,7 +5,7 @@
 [![Cosmos SDK](https://img.shields.io/badge/Cosmos%20SDK-v0.50.10-blue)](https://github.com/cosmos/cosmos-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-> English version: [README_EN.md](README_EN.md) | LLM-optimized docs: [llms.txt](llms.txt)
+> English version: [README_EN.md](README_EN.md) | LLM-optimized docs: [docs/llms.txt](docs/llms.txt)
 
 **Agent 世界的产权、合同和仲裁。**
 
@@ -129,7 +129,7 @@ make test   # 130+ tests across 10 suites
 ```python
 import requests
 
-BASE = "http://localhost:1317"
+BASE = "http://<node>:1317"
 
 # 查询所有 AI 能力
 caps = requests.get(f"{BASE}/oasyce/capability/v1/capabilities").json()
@@ -159,7 +159,7 @@ oasyced query datarights asset DATA_001 --output json
 localhost:9090
 ```
 
-完整 API 参考见 [llms.txt](llms.txt)。
+完整 API 参考见 [docs/llms.txt](docs/llms.txt)。
 
 ---
 
@@ -262,7 +262,7 @@ oasyced query reputation leaderboard --output json
                     |   DataVault (AI Skill)    |
                     |   本地数据资产管理          |
                     |   scan/classify/privacy   |
-                    |   pip install odv[oasyce] |
+                    |   bundled with oasyce     |
                     +---------------------------+
 ```
 
@@ -271,8 +271,8 @@ oasyced query reputation leaderboard --output json
 | 组件 | 定位 | 安装 |
 |------|------|------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (本仓库) | L1 结算链 | `make build` |
-| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python Agent 客户端 + CLI + Dashboard | `pip install oasyce` |
-| [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI Agent 数据资产管理 Skill | `pip install odv[oasyce]` |
+| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python Agent 客户端 + CLI + Dashboard | `pip install oasyce && oas bootstrap` |
+| [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI Agent 数据资产管理 Skill | `bundled with oasyce` / `pip install odv` |
 
 ---
 

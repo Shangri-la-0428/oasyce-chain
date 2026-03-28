@@ -15,7 +15,7 @@ What was tested and why.
 | Component | Version | Config |
 |-----------|---------|--------|
 | oasyce-chain | git hash | chain-id, node count |
-| Plugin Engine | version | standalone / chain-linked |
+| Oasyce Client | version | standalone / chain-linked |
 | Dashboard | version | port |
 
 ## Flow

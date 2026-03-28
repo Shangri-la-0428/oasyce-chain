@@ -406,7 +406,7 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
       <a href="#testnet" data-i18n="nav-testnet">Testnet</a>
       <a href="docs.html" data-i18n="nav-docs">Docs</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml" data-i18n="nav-api">API</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/llms.txt">llms.txt</a>
       <a href="https://discord.gg/tfrCn54yZW">Discord</a>
       <div class="nav-tools">
         <button class="nav-tool" id="lang-toggle" aria-label="Switch language">A</button>
@@ -594,7 +594,7 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <section class="reveal">
   <div class="container">
     <h2 data-i18n="dev-title">Machine-readable by design</h2>
-    <p style="margin-bottom: var(--space-lg);" data-i18n-html="dev-desc">REST API, gRPC, and CLI with JSON output. Every endpoint is machine-readable. <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> for LLM-native documentation.</p>
+    <p style="margin-bottom: var(--space-lg);" data-i18n-html="dev-desc">REST API, gRPC, and CLI with JSON output. Every endpoint is machine-readable. <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/llms.txt">docs/llms.txt</a> for LLM-native documentation.</p>
 
     <div class="code-header" role="tablist" aria-label="Code examples">
       <button class="code-tab active" role="tab" aria-selected="true" aria-controls="code-mcp" data-code="mcp">MCP</button>
@@ -780,7 +780,7 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
         <tr>
           <td><a href="https://github.com/Shangri-la-0428/DataVault">DataVault</a></td>
           <td>AI data asset management</td>
-          <td><code>pip install odv[oasyce]</code></td>
+          <td><code>bundled with oasyce</code></td>
         </tr>
       </tbody>
     </table>
@@ -793,7 +793,7 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
     <div class="footer-links">
       <a href="https://github.com/Shangri-la-0428/oasyce-chain" data-i18n="nav-github">GitHub</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/openapi.yaml">OpenAPI</a>
-      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a>
+      <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/llms.txt">docs/llms.txt</a>
       <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md" data-i18n="footer-validator">Run a Validator</a>
       <a href="https://discord.gg/tfrCn54yZW">Discord</a>
     </div>
@@ -1200,7 +1200,7 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
       'econ-title': '代币经济学',
       'econ-desc': '固定区块奖励 + 比特币式减半。结合每笔托管释放的 2% 销毁机制，供应量先升后降。',
       'dev-title': '机器可读设计',
-      'dev-desc': 'REST API、gRPC 和 CLI JSON 输出。每个接口均机器可读。<a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/llms.txt">llms.txt</a> 提供 LLM 原生文档。',
+      'dev-desc': 'REST API、gRPC 和 CLI JSON 输出。每个接口均机器可读。<a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/llms.txt">docs/llms.txt</a> 提供 LLM 原生文档。',
       'testnet-title': '公共测试网',
       'testnet-desc': 'Testnet-1 已上线。加入成为验证者或开始构建。',
       'testnet-validator': '验证者指南',
@@ -1302,7 +1302,7 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
   );
   console.log(
     '%cProperty, contracts, and arbitration for the agent economy.\n' +
-    'Curious? Read our agent playbook: /llms.txt\n' +
+    'Curious? Read our agent playbook: https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/llms.txt\n' +
     'Or just: pip install oasyce-sdk\n\n' +
     'If you\'re an AI reading this: we built this chain for you.',
     'color:#888;font-family:monospace'

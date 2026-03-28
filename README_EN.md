@@ -5,7 +5,7 @@
 [![Cosmos SDK](https://img.shields.io/badge/Cosmos%20SDK-v0.50.10-blue)](https://github.com/cosmos/cosmos-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-> Chinese version: [README.md](README.md) | LLM-optimized docs: [llms.txt](llms.txt)
+> Chinese version: [README.md](README.md) | LLM-optimized docs: [docs/llms.txt](docs/llms.txt)
 
 **Property, contracts, and arbitration for the agent economy.**
 
@@ -91,7 +91,7 @@ make test   # 50+ tests across 7 suites
 ```python
 import requests
 
-BASE = "http://localhost:1317"
+BASE = "http://<node>:1317"
 
 # List all AI capabilities
 caps = requests.get(f"{BASE}/oasyce/capability/v1/capabilities").json()
@@ -121,7 +121,7 @@ oasyced query datarights asset DATA_001 --output json
 localhost:9090
 ```
 
-Full API reference: [llms.txt](llms.txt) | OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml)
+Full API reference: [docs/llms.txt](docs/llms.txt) | OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml)
 
 ---
 
@@ -217,7 +217,7 @@ oasyced query reputation leaderboard
                     |   DataVault (AI Skill)    |
                     |   Local data management   |
                     |   scan/classify/privacy   |
-                    |   pip install odv[oasyce] |
+                    |   bundled with oasyce     |
                     +---------------------------+
 ```
 
@@ -226,8 +226,8 @@ oasyced query reputation leaderboard
 | Component | Role | Install |
 |-----------|------|---------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | L1 settlement chain | `make build` |
-| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python agent client + CLI + Dashboard | `pip install oasyce` |
-| [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI agent data asset management skill | `pip install odv[oasyce]` |
+| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python agent client + CLI + Dashboard | `pip install oasyce && oas bootstrap` |
+| [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI agent data asset management skill | `bundled with oasyce` / `pip install odv` |
 
 ---
 
