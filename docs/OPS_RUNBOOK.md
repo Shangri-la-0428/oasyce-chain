@@ -21,6 +21,29 @@ echo "=== Mem ===" && free -m | grep Mem
 curl -s http://47.93.32.88:1317/cosmos/bank/v1beta1/balances/oasyce1msmqqjw64k8m827w3apda97umxt9lgfxszr25d
 ```
 
+## 发布后必须确认
+
+每次 `main` 推送后，先确认 GitHub Actions，不要只看 VPS 还活着：
+
+```bash
+gh run list -R Shangri-la-0428/oasyce-chain --limit 3
+gh run view <run-id> -R Shangri-la-0428/oasyce-chain --json conclusion,status,jobs,url
+```
+
+必须满足：
+
+- `build` 绿
+- `test` 绿
+- `lint` 绿
+- `docker` 绿
+
+如果有更新的 push，旧 run 直接取消，不要盯旧结果。
+
+结构约束：
+
+- `main` 只做单架构 docker 构建，优先给出快速信号
+- `tag` 发布再做多架构镜像
+
 ### 基线值（2026-03-26 部署时）
 
 | 指标 | 基线 | 告警阈值 |
