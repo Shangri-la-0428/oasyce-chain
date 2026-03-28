@@ -4,11 +4,19 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
 
-const deployHealthcheckScript = "/Users/wutongcheng/Desktop/Net/oasyce-chain/deploy/healthcheck.sh"
+func deployHealthcheckScriptPath(t *testing.T) string {
+	t.Helper()
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("resolve current test file path")
+	}
+	return filepath.Clean(filepath.Join(filepath.Dir(currentFile), "..", "..", "deploy", "healthcheck.sh"))
+}
 
 func writeExecutable(t *testing.T, dir, name, content string) string {
 	t.Helper()
@@ -35,7 +43,7 @@ func TestDeployHealthcheckCalculatesTwelveHourThreshold(t *testing.T) {
 		t,
 		nil,
 		"-lc",
-		"source "+deployHealthcheckScript+"; calc_stale_threshold_checks 12 5",
+		"source "+deployHealthcheckScriptPath(t)+"; calc_stale_threshold_checks 12 5",
 	)
 	if out != "144" {
 		t.Fatalf("expected 144 checks for 12h/5m, got %q", out)
@@ -108,7 +116,7 @@ esac
 		t.Fatal(err)
 	}
 
-	cmd := exec.Command("bash", deployHealthcheckScript)
+	cmd := exec.Command("bash", deployHealthcheckScriptPath(t))
 	cmd.Env = append(os.Environ(), baseEnv...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("healthcheck default mode failed: %v\n%s", err, out)
@@ -124,7 +132,7 @@ esac
 		t.Fatal(err)
 	}
 
-	cmd = exec.Command("bash", deployHealthcheckScript)
+	cmd = exec.Command("bash", deployHealthcheckScriptPath(t))
 	cmd.Env = append(os.Environ(), append(baseEnv, "OASYCE_MONITOR_ECONOMY_STALE=1")...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("healthcheck enabled mode failed: %v\n%s", err, out)
@@ -138,7 +146,7 @@ esac
 		t.Fatalf("unexpected mail content:\n%s", body)
 	}
 
-	cmd = exec.Command("bash", deployHealthcheckScript)
+	cmd = exec.Command("bash", deployHealthcheckScriptPath(t))
 	cmd.Env = append(os.Environ(), append(baseEnv, "OASYCE_MONITOR_ECONOMY_STALE=1")...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("healthcheck second enabled run failed: %v\n%s", err, out)
