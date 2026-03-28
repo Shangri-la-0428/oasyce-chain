@@ -306,8 +306,17 @@ datavault register ~/Documents --confirm --json   # register only safe files
 
 ### Oasyce CLI (oas)
 
+Before using `oas` or `datavault` against the public beta, force testnet + strict chain mode:
+
 ```bash
-oas testnet onboard               # PoW self-register + get tokens, one step
+export OASYCE_NETWORK_MODE=testnet
+export OASYCE_STRICT_CHAIN=1
+```
+
+```bash
+oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json
+oasyced tx onboarding register <nonce> --from mykey --chain-id oasyce-testnet-1 --output json --yes
+curl "http://47.93.32.88:8080/faucet?address=$(oasyced keys show mykey -a --keyring-backend test)"
 oas register data.csv --owner me --tags research,nlp   # register asset
 oas capability register --name "My API" --endpoint https://... --price 0.5 --tags nlp
 oas capability invoke CAP_ID --input '{"text":"hello"}'

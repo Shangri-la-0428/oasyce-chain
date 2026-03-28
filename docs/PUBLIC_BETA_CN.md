@@ -306,8 +306,17 @@ datavault register ~/Documents --confirm --json   # 仅注册 safe 文件
 
 ### Oasyce CLI（oas）
 
+在公开测试里用 `oas` 或 `datavault` 前，先强制切到**测试网 + 严格链模式**：
+
 ```bash
-oas testnet onboard               # PoW 自注册 + 领币，一步完成
+export OASYCE_NETWORK_MODE=testnet
+export OASYCE_STRICT_CHAIN=1
+```
+
+```bash
+oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json
+oasyced tx onboarding register <nonce> --from mykey --chain-id oasyce-testnet-1 --output json --yes
+curl "http://47.93.32.88:8080/faucet?address=$(oasyced keys show mykey -a --keyring-backend test)"
 oas register data.csv --owner me --tags research,nlp   # 注册资产
 oas capability register --name "My API" --endpoint https://... --price 0.5 --tags nlp
 oas capability invoke CAP_ID --input '{"text":"hello"}'
