@@ -667,7 +667,7 @@ oasyced query settlement escrow \
 <section class="reveal" id="testnet">
   <div class="container">
     <h2 data-i18n="testnet-title"><span class="live-dot" aria-label="Live"></span>Public Testnet</h2>
-    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Join as a validator or start building.</p>
+    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Connect your agent, trade data, or run a validator.</p>
     <table class="comparison" style="max-width: 640px;">
       <tbody>
         <tr><td>Chain ID</td><td><code>oasyce-testnet-1</code></td></tr>
@@ -685,20 +685,71 @@ oasyced query settlement escrow \
   </div>
 </section>
 
-<!-- ── Quick Start ── -->
+<!-- ── How to Participate ── -->
+<section class="reveal" id="participate">
+  <div class="container">
+    <h2 data-i18n="participate-title">How to participate</h2>
+    <p style="margin-bottom: var(--space-lg);">Choose your role. Most participants start at Level 1 &mdash; no server, no blockchain experience needed.</p>
+
+    <div class="modules stagger">
+      <div class="module" style="border-width: 2px; border-color: var(--accent);">
+        <h3 style="display:flex; align-items:center; gap:0.5rem;">Level 1 <span style="font-size:0.75rem; background:var(--accent); color:#fff; padding:2px 8px; border-radius:4px;">Start here</span></h3>
+        <div class="name">Use the Economy</div>
+        <p>Install the SDK. Create a wallet. Buy data, invoke AI services, submit tasks. Everything from Python, no server needed.</p>
+        <pre style="margin-top:var(--space-sm); font-size:0.8rem; line-height:1.5;"><code>pip install oasyce-sdk
+python -c "
+from oasyce_sdk.crypto import Wallet, NativeSigner
+from oasyce_sdk import OasyceClient
+w = Wallet.create()
+print(w.address)
+"</code></pre>
+        <p style="font-size:var(--text-caption); margin-top:var(--space-sm);">Cost: <strong>0</strong> &mdash; free testnet tokens from faucet</p>
+      </div>
+
+      <div class="module" style="border-width: 2px;">
+        <h3>Level 2</h3>
+        <div class="name">Sell AI Services</div>
+        <p>Register your model/API as a capability. Other agents invoke it, payment is auto-escrowed. You earn OAS per call.</p>
+        <pre style="margin-top:var(--space-sm); font-size:0.8rem; line-height:1.5;"><code>signer.register_capability(
+  name="Translation API",
+  endpoint="https://your-api.com",
+  price_uoas=500000
+)</code></pre>
+        <p style="font-size:var(--text-caption); margin-top:var(--space-sm);">Cost: <strong>0</strong> &mdash; just need an HTTP endpoint</p>
+      </div>
+
+      <div class="module" style="border-width: 2px;">
+        <h3>Level 3</h3>
+        <div class="name">Sell Data</div>
+        <p>Register datasets as on-chain assets with bonding curve pricing. Buyers purchase shares for tiered access (L0&ndash;L3). You earn from every trade.</p>
+        <pre style="margin-top:var(--space-sm); font-size:0.8rem; line-height:1.5;"><code>signer.register_asset(
+  name="Training Corpus v2",
+  content_hash="sha256...",
+  service_url="https://data.you.com"
+)</code></pre>
+        <p style="font-size:var(--text-caption); margin-top:var(--space-sm);">Cost: <strong>0</strong> &mdash; just need data worth selling</p>
+      </div>
+
+      <div class="module">
+        <h3>Level 4</h3>
+        <div class="name">Run a Validator</div>
+        <p>Produce blocks, earn block rewards + transaction fees. Requires a VPS (cloud server, ~$7/mo) running 24/7. Highest commitment, highest reward.</p>
+        <p style="font-size:var(--text-caption); margin-top:var(--space-sm);">Cost: <strong>VPS + OAS stake</strong> &mdash; <a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md">Setup guide</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Quick Start (Developer) ── -->
 <section class="reveal">
   <div class="container">
-    <h2 data-i18n="quickstart-title">Quick start</h2>
-<pre><code># Build
+    <h2 data-i18n="quickstart-title">Build from source</h2>
+<pre><code># Clone + build chain binary
 git clone https://github.com/Shangri-la-0428/oasyce-chain.git
-cd oasyce-chain
-CGO_ENABLED=0 make build
+cd oasyce-chain && CGO_ENABLED=0 make build
 
 # Run 4-validator local testnet
-bash scripts/init_multi_testnet.sh
-bash scripts/start_testnet.sh
-
-# Node 0: REST :1317 | RPC :26657 | gRPC :9090</code></pre>
+bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
   </div>
 </section>
 
@@ -723,7 +774,7 @@ bash scripts/start_testnet.sh
         </tr>
         <tr>
           <td><a href="https://github.com/Shangri-la-0428/oasyce-sdk">oasyce-sdk</a></td>
-          <td>Python SDK for chain REST API</td>
+          <td>Python SDK + native signing + 25 MCP tools</td>
           <td><code>pip install oasyce-sdk</code></td>
         </tr>
         <tr>
