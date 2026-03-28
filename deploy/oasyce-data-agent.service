@@ -1,0 +1,32 @@
+[Unit]
+Description=Oasyce Data Registration Agent
+Documentation=https://github.com/Shangri-la-0428/oasyce-chain
+After=oasyced.service
+Wants=oasyced.service
+
+[Service]
+User=oasyce
+Environment=DATA_AGENT_KEY=data-agent
+Environment=OASYCE_CHAIN_REST=http://127.0.0.1:11317
+Environment=OASYCED_BIN=/opt/oasyce/bin/oasyced
+Environment=OASYCED_CHAIN_ID=oasyce-testnet-1
+Environment=OASYCED_KEYRING=test
+Environment=DATA_AGENT_PORT=8431
+Environment=WATCH_DIRS=/home/oasyce/production_data
+Environment=SCAN_INTERVAL=1800
+Environment=ALLOWED_EXTENSIONS=.csv,.json,.pdf,.md,.txt,.py,.yaml,.toml,.xml,.html
+Environment=EXCLUDE_PATTERNS=.git,node_modules,__pycache__,.venv,build,dist,.cache
+Environment=DEFAULT_TAGS=production,auto-registered
+Environment=MAX_RISK_LEVEL=low
+Environment=SERVICE_URL_TEMPLATE=http://47.93.32.88/data/{hash}
+Environment=STATE_FILE=/home/oasyce/.data_agent_state.json
+ExecStart=/usr/bin/python3 /opt/oasyce/src/scripts/data_agent.py
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

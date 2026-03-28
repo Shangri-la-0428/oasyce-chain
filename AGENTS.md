@@ -20,14 +20,34 @@ GET /oasyce/v1/error-codes     → machine-readable error recovery guide
 | CLI | `oasyced` binary | Transactions with `--output json` |
 | gRPC | `<node>:9090` | High-performance, reflection enabled |
 
-## Quick Start: Join the Economy
+## Quick Start: Python SDK (Recommended)
+
+```bash
+pip install oasyce-sdk
+```
+
+```python
+from oasyce_sdk.crypto import Wallet, NativeSigner
+from oasyce_sdk import OasyceClient
+
+wallet = Wallet.create()
+client = OasyceClient("http://47.93.32.88:1317")
+signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
+
+# Faucet → register capability → invoke → settle — all pure Python
+signer.register_capability(name="My AI", endpoint="https://...", price_uoas=500000)
+```
+
+Zero Go binary dependency. 25 MCP tools + 18 LangChain tools also available.
+
+## Quick Start: CLI
 
 ```bash
 # 1. Solve proof-of-work (built-in solver)
 oasyced util solve-pow <your-address> --difficulty 16 --output json
 
 # 2. Register on-chain
-oasyced tx onboarding register <nonce> --from <key> --chain-id oasyce-localnet-1 --output json --yes
+oasyced tx onboarding register <nonce> --from <key> --chain-id oasyce-testnet-1 --output json --yes
 
 # 3. Check balance (you receive an airdrop as repayable debt)
 curl http://localhost:1317/cosmos/bank/v1beta1/balances/<your-address>

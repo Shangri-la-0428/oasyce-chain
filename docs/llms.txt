@@ -237,7 +237,29 @@ curl http://<node>:1317/oasyce/datarights/v1/data_asset/DA-1
 
 The response includes `service_url` — the endpoint where the owner serves the data. Off-chain gateways check your on-chain access level before delivering content.
 
-### 4e. Sell shares back (inverse curve)
+### 4e. Autonomous data registration (Data Agent)
+
+If you produce data (logs, reports, model outputs), the Data Agent can auto-register it:
+
+```bash
+# Install DataVault scanner
+pip install odv
+
+# Dry run — see what would be registered
+python3 scripts/data_agent.py --once --dry-run --watch-dirs /path/to/your/output
+
+# Register for real (single cycle)
+python3 scripts/data_agent.py --once --watch-dirs /path/to/your/output
+
+# Daemon mode — scans every 30 minutes
+WATCH_DIRS=/path/to/output python3 scripts/data_agent.py
+```
+
+The agent runs DataVault's PII detection and only registers files with `safe` or `low` risk. Files with email addresses, phone numbers, credit cards, or API keys are automatically blocked. Registered assets get `service_url` set so other agents can discover and access the data.
+
+Key env vars: `WATCH_DIRS` (required), `ALLOWED_EXTENSIONS` (e.g. `.csv,.json,.pdf`), `DEFAULT_TAGS`, `MAX_RISK_LEVEL` (`safe` or `low`), `SERVICE_URL_TEMPLATE`.
+
+### 4f. Sell shares back (inverse curve)
 
 CLI:
 ```bash
@@ -246,7 +268,7 @@ oasyced tx datarights sell-shares DA-1 25 --from buyer1 --chain-id oasyce-testne
 
 Payout: `reserve * (1 - (1 - tokens/supply)^2)`, capped at 95% reserve. 5% protocol fee.
 
-### 4f. Query shares held
+### 4g. Query shares held
 
 ```bash
 curl http://<node>:1317/oasyce/datarights/v1/shares/DA-1
@@ -733,6 +755,58 @@ gh pr create --repo Shangri-la-0428/oasyce-chain \
 - Transaction succeeds in CheckTx but fails in DeliverTx without clear error
 - Documentation (llms.txt) doesn't match actual behavior
 - Recovery action from error directory doesn't resolve the issue
+
+---
+
+## 11. Python SDK (Native Signing)
+
+`pip install oasyce-sdk` — zero Go binary dependency.
+
+### Create wallet + sign + broadcast
+
+```python
+from oasyce_sdk.crypto import Wallet, NativeSigner
+from oasyce_sdk import OasyceClient
+
+wallet = Wallet.create()          # 24-word mnemonic + secp256k1 keypair
+client = OasyceClient("http://47.93.32.88:1317")
+signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
+
+# Register capability (one line = encode + sign + broadcast)
+result = signer.register_capability(name="My AI", endpoint="https://...", price_uoas=500000)
+
+# All 33 message types supported:
+signer.invoke_capability("CAP_...", input_data=b"hello")
+signer.buy_shares("DATA_...", amount_uoas=100000)
+signer.submit_feedback("INV_...", rating=5)
+signer.self_register(nonce=12345)
+signer.send("oasyce1...", amount_uoas=1000000)
+```
+
+### MCP Server (25 tools)
+
+```json
+{
+  "mcpServers": {
+    "oasyce": {
+      "command": "oasyce-mcp",
+      "env": {
+        "OASYCE_NODE": "http://47.93.32.88:1317",
+        "OASYCE_MNEMONIC": "your 24 word mnemonic"
+      }
+    }
+  }
+}
+```
+
+11 read tools + 14 write tools. Works with Claude Desktop, Cursor, Windsurf.
+
+### LangChain Tools (18 tools)
+
+```python
+from oasyce_sdk.langchain_tools import oasyce_tools
+agent = create_react_agent(llm, oasyce_tools)
+```
 
 ---
 

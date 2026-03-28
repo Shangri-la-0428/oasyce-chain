@@ -1,8 +1,12 @@
 # /etc/logrotate.d/oasyced
-# For file-based logging (if StandardOutput=file: is used in systemd service).
 # Install: cp deploy/logrotate-oasyced /etc/logrotate.d/oasyced
+# Test:    logrotate -d /etc/logrotate.d/oasyced
 
-/var/log/oasyced/*.log {
+/var/log/oasyced.log
+/var/log/oasyced/*.log
+/var/log/oasyce-alert.log
+/var/log/oasyce-econ.log
+{
     daily
     rotate 7
     compress
@@ -10,6 +14,6 @@
     missingok
     notifempty
     copytruncate
-    maxsize 100M
+    maxsize 50M
     create 0640 oasyce oasyce
 }

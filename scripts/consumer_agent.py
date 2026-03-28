@@ -303,6 +303,70 @@ def submit_feedback(invocation_id, score):
 # Main
 # ---------------------------------------------------------------------------
 
+def discover_data_asset():
+    """Find an ACTIVE data asset to buy shares of."""
+    data = rest_get("/oasyce/datarights/v1/data_assets")
+    if not data:
+        return None
+    assets = [a for a in data.get("data_assets", [])
+              if a.get("status", "").upper() in ("ACTIVE", "ASSET_STATUS_ACTIVE", "")
+              and a.get("id", "").startswith("DATA_")]
+    if not assets:
+        return None
+    # Pick one we haven't bought yet (smallest total_shares = freshest)
+    assets.sort(key=lambda a: int(a.get("total_shares", "0") or "0"))
+    return assets[0]
+
+
+def buy_data_shares(asset_id, amount_uoas="100000"):
+    """Buy shares of a data asset on the bonding curve."""
+    ok, txhash = oasyced_tx([
+        "datarights", "buy-shares", asset_id, f"{amount_uoas}uoas",
+    ])
+    if not ok:
+        return None
+    time.sleep(7)
+    return txhash
+
+
+def check_data_access(asset_id, addr):
+    """Check access level after buying shares."""
+    data = rest_get(f"/oasyce/datarights/v1/access_level/{asset_id}/{addr}")
+    if not data:
+        return None
+    return data.get("access_level", "")
+
+
+def data_asset_cycle(addr, state):
+    """Optional: discover a data asset, buy shares, check access. Returns True if traded."""
+    asset = discover_data_asset()
+    if not asset:
+        log.info("No data assets found, skipping data cycle")
+        return False
+
+    asset_id = asset["id"]
+    asset_name = asset.get("name", "?")
+    log.info("Data asset: %s (%s)", asset_name, asset_id)
+
+    # Buy a small amount (0.1 OAS = 100000 uoas)
+    log.info("Buying 0.1 OAS of shares in %s...", asset_id)
+    txhash = buy_data_shares(asset_id, "100000")
+    if not txhash:
+        log.warning("Failed to buy data shares")
+        return False
+
+    # Check access level
+    level = check_data_access(asset_id, addr)
+    log.info("Access level for %s: %s", asset_id, level or "none")
+
+    service_url = asset.get("service_url", "")
+    if service_url:
+        log.info("Data service_url: %s", service_url)
+
+    state["total_data_purchases"] = state.get("total_data_purchases", 0) + 1
+    return True
+
+
 def main():
     state = load_state()
     log.info("=== Consumer Agent Cycle %d ===", state["total_invocations"] + 1)
@@ -396,10 +460,14 @@ def main():
     else:
         log.warning("Provider did not respond, skipping feedback")
 
+    # 9. Data asset cycle — discover, buy, check access
+    data_asset_cycle(addr, state)
+
     state["last_run"] = time.strftime("%Y-%m-%d %H:%M:%S")
     save_state(state)
-    log.info("Cycle complete: invocations=%d settlements=%d",
-             state["total_invocations"], state["total_settlements"])
+    log.info("Cycle complete: invocations=%d settlements=%d data_purchases=%d",
+             state["total_invocations"], state["total_settlements"],
+             state.get("total_data_purchases", 0))
     return 0
 
 

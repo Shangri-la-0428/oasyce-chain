@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **DataAsset `service_url` field** — Buyers can now discover where to access data after purchasing shares. Set at registration via `--service-url` flag, updatable via `update-service-url` command (owner only). Content integrity still guaranteed by `content_hash`.
 - **`MsgUpdateServiceUrl`** — New transaction type for updating data access endpoints. Owner-only, empty string clears the URL.
 - **Consumer Agent** — `scripts/consumer_agent.py` autonomous consumer for cron-based economic cycles (faucet → discover → invoke → feedback)
+- **Data Agent** — `scripts/data_agent.py` autonomous data asset registration daemon. Integrates DataVault scan/classify/privacy pipeline; auto-registers safe assets (risk=safe/low) on-chain with zero human intervention. Supports `--dry-run`, `--once`, extension allowlist, path exclusion, and configurable risk threshold. Health endpoint at `/health`.
+- **Consumer data asset cycle** — Consumer agent now discovers data assets, buys shares on bonding curve, and checks access level — completing the data side of the autonomous economic loop
 - **Provider health degradation** — Provider agent returns HTTP 503 "degraded" when upstream is down; consumer pre-checks and skips cycle
 - **Economic metrics in healthcheck** — Provider earnings tracking, call growth stall detection, consumer liveness monitoring, economic summary log
 

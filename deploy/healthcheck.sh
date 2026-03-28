@@ -100,8 +100,8 @@ STALE_COUNT=$(cat "${STATE_FILE}_stale" 2>/dev/null || echo 0)
 if [ -n "$TOTAL_CALLS" ] && [ "$TOTAL_CALLS" -gt 0 ] 2>/dev/null; then
     if [ "$TOTAL_CALLS" -le "$PREV_CALLS" ] 2>/dev/null; then
         STALE_COUNT=$((STALE_COUNT + 1))
-        if [ "$STALE_COUNT" -ge 4 ]; then
-            send_alert "Economy STALE — no new invocations in 2+ hours (total_calls=$TOTAL_CALLS)"
+        if [ "$STALE_COUNT" -ge 24 ]; then
+            send_alert "Economy STALE — no new invocations in 12+ hours (total_calls=$TOTAL_CALLS)"
             STALE_COUNT=0
         fi
     else
@@ -123,12 +123,20 @@ if [ -f "$CONSUMER_STATE" ]; then
     fi
 fi
 
-# 6. Provider HTTP health
+# 6. Provider HTTP health — only alert after 2 consecutive failures (avoid startup/transient false positives)
 PROV_HEALTH=$(curl -s --max-time 5 "http://127.0.0.1:8430/health" 2>/dev/null)
 PROV_OK=$(echo "$PROV_HEALTH" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("status",""))' 2>/dev/null)
+PROV_FAIL_COUNT=$(cat "${STATE_FILE}_prov_fail" 2>/dev/null || echo 0)
 if [ "$PROV_OK" != "ok" ]; then
-    send_alert "Provider agent HTTP health FAILED (systemd may be active but HTTP unresponsive)"
+    PROV_FAIL_COUNT=$((PROV_FAIL_COUNT + 1))
+    if [ "$PROV_FAIL_COUNT" -ge 2 ]; then
+        send_alert "Provider agent HTTP health FAILED ${PROV_FAIL_COUNT}x consecutive (systemd may be active but HTTP unresponsive)"
+        PROV_FAIL_COUNT=0
+    fi
+else
+    PROV_FAIL_COUNT=0
 fi
+echo "$PROV_FAIL_COUNT" > "${STATE_FILE}_prov_fail"
 
 # 7. Log economic summary (no alert, just for dashboarding)
 CONSUMER_INV=$(python3 -c 'import json; d=json.load(open("'"$CONSUMER_STATE"'")); print(d.get("total_invocations",0), d.get("total_settlements",0))' 2>/dev/null)
