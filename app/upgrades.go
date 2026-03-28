@@ -10,6 +10,7 @@ import (
 
 // Upgrade plan names — each corresponds to a governance proposal.
 const (
+	UpgradeV053 = "v0.5.3"
 	UpgradeV060 = "v0.6.0"
 )
 
@@ -17,9 +18,28 @@ const (
 // Called from NewOasyceApp after all keepers are initialized.
 func (app *OasyceApp) registerUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
+		UpgradeV053,
+		app.upgradeHandlerV053(),
+	)
+	app.UpgradeKeeper.SetUpgradeHandler(
 		UpgradeV060,
 		app.upgradeHandlerV060(),
 	)
+}
+
+// upgradeHandlerV053 handles the v0.5.2 → v0.5.3 upgrade.
+//
+// Changes in v0.5.3:
+//   - x/anchor module added (new store key)
+//   - AI agent docs updated (llms.txt, AGENTS.md)
+//   - SDK v0.5.0 native signing support
+func (app *OasyceApp) upgradeHandlerV053() func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		app.Logger().Info(
+			fmt.Sprintf("applying upgrade %s at height %d — adding anchor module store", plan.Name, plan.Height),
+		)
+		return app.ModuleManager.RunMigrations(ctx, app.Configurator(), vm)
+	}
 }
 
 // upgradeHandlerV060 handles the v0.5.0 → v0.6.0 upgrade.

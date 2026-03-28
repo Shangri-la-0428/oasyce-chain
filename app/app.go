@@ -726,6 +726,17 @@ func NewOasyceApp(
 	// Seal the IBC capability keeper after all scoped keepers are created.
 	app.IBCCapabilityKeeper.Seal()
 
+	// Configure store loader for upgrades that add new module stores.
+	// Must be set before LoadLatestVersion so the multistore knows
+	// which new keys to expect at the upgrade height.
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err == nil && upgradeInfo.Name == UpgradeV053 && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		storeUpgrades := storetypes.StoreUpgrades{
+			Added: []string{anchortypes.StoreKey},
+		}
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			panic(err)
