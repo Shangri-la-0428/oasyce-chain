@@ -13,7 +13,7 @@
 | gRPC | `47.93.32.88:9090` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=<your-address>` |
 | Binary | [GitHub Releases v0.5.0](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0) |
-| Genesis SHA256 | `4afed71e80aad3cddd553df514c77d46bc324932bb3807752b4135893f3f20b4` |
+| Genesis SHA256 | `dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739` |
 
 ---
 
@@ -49,23 +49,31 @@ By default the installer uses `~/.local/bin`. If that directory is not on your `
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-### 2. Initialize
+### 2. Or do the whole native setup in one command
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)
+```
+
+This prepares `~/.oasyced` for `oasyce-testnet-1`, downloads `genesis.json`, patches testnet-friendly params, and configures the seed peer plus REST API.
+
+### 3. Manual path: initialize yourself
 
 ```bash
 oasyced init my-node --chain-id oasyce-testnet-1
 ```
 
-### 3. Genesis
+### 4. Genesis
 
 ```bash
 curl -L -o ~/.oasyced/config/genesis.json \
   https://github.com/Shangri-la-0428/oasyce-chain/releases/download/testnet-1/genesis.json
 
 # Verify
-echo "4afed71e80aad3cddd553df514c77d46bc324932bb3807752b4135893f3f20b4  $HOME/.oasyced/config/genesis.json" | sha256sum -c
+echo "dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739  $HOME/.oasyced/config/genesis.json" | sha256sum -c
 ```
 
-### 4. Configure
+### 5. Configure
 
 ```bash
 # Add seed peer
@@ -76,7 +84,7 @@ sed -i.bak 's/persistent_peers = ""/persistent_peers = "3e5a914ab7e7400091ddf461
 sed -i.bak 's/enable = false/enable = true/' ~/.oasyced/config/app.toml
 ```
 
-### 5. Start
+### 6. Start
 
 ```bash
 oasyced start --minimum-gas-prices 0uoas
