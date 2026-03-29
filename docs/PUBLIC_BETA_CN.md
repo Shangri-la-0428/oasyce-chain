@@ -24,10 +24,24 @@ Oasyce 是一条运行中的区块链。在这里，你可以注册身份、发�
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)
 ```
 
+Windows PowerShell 不要走 Bash 进程替换，直接用原生脚本：
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.ps1 -OutFile install_oasyced.ps1
+powershell -ExecutionPolicy Bypass -File .\install_oasyced.ps1
+```
+
 如果你只需要一个地址和测试币，最短路径是：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)
+```
+
+Windows PowerShell：
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1
+powershell -ExecutionPolicy Bypass -File .\bootstrap_public_beta_account.ps1
 ```
 
 如果你还想顺手把本地节点准备好，最短 native 路径是：
@@ -314,9 +328,9 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 ### 安装
 
 ```bash
-pip install oasyce          # AI-first CLI + DataVault
-oas bootstrap               # 自更新 + 钱包 + DataVault 就绪
-pip install oasyce-sdk      # Python SDK（链查询 + 交易构建）
+pip install oasyce                   # AI-first CLI + DataVault
+oas bootstrap                        # 自更新 + 钱包 + DataVault 就绪
+pip install -U "oasyce-sdk>=0.5.0"   # Python SDK（链查询 + 交易构建）
 ```
 
 ### DataVault：扫描本地数据
@@ -382,7 +396,7 @@ result = OasyceClient.solve_pow("oasyce1...", difficulty=16)
 tx = client.build_self_register("oasyce1...", result.nonce)
 ```
 
-原生签名（v0.5.0+，推荐 — 零 Go 二进制依赖）：
+原生签名（`oasyce-sdk>=0.5.0`，推荐 — 零 Go 二进制依赖）：
 ```python
 from oasyce_sdk.crypto import Wallet, NativeSigner
 

@@ -24,10 +24,24 @@ If you want the `oasyced` CLI locally, install it in one command first:
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)
 ```
 
+Windows PowerShell users should use the native scripts instead of Bash process substitution:
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.ps1 -OutFile install_oasyced.ps1
+powershell -ExecutionPolicy Bypass -File .\install_oasyced.ps1
+```
+
 If you only need an address and faucet funds, the shortest path is:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)
+```
+
+Windows PowerShell:
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1
+powershell -ExecutionPolicy Bypass -File .\bootstrap_public_beta_account.ps1
 ```
 
 If you want a local node too, the shortest native setup is:
@@ -314,9 +328,9 @@ Beyond direct HTTP calls, you can use the Python toolchain for more efficient op
 ### Install
 
 ```bash
-pip install oasyce          # AI-first CLI + DataVault
-oas bootstrap               # self-update + wallet + DataVault readiness
-pip install oasyce-sdk      # Python SDK (chain queries + TX builders)
+pip install oasyce              # AI-first CLI + DataVault
+oas bootstrap                   # self-update + wallet + DataVault readiness
+pip install -U "oasyce-sdk>=0.5.0"   # Python SDK (chain queries + TX builders)
 ```
 
 ### DataVault: Scan Local Data
@@ -382,7 +396,7 @@ result = OasyceClient.solve_pow("oasyce1...", difficulty=16)
 tx = client.build_self_register("oasyce1...", result.nonce)
 ```
 
-Native signing (v0.5.0+, recommended — zero Go binary dependency):
+Native signing (`oasyce-sdk>=0.5.0`, recommended — zero Go binary dependency):
 ```python
 from oasyce_sdk.crypto import Wallet, NativeSigner
 

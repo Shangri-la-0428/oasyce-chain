@@ -59,9 +59,12 @@ If you are using the AI-first `oas + DataVault` workflow, complete the chain-sid
 
 - Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)
 - Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`
+- Windows PowerShell install: `Invoke-WebRequest .../install_oasyced.ps1 -OutFile install_oasyced.ps1` then `powershell -ExecutionPolicy Bypass -File ./install_oasyced.ps1`
 - Create account + request faucet funds: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)`
+- Windows PowerShell account setup: `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` then `powershell -ExecutionPolicy Bypass -File ./bootstrap_public_beta_account.ps1`
 - Prepare local node: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`
 - Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`
+- Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.5.0"`
 - API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)
 - Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)
 - Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)

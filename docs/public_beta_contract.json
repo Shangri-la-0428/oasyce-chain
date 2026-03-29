@@ -5,7 +5,9 @@
     "api_reference": "https://chain.oasyce.com/docs.html",
     "validator_guide": "https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md",
     "install_script": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh",
+    "install_script_ps1": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.ps1",
     "account_script": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh",
+    "account_script_ps1": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1",
     "bootstrap_script": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh",
     "run_script": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh",
     "service_script": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_public_beta_service.sh",
@@ -28,13 +30,15 @@
         ["Faucet", "`http://47.93.32.88:8080/faucet?address=oasyce1...`"],
         ["公测指南", "[docs/PUBLIC_BETA_CN.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md)"],
         ["安装 CLI", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`"],
+        ["Windows CLI", "`Invoke-WebRequest .../install_oasyced.ps1 -OutFile install_oasyced.ps1`"],
         ["准备账户", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)`"],
+        ["Windows 账户", "`Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1`"],
         ["准备节点", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`"],
         ["启动节点", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`"],
         ["API Reference", "[chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)"],
         ["Validator Guide", "[docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)"],
         ["Releases", "[latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"],
-        ["Python SDK", "`pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk))"]
+        ["Python SDK", "`pip install -U \"oasyce-sdk>=0.5.0\"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk))"]
       ]
     },
     "en": {
@@ -47,9 +51,12 @@
       "bullet_lines": [
         "- Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)",
         "- Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`",
+        "- Windows PowerShell install: `Invoke-WebRequest .../install_oasyced.ps1 -OutFile install_oasyced.ps1` then `powershell -ExecutionPolicy Bypass -File ./install_oasyced.ps1`",
         "- Create account + request faucet funds: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)`",
+        "- Windows PowerShell account setup: `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` then `powershell -ExecutionPolicy Bypass -File ./bootstrap_public_beta_account.ps1`",
         "- Prepare local node: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`",
         "- Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`",
+        "- Python SDK (NativeSigner): `pip install -U \"oasyce-sdk>=0.5.0\"`",
         "- API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)",
         "- Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)",
         "- Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"
@@ -67,7 +74,9 @@
         ["Faucet", "<code>47.93.32.88:8080/faucet?address=...</code>"],
         ["Start Here", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\">Public Beta Guide</a>"],
         ["Install CLI", "<code>bash &lt;(curl -fsSL .../install_oasyced.sh)</code>"],
+        ["Windows CLI", "<code>Invoke-WebRequest .../install_oasyced.ps1 -OutFile install_oasyced.ps1</code>"],
         ["Create Account", "<code>bash &lt;(curl -fsSL .../bootstrap_public_beta_account.sh)</code>"],
+        ["Windows Account", "<code>Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1</code>"],
         ["Prepare Node", "<code>bash &lt;(curl -fsSL .../bootstrap_public_beta_node.sh)</code>"],
         ["Run Node", "<code>bash &lt;(curl -fsSL .../run_public_beta_node.sh)</code>"],
         ["API", "<a href=\"docs.html\">docs.html</a>"],
@@ -86,17 +95,20 @@
     "docs_start_here": {
       "paragraphs": [
         "This page is the chain API reference. Public beta onboarding lives in the Public Beta Guide. Start there first, then come back here once your wallet, testnet environment, and Oasyce tooling are ready.",
-        "If you need the native chain CLI, install it first with <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)</code>.",
-        "If you only need an account and test tokens, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)</code>.",
+        "If you need the native chain CLI, install it first with <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)</code>. Windows PowerShell users should use the companion <code>install_oasyced.ps1</code> script instead.",
+        "If you only need an account and test tokens, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)</code>. Windows PowerShell users should use <code>bootstrap_public_beta_account.ps1</code>.",
         "If you want a local node, the shortest native setup is <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)</code>.",
         "If you want to run the node immediately in the current shell, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)</code>.",
+        "If you want NativeSigner from Python, install <code>oasyce-sdk&gt;=0.5.0</code> before following the SDK examples.",
         "Before using the public beta from `oas` or `datavault`, run <code>oas doctor --public-beta --json</code> and proceed only when it returns <code>status: ok</code>."
       ],
       "links": [
         "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\">Public Beta Guide (EN)</a>",
         "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md\">公测指南 (中文)</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh\">Install CLI Script</a>",
+        "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.ps1\">Install CLI Script (PowerShell)</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh\">Create Account Script</a>",
+        "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1\">Create Account Script (PowerShell)</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh\">Prepare Node Script</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh\">Run Node Script</a>",
         "<a class=\"notice-link\" href=\"index.html#testnet\">Network Overview</a>"

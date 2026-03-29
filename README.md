@@ -68,13 +68,15 @@ Oasyce Testnet-1 现已上线。
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
 | 公测指南 | [docs/PUBLIC_BETA_CN.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md) |
 | 安装 CLI | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)` |
+| Windows CLI | `Invoke-WebRequest .../install_oasyced.ps1 -OutFile install_oasyced.ps1` |
 | 准备账户 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)` |
+| Windows 账户 | `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` |
 | 准备节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)` |
 | 启动节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)` |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
 | Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
 | Releases | [latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |
-| Python SDK | `pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
+| Python SDK | `pip install -U "oasyce-sdk>=0.5.0"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
 <!-- END GENERATED:PUBLIC_BETA_ZH -->
 
 **最快路径（使用经济系统）：**

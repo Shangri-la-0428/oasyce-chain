@@ -25,6 +25,15 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain
 
 This creates a local key in `~/.oasyced`, requests faucet funds, and prints your address plus balance query.
 
+If you are on native Windows PowerShell, use the PowerShell scripts instead of Bash process substitution:
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.ps1 -OutFile install_oasyced.ps1
+powershell -ExecutionPolicy Bypass -File .\install_oasyced.ps1
+Invoke-WebRequest https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1
+powershell -ExecutionPolicy Bypass -File .\bootstrap_public_beta_account.ps1
+```
+
 ---
 
 ## Option A: One-Click Docker (Fastest)
@@ -50,6 +59,14 @@ docker exec oasyce-node oasyced status | jq '.SyncInfo.catching_up'
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)
+oasyced version
+```
+
+Windows PowerShell:
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.ps1 -OutFile install_oasyced.ps1
+powershell -ExecutionPolicy Bypass -File .\install_oasyced.ps1
 oasyced version
 ```
 
