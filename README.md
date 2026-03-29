@@ -73,6 +73,9 @@ Oasyce Testnet-1 现已上线。
 | Windows 账户 | `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` |
 | 准备节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)` |
 | 启动节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)` |
+| 产品侧指南 | [oasyce-net 公测指南](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md) |
+| Dashboard | `pip install oasyce && oas bootstrap && oas start` |
+| DataVault | [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md) |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
 | Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
 | Releases | [latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |

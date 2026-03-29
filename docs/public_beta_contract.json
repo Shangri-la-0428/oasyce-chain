@@ -35,6 +35,9 @@
         ["Windows 账户", "`Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1`"],
         ["准备节点", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`"],
         ["启动节点", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`"],
+        ["产品侧指南", "[oasyce-net 公测指南](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)"],
+        ["Dashboard", "`pip install oasyce && oas bootstrap && oas start`"],
+        ["DataVault", "[DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)"],
         ["API Reference", "[chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)"],
         ["Validator Guide", "[docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)"],
         ["Releases", "[latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"],
@@ -56,6 +59,9 @@
         "- Windows PowerShell account setup: `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` then `powershell -ExecutionPolicy Bypass -File ./bootstrap_public_beta_account.ps1`",
         "- Prepare local node: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`",
         "- Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`",
+        "- Product-side guide: [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)",
+        "- Dashboard: `pip install oasyce && oas bootstrap && oas start`",
+        "- Data ingress: [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)",
         "- Python SDK (NativeSigner): `pip install -U \"oasyce-sdk>=0.5.0\"`",
         "- API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)",
         "- Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)",
@@ -79,6 +85,9 @@
         ["Windows Account", "<code>Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1</code>"],
         ["Prepare Node", "<code>bash &lt;(curl -fsSL .../bootstrap_public_beta_node.sh)</code>"],
         ["Run Node", "<code>bash &lt;(curl -fsSL .../run_public_beta_node.sh)</code>"],
+        ["Product Guide", "<a href=\"https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md\">oasyce-net public guide</a>"],
+        ["Dashboard", "<code>pip install oasyce &amp;&amp; oas bootstrap &amp;&amp; oas start</code>"],
+        ["DataVault", "<a href=\"https://github.com/Shangri-la-0428/DataVault/blob/main/README.md\">Default data ingress</a>"],
         ["API", "<a href=\"docs.html\">docs.html</a>"],
         ["Validator", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md\">Validator Setup</a>"],
         ["Releases", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/releases/latest\">Latest Release</a>"]
@@ -95,6 +104,7 @@
     "docs_start_here": {
       "paragraphs": [
         "This page is the chain API reference. Public beta onboarding lives in the Public Beta Guide. Start there first, then come back here once your wallet, testnet environment, and Oasyce tooling are ready.",
+        "After chain onboarding, most normal usage moves to the product-side tools: <code>oas bootstrap</code> prepares the account/device runtime, <code>oas start</code> opens the Dashboard, and DataVault becomes the default data ingress for directory-scale assets.",
         "If you need the native chain CLI, install it first with <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)</code>. Windows PowerShell users should use the companion <code>install_oasyced.ps1</code> script instead.",
         "If you only need an account and test tokens, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)</code>. Windows PowerShell users should use <code>bootstrap_public_beta_account.ps1</code>.",
         "If you want a local node, the shortest native setup is <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)</code>.",
@@ -111,6 +121,7 @@
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1\">Create Account Script (PowerShell)</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh\">Prepare Node Script</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh\">Run Node Script</a>",
+        "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md\">Product-side guide (Dashboard / DataVault)</a>",
         "<a class=\"notice-link\" href=\"index.html#testnet\">Network Overview</a>"
       ]
     }

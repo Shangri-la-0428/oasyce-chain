@@ -321,6 +321,30 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 
 ---
 
+## 链上接入完成后：正常使用
+
+链侧接入只是把你带进 `oasyce-chain`。日常使用通常转到产品侧工具：
+
+- `oas`：账户、市场、能力、持仓、Dashboard
+- `DataVault`：目录级扫描、隐私检查、安全注册
+- `oasyce-sdk`：Python 原生查询和交易构建
+
+链上接入完成后，最短的产品侧路径是：
+
+```bash
+pip install oasyce                   # AI-first CLI + Dashboard + 内置 DataVault
+oas bootstrap                        # 自更新 + 钱包/设备就绪 + DataVault 就绪
+export OASYCE_NETWORK_MODE=testnet
+export OASYCE_STRICT_CHAIN=1
+oas doctor --public-beta --json
+oas start                            # Dashboard at http://localhost:8420
+```
+
+如果你要看完整产品侧说明，继续读：
+
+- [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
+- [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)
+
 ## Python 工具链
 
 除了 HTTP 直接调用，你还可以通过 Python 工具链更高效地操作。三个包，一条命令全装好。
@@ -334,6 +358,8 @@ pip install -U "oasyce-sdk>=0.5.0"   # Python SDK（链查询 + 交易构建）
 ```
 
 ### DataVault：扫描本地数据
+
+把 DataVault 当成默认数据入口，而不是可有可无的附属工具。面对目录、批量文件或 AI 持续扫描时，优先走 DataVault；只有显式单文件注册和调试时，才优先用 `oas register`。
 
 在注册数据资产之前，先扫描本地文件：
 
@@ -361,6 +387,14 @@ oas doctor --public-beta --json
 ```
 
 只有当 `oas doctor --public-beta --json` 返回 `status: ok`，才说明这台机器已经满足公开测试的最小门槛。
+
+完成接入后，日常使用最常见的三条是：
+
+```bash
+oas agent status                  # 查看自治 / DataVault-first 状态
+datavault report ~/Documents      # 查看 safe 和 risky 文件
+oas start                         # 打开 Dashboard
+```
 
 ```bash
 oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json

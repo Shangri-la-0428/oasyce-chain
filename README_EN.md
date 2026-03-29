@@ -64,6 +64,9 @@ If you are using the AI-first `oas + DataVault` workflow, complete the chain-sid
 - Windows PowerShell account setup: `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` then `powershell -ExecutionPolicy Bypass -File ./bootstrap_public_beta_account.ps1`
 - Prepare local node: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`
 - Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`
+- Product-side guide: [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
+- Dashboard: `pip install oasyce && oas bootstrap && oas start`
+- Data ingress: [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)
 - Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.5.0"`
 - API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)
 - Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)

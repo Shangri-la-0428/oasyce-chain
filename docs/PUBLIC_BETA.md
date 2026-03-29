@@ -321,6 +321,30 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 
 ---
 
+## After Onboarding: Normal Product Usage
+
+Chain onboarding gets you onto `oasyce-chain`. Day-to-day usage usually moves to the product-side tools:
+
+- `oas` for account, market, capabilities, portfolio, and Dashboard
+- `DataVault` for directory-scale data scanning, privacy checks, and safe registration
+- `oasyce-sdk` for Python-native queries and transaction builders
+
+The shortest product-side path after chain onboarding is:
+
+```bash
+pip install oasyce              # AI-first CLI + Dashboard + bundled DataVault
+oas bootstrap                   # self-update + wallet/device readiness + DataVault readiness
+export OASYCE_NETWORK_MODE=testnet
+export OASYCE_STRICT_CHAIN=1
+oas doctor --public-beta --json
+oas start                       # Dashboard at http://localhost:8420
+```
+
+If you want the full product-side guide, continue with:
+
+- [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
+- [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)
+
 ## Python Toolchain
 
 Beyond direct HTTP calls, you can use the Python toolchain for more efficient operations. Three packages, one install.
@@ -334,6 +358,8 @@ pip install -U "oasyce-sdk>=0.5.0"   # Python SDK (chain queries + TX builders)
 ```
 
 ### DataVault: Scan Local Data
+
+Treat DataVault as the default data ingress, not an optional add-on. Use it when you are working with a directory, repeated scans, or AI-managed data assets. Keep `oas register` for explicit single-file registration and debugging.
 
 Before registering data assets, scan your local files:
 
@@ -361,6 +387,14 @@ oas doctor --public-beta --json
 ```
 
 Proceed only when `oas doctor --public-beta --json` reports `status: ok`.
+
+For normal day-to-day usage after onboarding:
+
+```bash
+oas agent status                  # inspect autonomy / DataVault-first status
+datavault report ~/Documents      # review safe vs risky files
+oas start                         # open Dashboard
+```
 
 ```bash
 oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json
