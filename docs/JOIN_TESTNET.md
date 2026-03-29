@@ -17,6 +17,16 @@
 
 ---
 
+## If You Only Need an Address + Faucet Funds
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)
+```
+
+This creates a local key in `~/.oasyced`, requests faucet funds, and prints your address plus balance query.
+
+---
+
 ## Option A: One-Click Docker (Fastest)
 
 ```bash

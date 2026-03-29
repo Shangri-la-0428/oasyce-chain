@@ -59,6 +59,7 @@ If you are using the AI-first `oas + DataVault` workflow, complete the chain-sid
 
 - Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)
 - Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`
+- Create account + request faucet funds: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)`
 - Prepare local node: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`
 - Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`
 - API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)

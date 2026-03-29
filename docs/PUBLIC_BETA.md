@@ -24,6 +24,12 @@ If you want the `oasyced` CLI locally, install it in one command first:
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)
 ```
 
+If you only need an address and faucet funds, the shortest path is:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)
+```
+
 If you want a local node too, the shortest native setup is:
 
 ```bash
