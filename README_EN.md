@@ -50,15 +50,18 @@ Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is just
 
 ---
 
+<!-- BEGIN GENERATED:PUBLIC_BETA_EN -->
 ## Public Beta
 
 The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA.md).
 
+If you are using the AI-first `oas + DataVault` workflow, complete the chain-side onboarding first, then return to the product-side guide.
+
 - Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)
 - API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)
+- Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)
 - Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)
-
-If you are using the AI-first `oas + DataVault` workflow, complete the chain-side onboarding first, then return to the product-side guide.
+<!-- END GENERATED:PUBLIC_BETA_EN -->
 
 ---
 

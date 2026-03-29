@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Check generated public docs
+        run: python3 scripts/sync_public_docs.py
       - uses: actions/setup-go@v6
         with:
           go-version: '1.22'

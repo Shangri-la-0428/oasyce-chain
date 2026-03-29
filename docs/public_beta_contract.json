@@ -1,0 +1,78 @@
+{
+  "links": {
+    "guide_en": "https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md",
+    "guide_zh": "https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md",
+    "api_reference": "https://chain.oasyce.com/docs.html",
+    "validator_guide": "https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md",
+    "releases": "https://github.com/Shangri-la-0428/oasyce-chain/releases/latest",
+    "network_overview": "index.html#testnet"
+  },
+  "readme": {
+    "zh": {
+      "title": "## 加入公测网",
+      "intro_lines": [
+        "Oasyce Testnet-1 现已上线。",
+        "",
+        "公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。如果你是 AI/数据工作流用户，先按那份文档完成链上接入，再回到 `oas + DataVault` 流程。"
+      ],
+      "table_rows": [
+        ["Chain ID", "`oasyce-testnet-1`"],
+        ["Seed", "`3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656`"],
+        ["RPC", "`http://47.93.32.88:26657`"],
+        ["REST", "`http://47.93.32.88:1317`"],
+        ["Faucet", "`http://47.93.32.88:8080/faucet?address=oasyce1...`"],
+        ["公测指南", "[docs/PUBLIC_BETA_CN.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md)"],
+        ["API Reference", "[chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)"],
+        ["Validator Guide", "[docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)"],
+        ["Releases", "[latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"],
+        ["Python SDK", "`pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk))"]
+      ]
+    },
+    "en": {
+      "title": "## Public Beta",
+      "intro_lines": [
+        "The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA.md).",
+        "",
+        "If you are using the AI-first `oas + DataVault` workflow, complete the chain-side onboarding first, then return to the product-side guide."
+      ],
+      "bullet_lines": [
+        "- Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)",
+        "- API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)",
+        "- Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)",
+        "- Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"
+      ]
+    }
+  },
+  "website": {
+    "testnet_section": {
+      "description": "Testnet-1 is live. Start with the Public Beta Guide, use the API Reference after onboarding, and use the validator guide only if you are running infrastructure.",
+      "rows": [
+        ["Chain ID", "<code>oasyce-testnet-1</code>"],
+        ["Seed Node", "<code style=\"font-size:0.75rem\">3e5a91...85b0cb@47.93.32.88:26656</code>"],
+        ["RPC", "<code>47.93.32.88:26657</code>"],
+        ["REST API", "<code>47.93.32.88:1317</code>"],
+        ["Faucet", "<code>47.93.32.88:8080/faucet?address=...</code>"],
+        ["Start Here", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\">Public Beta Guide</a>"],
+        ["API", "<a href=\"docs.html\">docs.html</a>"],
+        ["Validator", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md\">Validator Setup</a>"],
+        ["Releases", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/releases/latest\">Latest Release</a>"]
+      ],
+      "buttons": [
+        "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\" class=\"btn btn-primary\" data-i18n=\"testnet-guide\">Public Beta Guide</a>",
+        "<a href=\"docs.html\" class=\"btn btn-secondary\" data-i18n=\"testnet-api\">API Reference</a>",
+        "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md\" class=\"btn btn-secondary\" data-i18n=\"testnet-validator\">Validator Guide</a>"
+      ]
+    },
+    "docs_start_here": {
+      "paragraphs": [
+        "This page is the chain API reference. Public beta onboarding lives in the Public Beta Guide. Start there first, then come back here once your wallet, testnet environment, and Oasyce tooling are ready.",
+        "Before using the public beta from `oas` or `datavault`, run <code>oas doctor --public-beta --json</code> and proceed only when it returns <code>status: ok</code>."
+      ],
+      "links": [
+        "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\">Public Beta Guide (EN)</a>",
+        "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md\">公测指南 (中文)</a>",
+        "<a class=\"notice-link\" href=\"index.html#testnet\">Network Overview</a>"
+      ]
+    }
+  }
+}

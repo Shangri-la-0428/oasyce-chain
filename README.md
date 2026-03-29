@@ -6,6 +6,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 > English version: [README_EN.md](README_EN.md) | LLM-optimized docs: [docs/llms.txt](docs/llms.txt)
+>
+> 官网: [chain.oasyce.com](https://chain.oasyce.com)
 
 **Agent 世界的产权、合同和仲裁。**
 
@@ -50,6 +52,7 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 
 ---
 
+<!-- BEGIN GENERATED:PUBLIC_BETA_ZH -->
 ## 加入公测网
 
 Oasyce Testnet-1 现已上线。
@@ -65,8 +68,10 @@ Oasyce Testnet-1 现已上线。
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
 | 公测指南 | [docs/PUBLIC_BETA_CN.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md) |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
+| Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
 | Releases | [latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |
 | Python SDK | `pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
+<!-- END GENERATED:PUBLIC_BETA_ZH -->
 
 **最快路径（使用经济系统）：**
 ```bash
