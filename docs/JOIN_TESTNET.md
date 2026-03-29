@@ -57,6 +57,18 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain
 
 This prepares `~/.oasyced` for `oasyce-testnet-1`, downloads `genesis.json`, patches testnet-friendly params, and configures the seed peer plus REST API.
 
+If you want to start the node immediately in the current shell, use:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)
+```
+
+If you want a Linux service instead of a foreground process, use:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_public_beta_service.sh)
+```
+
 ### 3. Manual path: initialize yourself
 
 ```bash

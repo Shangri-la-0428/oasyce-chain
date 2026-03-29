@@ -30,6 +30,12 @@ If you want a local node too, the shortest native setup is:
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)
 ```
 
+If you want to prepare and start the node immediately in the current shell:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)
+```
+
 ### Step 1: Get tokens from the faucet
 
 ```bash

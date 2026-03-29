@@ -30,6 +30,12 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain
 bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)
 ```
 
+如果你希望在当前 shell 里直接准备并启动节点：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)
+```
+
 ### 第一步：从水龙头获取代币
 
 ```bash

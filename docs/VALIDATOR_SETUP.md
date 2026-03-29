@@ -54,6 +54,12 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain
 
 Then continue from key creation, funding, and `create-validator`.
 
+If this validator should run as a Linux service, use:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_public_beta_service.sh)
+```
+
 ### Option B: Build from Source
 
 ```bash
