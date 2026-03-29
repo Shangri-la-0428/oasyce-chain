@@ -12,6 +12,7 @@ import urllib.parse
 PORT = int(os.environ.get("FAUCET_PORT", "8080"))
 AMOUNT = int(os.environ.get("FAUCET_AMOUNT", "100"))  # OAS
 CHAIN_ID = os.environ.get("CHAIN_ID", "oasyce-testnet-1")
+NODE = os.environ.get("NODE", "tcp://localhost:26657")
 HOME = os.environ.get("OASYCE_HOME", "/home/oasyce/.oasyced")
 FAUCET_KEY = os.environ.get("FAUCET_KEY", "faucet")
 RATE_SECONDS = 3600  # 1 hour per address
@@ -37,6 +38,45 @@ def save_rate_limit():
             json.dump(rate_limit, f)
     except OSError:
         pass
+
+
+def run_faucet_send(address, retries=2):
+    amount_uoas = AMOUNT * 1_000_000
+    faucet_addr = subprocess.check_output([
+        "oasyced", "keys", "show", FAUCET_KEY, "-a",
+        "--keyring-backend", "test", "--home", HOME
+    ], text=True).strip()
+
+    cmd = [
+        "oasyced", "tx", "send", faucet_addr, address,
+        f"{amount_uoas}uoas",
+        "--from", FAUCET_KEY,
+        "--fees", "10000uoas", "--yes",
+        "--keyring-backend", "test",
+        "--chain-id", CHAIN_ID,
+        "--node", NODE,
+        "--home", HOME,
+        "--output", "json",
+    ]
+
+    for attempt in range(1, retries + 1):
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        output = (result.stdout or result.stderr).strip()
+        if result.returncode != 0:
+            return False, output
+        try:
+            payload = json.loads(output)
+        except json.JSONDecodeError:
+            return False, output or "non-json faucet tx output"
+        code = int(payload.get("code", 0) or 0)
+        if code == 0:
+            return True, payload
+        if code == 19 and attempt < retries:
+            time.sleep(6)
+            continue
+        return False, payload.get("raw_log", output)
+
+    return False, "max retries exceeded"
 
 
 class ReuseAddrServer(http.server.HTTPServer):
@@ -68,24 +108,10 @@ class FaucetHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(429, {"error": f"rate limited, retry in {wait}s"})
             return
 
-        amount_uoas = AMOUNT * 1_000_000
         try:
-            faucet_addr = subprocess.check_output([
-                "oasyced", "keys", "show", FAUCET_KEY, "-a",
-                "--keyring-backend", "test", "--home", HOME
-            ], text=True).strip()
-
-            result = subprocess.run([
-                "oasyced", "tx", "send", faucet_addr, address,
-                f"{amount_uoas}uoas",
-                "--fees", "500uoas", "--yes",
-                "--keyring-backend", "test",
-                "--chain-id", CHAIN_ID,
-                "--home", HOME,
-            ], capture_output=True, text=True, timeout=30)
-
-            if result.returncode != 0:
-                self.send_json(500, {"error": result.stderr.strip()})
+            ok, payload = run_faucet_send(address)
+            if not ok:
+                self.send_json(500, {"error": str(payload)})
                 return
 
             rate_limit[address] = now
@@ -94,6 +120,7 @@ class FaucetHandler(http.server.BaseHTTPRequestHandler):
                 "status": "ok",
                 "amount": f"{AMOUNT} OAS",
                 "to": address,
+                "txhash": payload.get("txhash", ""),
             })
         except Exception as e:
             self.send_json(500, {"error": str(e)})

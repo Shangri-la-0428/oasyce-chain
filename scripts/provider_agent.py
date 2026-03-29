@@ -61,6 +61,7 @@ import time
 import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import socketserver
+from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
@@ -78,6 +79,10 @@ PROVIDER_PORT = int(os.environ.get("PROVIDER_PORT", "8430"))
 OASYCED = os.environ.get("OASYCED_BIN", "oasyced")
 CHAIN_ID = os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
 KEYRING = os.environ.get("OASYCED_KEYRING", "test")
+ALERT_EMAIL = os.environ.get("OASYCE_ALERT_EMAIL", "ptc0428@qq.com")
+ALERT_LOG = os.environ.get("OASYCE_ALERT_LOG", "/tmp/oasyce-provider-alert.log")
+ALERT_STATE_DIR = os.environ.get("OASYCE_ALERT_STATE_DIR", "/tmp/oasyce_provider_alerts")
+AUTO_DEACTIVATE_ON_BUY_FAILURE = os.environ.get("OASYCE_AUTO_DEACTIVATE_ON_BUY_FAILURE", "1") == "1"
 
 CHALLENGE_WINDOW = 100  # blocks
 BLOCK_TIME_S = 5        # seconds per block
@@ -244,6 +249,58 @@ def get_provider_address():
         pass
     return None
 
+
+def log_alert_event(level, msg):
+    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        with open(ALERT_LOG, "a", encoding="utf-8") as f:
+            f.write(f"{ts}: {level}: {msg}\n")
+    except OSError as e:
+        log.warning("Could not write alert log %s: %s", ALERT_LOG, e)
+
+
+def ensure_alert_state_dir():
+    os.makedirs(ALERT_STATE_DIR, exist_ok=True)
+
+
+def alert_state_path(key):
+    safe = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in key)
+    return os.path.join(ALERT_STATE_DIR, f"{safe}.active")
+
+
+def send_alert_email(msg):
+    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+    subject = f"[Oasyce Alert] {msg}"
+    mail = (
+        f"Subject: {subject}\n"
+        f"From: Oasyce Monitor <ptc0428@qq.com>\n"
+        f"To: {ALERT_EMAIL}\n"
+        "Content-Type: text/plain; charset=utf-8\n\n"
+        f"{msg}\n\nTime: {ts}\n"
+    )
+    try:
+        subprocess.run(
+            ["msmtp", ALERT_EMAIL],
+            input=mail,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        log.warning("msmtp not found; alert email skipped")
+
+
+def activate_alert_once(key, msg):
+    ensure_alert_state_dir()
+    path = alert_state_path(key)
+    if os.path.exists(path):
+        return False
+    log_alert_event("ALERT", msg)
+    send_alert_email(msg)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("1\n")
+    return True
+
 # ---------------------------------------------------------------------------
 # Upstream API call
 # ---------------------------------------------------------------------------
@@ -275,43 +332,181 @@ def call_upstream(input_data):
 # Background claim scheduler
 # ---------------------------------------------------------------------------
 
-# Upstream health cache (avoid hammering upstream on every /health)
+# Upstream status is only updated on buyer-path probes or real invocation attempts.
 _upstream_ok = True
+_upstream_known = False
+_upstream_error = ""
 _upstream_check_ts = 0
-
-# Consecutive failure tracking — auto-deactivate after MAX_CONSECUTIVE_FAILS
-_consecutive_fails = 0
-MAX_CONSECUTIVE_FAILS = int(os.environ.get("MAX_CONSECUTIVE_FAILS", "3"))
+_capability_ok = False
+_capability_check_ts = 0
+_capability_error = "capability not checked yet"
 _deactivated = False
 
-def _check_upstream_cached():
-    """Return whether upstream is reachable. Cached for 60 seconds."""
-    global _upstream_ok, _upstream_check_ts
+def record_upstream_status(ok, error=""):
+    global _upstream_ok, _upstream_known, _upstream_error, _upstream_check_ts
+    _upstream_ok = ok
+    _upstream_known = True
+    _upstream_error = error
+    _upstream_check_ts = time.time()
+
+
+def probe_upstream(force=False):
+    """Probe upstream only when a buyer path requests it."""
+    global _upstream_ok, _upstream_error, _upstream_check_ts, _upstream_known
     now = time.time()
-    if now - _upstream_check_ts < 60:
-        return _upstream_ok
+    if not force and _upstream_known and now - _upstream_check_ts < 30:
+        return _upstream_ok, _upstream_error
     _upstream_check_ts = now
     if not UPSTREAM_API_URL:
-        _upstream_ok = False
-        return False
+        record_upstream_status(False, "UPSTREAM_API_URL not configured")
+        return _upstream_ok, _upstream_error
     try:
         req = Request(UPSTREAM_API_URL, method="HEAD")
         with urlopen(req, timeout=5) as resp:
-            _upstream_ok = True
+            record_upstream_status(True, "")
     except Exception:
-        # HEAD might not be supported, try a minimal POST
         try:
-            body = json.dumps({"prompt": ""}).encode()
+            body = json.dumps({"prompt": "health check", "max_tokens": 1}).encode()
             req = Request(UPSTREAM_API_URL, data=body,
                           headers={"Content-Type": "application/json"}, method="POST")
             with urlopen(req, timeout=10) as resp:
-                _upstream_ok = True
+                record_upstream_status(True, "")
         except HTTPError as e:
-            # 4xx means upstream is reachable, just rejected our test
-            _upstream_ok = e.code < 500
-        except Exception:
-            _upstream_ok = False
-    return _upstream_ok
+            err = e.read().decode("utf-8", errors="replace")[:500]
+            record_upstream_status(False, f"upstream HTTP {e.code}: {err}")
+        except Exception as e:
+            record_upstream_status(False, f"upstream connection error: {e}")
+    return _upstream_ok, _upstream_error
+
+
+def _check_capability_cached(force=False):
+    """Return whether the configured capability exists, is active, and belongs to us."""
+    global _capability_ok, _capability_check_ts, _capability_error
+    if _deactivated:
+        return False, _capability_error or "capability locally deactivated"
+    now = time.time()
+    if not force and now - _capability_check_ts < 60:
+        return _capability_ok, _capability_error
+
+    _capability_check_ts = now
+    if not CAPABILITY_ID:
+        _capability_ok = False
+        _capability_error = "capability ID is not configured"
+        return _capability_ok, _capability_error
+
+    cap_data = get_capability(CAPABILITY_ID)
+    if not cap_data:
+        _capability_ok = False
+        _capability_error = "capability not found on-chain"
+        return _capability_ok, _capability_error
+
+    cap = cap_data.get("capability", {})
+    if not cap.get("is_active", False):
+        _capability_ok = False
+        _capability_error = "capability is inactive on-chain"
+        return _capability_ok, _capability_error
+
+    provider_addr = get_provider_address()
+    if provider_addr and cap.get("provider", "") != provider_addr:
+        _capability_ok = False
+        _capability_error = f"capability belongs to {cap.get('provider', '')}, not {provider_addr}"
+        return _capability_ok, _capability_error
+
+    _capability_ok = True
+    _capability_error = ""
+    return _capability_ok, _capability_error
+
+
+def disable_capability(reason, invocation_id=""):
+    global _deactivated, _capability_ok, _capability_check_ts, _capability_error
+
+    reason = (reason or "unknown upstream failure").strip()
+    msg = f"Capability {CAPABILITY_ID} auto-disabled after buyer-path failure"
+    if invocation_id:
+        msg += f" ({invocation_id})"
+    msg += f": {reason}"
+    activate_alert_once(f"provider_capability_disabled_{CAPABILITY_ID}", msg)
+
+    if _deactivated:
+        return False
+
+    _deactivated = True
+    _capability_ok = False
+    _capability_check_ts = time.time()
+    _capability_error = f"capability locally disabled after buyer-path failure: {reason}"
+
+    if AUTO_DEACTIVATE_ON_BUY_FAILURE and CAPABILITY_ID:
+        ok, out = oasyced_tx(["oasyce_capability", "deactivate", CAPABILITY_ID])
+        if ok:
+            log.error("Capability %s deactivated on-chain after buyer-path failure", CAPABILITY_ID)
+            return True
+        log.error("Capability %s local disable set but on-chain deactivate failed: %s", CAPABILITY_ID, out)
+    return False
+
+
+def handle_buyer_path_failure(invocation_id, reason):
+    record_upstream_status(False, reason)
+    if invocation_id:
+        oasyced_tx(["oasyce_capability", "fail-invocation", invocation_id])
+    disable_capability(reason, invocation_id=invocation_id)
+
+
+def build_health_status(probe=False):
+    capability_ok, capability_error = _check_capability_cached(force=probe)
+
+    if _deactivated:
+        return 503, {
+            "status": "deactivated",
+            "capability_id": CAPABILITY_ID,
+            "upstream": UPSTREAM_API_URL or "(not configured)",
+            "upstream_ok": _upstream_ok if _upstream_known else None,
+            "upstream_error": _upstream_error,
+            "upstream_known": _upstream_known,
+            "capability_ok": False,
+            "capability_error": _capability_error,
+            "deactivated": True,
+        }
+
+    if not capability_ok:
+        return 503, {
+            "status": "inactive",
+            "capability_id": CAPABILITY_ID,
+            "upstream": UPSTREAM_API_URL or "(not configured)",
+            "upstream_ok": _upstream_ok if _upstream_known else None,
+            "upstream_error": _upstream_error,
+            "upstream_known": _upstream_known,
+            "capability_ok": capability_ok,
+            "capability_error": capability_error,
+            "deactivated": False,
+        }
+
+    if probe:
+        upstream_ok, upstream_error = probe_upstream(force=True)
+        if not upstream_ok:
+            disable_capability(f"buyer preflight failed: {upstream_error}")
+            return 503, {
+                "status": "deactivated",
+                "capability_id": CAPABILITY_ID,
+                "upstream": UPSTREAM_API_URL or "(not configured)",
+                "upstream_ok": False,
+                "upstream_error": upstream_error,
+                "upstream_known": True,
+                "capability_ok": False,
+                "capability_error": _capability_error,
+                "deactivated": True,
+            }
+
+    return 200, {
+        "status": "ok",
+        "capability_id": CAPABILITY_ID,
+        "upstream": UPSTREAM_API_URL or "(not configured)",
+        "upstream_ok": _upstream_ok if _upstream_known else None,
+        "upstream_error": _upstream_error,
+        "upstream_known": _upstream_known,
+        "capability_ok": capability_ok,
+        "capability_error": capability_error,
+        "deactivated": False,
+    }
 
 # Track pending claims: {invocation_id: completed_height}
 _pending_claims = {}
@@ -371,26 +566,12 @@ class ProviderHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path == "/health":
-            # Check upstream reachability (cached 60s)
-            upstream_ok = _check_upstream_cached()
-            if _deactivated:
-                status = "deactivated"
-                code = 503
-            elif upstream_ok:
-                status = "ok"
-                code = 200
-            else:
-                status = "degraded"
-                code = 503
-            self._respond_json(code, {
-                "status": status,
-                "capability_id": CAPABILITY_ID,
-                "upstream": UPSTREAM_API_URL or "(not configured)",
-                "upstream_ok": upstream_ok,
-                "consecutive_fails": _consecutive_fails,
-                "deactivated": _deactivated,
-            })
+        parsed = urlparse(self.path)
+        if parsed.path == "/health":
+            probe = parse_qs(parsed.query).get("probe", ["0"])[0] == "1"
+            code, payload = build_health_status(probe=probe)
+            payload["probe"] = probe
+            self._respond_json(code, payload)
             return
 
         if self.path == "/status":
@@ -434,6 +615,11 @@ class ProviderHandler(BaseHTTPRequestHandler):
             self._respond_json(400, {"error": "missing input"})
             return
 
+        if _deactivated:
+            handle_buyer_path_failure(invocation_id, "capability already deactivated")
+            self._respond_json(503, {"error": "capability is deactivated"})
+            return
+
         log.info("Processing invocation %s", invocation_id)
 
         # Step 1: Verify invocation on-chain
@@ -450,20 +636,7 @@ class ProviderHandler(BaseHTTPRequestHandler):
         upstream_resp, err = call_upstream(input_data)
         if err:
             log.error("[%s] Upstream call failed: %s", invocation_id, err)
-            # Mark upstream as unhealthy so /health reflects reality
-            global _upstream_ok, _upstream_check_ts, _consecutive_fails, _deactivated
-            _upstream_ok = False
-            _upstream_check_ts = time.time()
-            _consecutive_fails += 1
-            log.warning("[%s] Consecutive failures: %d/%d", invocation_id, _consecutive_fails, MAX_CONSECUTIVE_FAILS)
-            # Report failure on-chain
-            oasyced_tx(["oasyce_capability", "fail-invocation", invocation_id])
-            # Auto-deactivate after too many consecutive failures
-            if _consecutive_fails >= MAX_CONSECUTIVE_FAILS and not _deactivated:
-                log.error("Upstream failed %d consecutive times — auto-deactivating capability %s",
-                          _consecutive_fails, CAPABILITY_ID)
-                oasyced_tx(["oasyce_capability", "deactivate", CAPABILITY_ID])
-                _deactivated = True
+            handle_buyer_path_failure(invocation_id, err)
             self._respond_json(502, {"error": f"upstream error: {err}"})
             return
 
@@ -482,8 +655,7 @@ class ProviderHandler(BaseHTTPRequestHandler):
             pass
 
         # Step 4: Complete invocation on-chain (starts challenge window)
-        # Upstream succeeded — reset failure counter
-        _consecutive_fails = 0
+        record_upstream_status(True, "")
 
         log.info("[%s] Submitting complete-invocation on-chain...", invocation_id)
         complete_args = [
@@ -529,6 +701,11 @@ class ProviderHandler(BaseHTTPRequestHandler):
 def register_capability(name, price, description="", tags=""):
     """Register a new capability on-chain. Returns capability ID or exits."""
     log.info("Registering capability: name=%s, price=%duoas", name, price)
+
+    upstream_ok, upstream_error = probe_upstream(force=True)
+    if not upstream_ok:
+        log.error("Upstream validation failed; refusing to register capability: %s", upstream_error)
+        sys.exit(1)
 
     args = [
         "oasyce_capability", "register",
@@ -607,6 +784,7 @@ def main():
 
     # Resolve capability ID
     global CAPABILITY_ID, PROVIDER_PORT
+    global _deactivated, _capability_ok, _capability_check_ts, _capability_error
     if args.capability_id:
         CAPABILITY_ID = args.capability_id
     if args.port:
@@ -636,10 +814,20 @@ def main():
         cap = cap_data.get("capability", {})
         log.info("Serving capability: %s (%s)", cap.get("name", "?"), CAPABILITY_ID)
         log.info("Price per call: %s", cap.get("price_per_call", "?"))
+        if not cap.get("is_active", False):
+            _deactivated = True
+            _capability_ok = False
+            _capability_check_ts = time.time()
+            _capability_error = "capability is inactive on-chain"
+            log.warning("Capability %s is inactive on-chain; starting in deactivated mode", CAPABILITY_ID)
         if cap.get("provider") != addr:
             log.error("Capability %s belongs to %s, not %s",
                       CAPABILITY_ID, cap.get("provider"), addr)
             sys.exit(1)
+        if not _deactivated:
+            _capability_ok = True
+            _capability_check_ts = time.time()
+            _capability_error = ""
     else:
         log.warning("Could not verify capability %s on-chain (REST may be down)", CAPABILITY_ID)
 
