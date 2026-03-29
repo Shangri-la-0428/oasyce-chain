@@ -4,6 +4,7 @@
     "guide_zh": "https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md",
     "api_reference": "https://chain.oasyce.com/docs.html",
     "validator_guide": "https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md",
+    "install_script": "https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh",
     "releases": "https://github.com/Shangri-la-0428/oasyce-chain/releases/latest",
     "network_overview": "index.html#testnet"
   },
@@ -22,6 +23,7 @@
         ["REST", "`http://47.93.32.88:1317`"],
         ["Faucet", "`http://47.93.32.88:8080/faucet?address=oasyce1...`"],
         ["公测指南", "[docs/PUBLIC_BETA_CN.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md)"],
+        ["安装 CLI", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`"],
         ["API Reference", "[chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)"],
         ["Validator Guide", "[docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)"],
         ["Releases", "[latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"],
@@ -37,6 +39,7 @@
       ],
       "bullet_lines": [
         "- Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)",
+        "- Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`",
         "- API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)",
         "- Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)",
         "- Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"
@@ -53,12 +56,14 @@
         ["REST API", "<code>47.93.32.88:1317</code>"],
         ["Faucet", "<code>47.93.32.88:8080/faucet?address=...</code>"],
         ["Start Here", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\">Public Beta Guide</a>"],
+        ["Install CLI", "<code>bash &lt;(curl -fsSL .../install_oasyced.sh)</code>"],
         ["API", "<a href=\"docs.html\">docs.html</a>"],
         ["Validator", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md\">Validator Setup</a>"],
         ["Releases", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/releases/latest\">Latest Release</a>"]
       ],
       "buttons": [
         "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\" class=\"btn btn-primary\" data-i18n=\"testnet-guide\">Public Beta Guide</a>",
+        "<a href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh\" class=\"btn btn-secondary\">Install CLI</a>",
         "<a href=\"docs.html\" class=\"btn btn-secondary\" data-i18n=\"testnet-api\">API Reference</a>",
         "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md\" class=\"btn btn-secondary\" data-i18n=\"testnet-validator\">Validator Guide</a>"
       ]
@@ -66,11 +71,13 @@
     "docs_start_here": {
       "paragraphs": [
         "This page is the chain API reference. Public beta onboarding lives in the Public Beta Guide. Start there first, then come back here once your wallet, testnet environment, and Oasyce tooling are ready.",
+        "If you need the native chain CLI, install it first with <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)</code>.",
         "Before using the public beta from `oas` or `datavault`, run <code>oas doctor --public-beta --json</code> and proceed only when it returns <code>status: ok</code>."
       ],
       "links": [
         "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\">Public Beta Guide (EN)</a>",
         "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md\">公测指南 (中文)</a>",
+        "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh\">Install CLI Script</a>",
         "<a class=\"notice-link\" href=\"index.html#testnet\">Network Overview</a>"
       ]
     }

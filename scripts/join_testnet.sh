@@ -46,6 +46,10 @@ if ! command -v docker &>/dev/null; then
     echo "  macOS:   https://docs.docker.com/desktop/install/mac-install/"
     echo "  Windows: https://docs.docker.com/desktop/install/windows-install/"
     echo "  Linux:   https://docs.docker.com/engine/install/"
+    echo ""
+    echo "If you want the native CLI instead of Docker:"
+    echo "  bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)"
+    echo "  See docs/JOIN_TESTNET.md for the native setup path."
     exit 1
 fi
 

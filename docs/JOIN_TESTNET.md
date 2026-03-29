@@ -17,7 +17,7 @@
 
 ---
 
-## Option A: One-Click Docker (Recommended)
+## Option A: One-Click Docker (Fastest)
 
 ```bash
 # Prerequisites: Docker
@@ -34,22 +34,19 @@ docker exec oasyce-node oasyced status | jq '.SyncInfo.catching_up'
 
 ---
 
-## Option B: Binary Install
+## Option B: Native CLI Install (Recommended)
 
-### 1. Download
+### 1. Install `oasyced`
 
 ```bash
-# Linux amd64
-curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.0/oasyced-linux-amd64
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)
+oasyced version
+```
 
-# macOS Apple Silicon
-curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.0/oasyced-darwin-arm64
+By default the installer uses `~/.local/bin`. If that directory is not on your `PATH`, add it:
 
-# macOS Intel
-curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.0/oasyced-darwin-amd64
-
-chmod +x oasyced && sudo mv oasyced /usr/local/bin/
-oasyced version  # should print v0.5.0
+```bash
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 ### 2. Initialize
@@ -199,6 +196,7 @@ curl -s http://localhost:1317/oasyce/capability/v1/params | jq
 ## Links
 
 - [Full Validator Guide](VALIDATOR_SETUP.md)
+- [Public Beta Guide](PUBLIC_BETA.md)
 - [Architecture](ARCHITECTURE.md)
 - [Economics](ECONOMICS.md)
 - [Agent Workflows](AGENT_WORKFLOWS.md)

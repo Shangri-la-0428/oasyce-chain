@@ -67,6 +67,7 @@ Oasyce Testnet-1 现已上线。
 | REST | `http://47.93.32.88:1317` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
 | 公测指南 | [docs/PUBLIC_BETA_CN.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md) |
+| 安装 CLI | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)` |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
 | Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
 | Releases | [latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |

@@ -18,6 +18,12 @@ You need nothing installed. Every step below uses HTTP requests to the public te
 
 **Base URL**: `http://47.93.32.88:1317`
 
+If you want the `oasyced` CLI locally, install it in one command first:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)
+```
+
 ### Step 1: Get tokens from the faucet
 
 ```bash
@@ -50,6 +56,14 @@ curl http://47.93.32.88:1317/oasyce/v1/marketplace
 Returns all active capabilities (AI services for sale), data assets, and open compute tasks in a single call.
 
 You are live. Choose what to do next.
+
+### Optional: install the CLI and verify it
+
+```bash
+oasyced version
+```
+
+If you want a local node or validator next, continue with [JOIN_TESTNET.md](JOIN_TESTNET.md) or [VALIDATOR_SETUP.md](VALIDATOR_SETUP.md).
 
 ---
 

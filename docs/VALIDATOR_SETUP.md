@@ -14,20 +14,16 @@
 | Faucet | `http://47.93.32.88:8080/faucet?address=oasyce1...` |
 | RPC | `http://47.93.32.88:26657` |
 | REST API | `http://47.93.32.88:1317` |
-| Binary downloads | [GitHub Releases](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0) |
+| Binary downloads | [GitHub Releases](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |
 
 ### Option A: Download Pre-built Binary (Recommended)
 
 ```bash
-# 1. Download binary for your platform
-# Linux:
-curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.0/oasyced-linux-amd64
-# macOS (Apple Silicon):
-curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.0/oasyced-darwin-arm64
-# macOS (Intel):
-curl -L -o oasyced https://github.com/Shangri-la-0428/oasyce-chain/releases/download/v0.5.0/oasyced-darwin-amd64
+# 1. Install the latest pre-built binary
+bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)
 
-chmod +x oasyced && sudo mv oasyced /usr/local/bin/
+# If ~/.local/bin is not on PATH:
+export PATH="$HOME/.local/bin:$PATH"
 
 # 2. Init
 oasyced init <your-moniker> --chain-id oasyce-testnet-1
