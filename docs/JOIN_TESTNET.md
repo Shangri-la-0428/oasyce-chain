@@ -12,7 +12,7 @@
 | REST API | `http://47.93.32.88:1317` |
 | gRPC | `47.93.32.88:9090` |
 | Faucet | `http://47.93.32.88:8080/faucet?address=<your-address>` |
-| Binary | [GitHub Releases v0.5.0](https://github.com/Shangri-la-0428/oasyce-chain/releases/tag/v0.5.0) |
+| Binary | [GitHub Releases latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |
 | Genesis SHA256 | `dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739` |
 
 ---
