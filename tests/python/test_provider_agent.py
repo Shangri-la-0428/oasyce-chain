@@ -45,7 +45,7 @@ class ProviderAgentTests(unittest.TestCase):
         self.assertIsNone(payload["upstream_ok"])
         mock_probe.assert_not_called()
 
-    def test_health_probe_failure_disables_capability(self):
+    def test_health_probe_failure_reports_degraded_without_disabling_capability(self):
         with mock.patch.object(provider_agent, "_check_capability_cached", return_value=(True, "")), \
              mock.patch.object(provider_agent, "probe_upstream", return_value=(False, "No available accounts")), \
              mock.patch.object(provider_agent, "activate_alert_once") as mock_alert, \
@@ -53,10 +53,10 @@ class ProviderAgentTests(unittest.TestCase):
             code, payload = provider_agent.build_health_status(probe=True)
 
         self.assertEqual(code, 503)
-        self.assertEqual(payload["status"], "deactivated")
-        self.assertTrue(provider_agent._deactivated)
-        mock_alert.assert_called_once()
-        mock_tx.assert_called_once_with(["oasyce_capability", "deactivate", "CAP_TEST"])
+        self.assertEqual(payload["status"], "degraded")
+        self.assertFalse(provider_agent._deactivated)
+        mock_alert.assert_not_called()
+        mock_tx.assert_not_called()
 
     def test_buyer_path_failure_fails_invocation_and_deactivates(self):
         with mock.patch.object(provider_agent, "activate_alert_once") as mock_alert, \

@@ -483,17 +483,16 @@ def build_health_status(probe=False):
     if probe:
         upstream_ok, upstream_error = probe_upstream(force=True)
         if not upstream_ok:
-            disable_capability(f"buyer preflight failed: {upstream_error}")
             return 503, {
-                "status": "deactivated",
+                "status": "degraded",
                 "capability_id": CAPABILITY_ID,
                 "upstream": UPSTREAM_API_URL or "(not configured)",
                 "upstream_ok": False,
                 "upstream_error": upstream_error,
                 "upstream_known": True,
-                "capability_ok": False,
-                "capability_error": _capability_error,
-                "deactivated": True,
+                "capability_ok": capability_ok,
+                "capability_error": capability_error,
+                "deactivated": False,
             }
 
     return 200, {
