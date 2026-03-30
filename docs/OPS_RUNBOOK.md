@@ -92,22 +92,23 @@ oasyced q oasyce_capability by-provider oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en
 规则：
 
 - `/health?probe=1` 只允许报告 `degraded`，不应再触发链上 `deactivate`
-- 如果当前 capability 已经 `inactive`，注册一个新的 capability 并把 `oasyce-provider.service.d/capability.conf` 切到新 ID
+- 如果当前 capability 已经 `inactive`，注册一个新的 capability 并把 `/etc/oasyce/provider-capability.env` 切到新 ID
 - 切换后重启 provider，并手动跑一次 consumer，确认链路恢复
 
 ```bash
 ssh -p 29222 root@47.93.32.88 '
-sudo -u oasyce env \
-  OASYCE_PROVIDER_KEY=validator \
-  OASYCED_CHAIN_ID=oasyce-testnet-1 \
-  OASYCED_KEYRING=test \
-  OASYCE_CHAIN_REST=http://127.0.0.1:11317 \
-  OASYCE_CHAIN_RPC=http://127.0.0.1:26667 \
-  UPSTREAM_API_URL=http://127.0.0.1:8090/v1/chat \
-  PROVIDER_PORT=8430 \
-  /usr/bin/python3 /opt/oasyce/src/scripts/provider_agent.py --register --name "Claude AI (Opus 4.6)" --price 500000 --description "Claude Opus 4.6 AI assistant via Oasyce proxy." --tags ai,claude,llm,chat
+bash /opt/oasyce/src/scripts/rotate_provider_capability.sh
 '
 ```
+
+### Provider capability 生命周期
+
+链上 capability 是不可删除的历史记录，所以“清理”不是删掉旧 ID，而是保证：
+
+- 当前生效 capability 只有一个
+- 当前 ID 固定写在 `/etc/oasyce/provider-capability.env`
+- 轮换时总是“先注册新 capability，再切 current，最后退役旧 active capability”
+- consumer 默认优先选择最新 active capability
 
 ### 磁盘空间不足
 

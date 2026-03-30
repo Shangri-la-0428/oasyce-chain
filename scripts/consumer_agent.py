@@ -338,6 +338,7 @@ def discover_capability(preferred_capability_id=""):
               if c.get("is_active") and c.get("id", "").startswith("CAP_")]
     if not active:
         return None
+    active.sort(key=lambda c: c.get("created_at", ""), reverse=True)
     # Prefer Claude AI capability
     for cap in active:
         if "claude" in cap.get("name", "").lower():

@@ -16,7 +16,7 @@ Environment=OASYCED_KEYRING=test
 Environment=OASYCE_PROVIDER_KEY=validator
 Environment=OASYCE_CHAIN_REST=http://127.0.0.1:11317
 Environment=OASYCE_CHAIN_RPC=http://127.0.0.1:26667
-Environment=OASYCE_CAPABILITY_ID=CAP_0000000000000008
+EnvironmentFile=-/etc/oasyce/provider-capability.env
 Environment=PROVIDER_PORT=8430
 
 # Upstream: local Claude proxy

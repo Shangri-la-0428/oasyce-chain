@@ -104,6 +104,12 @@ On every successful settlement:
    python3 scripts/provider_agent.py
    ```
 
+   On long-running VPS deployments, do not hand-edit capability IDs forever. Keep the current active ID in `/etc/oasyce/provider-capability.env` and rotate with:
+
+   ```bash
+   bash scripts/rotate_provider_capability.sh
+   ```
+
 3. The agent handles everything: verify invocation on-chain → call upstream → hash output → complete on-chain → auto-claim after challenge window.
 
 ### What is the challenge window?
