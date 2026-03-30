@@ -340,6 +340,16 @@ oas doctor --public-beta --json
 oas start                            # Dashboard at http://localhost:8420
 ```
 
+如果这台设备已经在使用 Oasyce，只是想拿到最新 CLI / Dashboard / 自治能力，就不要重新走 onboarding，直接原地升级：
+
+```bash
+export OASYCE_NETWORK_MODE=testnet
+export OASYCE_STRICT_CHAIN=1
+oas update --check --json
+oas doctor --public-beta --json
+oas start
+```
+
 如果你要看完整产品侧说明，继续读：
 
 - [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
