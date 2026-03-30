@@ -118,6 +118,8 @@ After a provider submits the output hash (`CompleteInvocation`), there's a **100
 
 The provider agent calls `FailInvocation`, which refunds the consumer's escrow in full. No penalty to the provider.
 
+Single transient upstream failures do **not** deactivate the capability. The provider only auto-deactivates after repeated consecutive buyer-path failures (default threshold: 3), so short upstream blips do not take the service offline.
+
 ```bash
 oasyced tx oasyce_capability fail-invocation INV_001 --from provider
 ```

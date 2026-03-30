@@ -83,6 +83,9 @@ ALERT_EMAIL = os.environ.get("OASYCE_ALERT_EMAIL", "ptc0428@qq.com")
 ALERT_LOG = os.environ.get("OASYCE_ALERT_LOG", "/tmp/oasyce-provider-alert.log")
 ALERT_STATE_DIR = os.environ.get("OASYCE_ALERT_STATE_DIR", "/tmp/oasyce_provider_alerts")
 AUTO_DEACTIVATE_ON_BUY_FAILURE = os.environ.get("OASYCE_AUTO_DEACTIVATE_ON_BUY_FAILURE", "1") == "1"
+AUTO_DEACTIVATE_FAILURE_THRESHOLD = max(
+    1, int(os.environ.get("OASYCE_AUTO_DEACTIVATE_FAILURE_THRESHOLD", "3"))
+)
 
 CHALLENGE_WINDOW = 100  # blocks
 BLOCK_TIME_S = 5        # seconds per block
@@ -341,6 +344,7 @@ _capability_ok = False
 _capability_check_ts = 0
 _capability_error = "capability not checked yet"
 _deactivated = False
+_buyer_failure_streak = 0
 
 def record_upstream_status(ok, error=""):
     global _upstream_ok, _upstream_known, _upstream_error, _upstream_check_ts
@@ -444,11 +448,29 @@ def disable_capability(reason, invocation_id=""):
     return False
 
 
+def reset_buyer_failure_streak():
+    global _buyer_failure_streak
+    _buyer_failure_streak = 0
+
+
 def handle_buyer_path_failure(invocation_id, reason):
+    global _buyer_failure_streak
     record_upstream_status(False, reason)
     if invocation_id:
         oasyced_tx(["oasyce_capability", "fail-invocation", invocation_id])
-    disable_capability(reason, invocation_id=invocation_id)
+    _buyer_failure_streak += 1
+    log.warning(
+        "Buyer-path failure streak for %s is now %d/%d: %s",
+        CAPABILITY_ID,
+        _buyer_failure_streak,
+        AUTO_DEACTIVATE_FAILURE_THRESHOLD,
+        reason,
+    )
+    if AUTO_DEACTIVATE_ON_BUY_FAILURE and _buyer_failure_streak >= AUTO_DEACTIVATE_FAILURE_THRESHOLD:
+        disable_capability(
+            f"failure threshold reached after {_buyer_failure_streak} consecutive buyer-path failures: {reason}",
+            invocation_id=invocation_id,
+        )
 
 
 def build_health_status(probe=False):
@@ -505,6 +527,7 @@ def build_health_status(probe=False):
         "capability_ok": capability_ok,
         "capability_error": capability_error,
         "deactivated": False,
+        "buyer_failure_streak": _buyer_failure_streak,
     }
 
 # Track pending claims: {invocation_id: completed_height}
@@ -638,6 +661,7 @@ class ProviderHandler(BaseHTTPRequestHandler):
             handle_buyer_path_failure(invocation_id, err)
             self._respond_json(502, {"error": f"upstream error: {err}"})
             return
+        reset_buyer_failure_streak()
 
         # Step 3: Hash the output and extract usage metrics
         output_hash = hashlib.sha256(upstream_resp).hexdigest()

@@ -77,6 +77,38 @@ ssh -p 29222 root@47.93.32.88 'systemctl restart oasyced && sleep 5 && systemctl
 ssh -p 29222 root@47.93.32.88 'systemctl restart oasyce-faucet && sleep 2 && curl -s localhost:8080/faucet?address=oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en4gyv5'
 ```
 
+### Provider capability 被自动停用
+
+先区分是短暂 upstream 抖动，还是 capability 真被链上停用：
+
+```bash
+ssh -p 29222 root@47.93.32.88 '
+curl -s http://127.0.0.1:8430/health
+curl -s http://127.0.0.1:8430/health?probe=1
+oasyced q oasyce_capability by-provider oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en4gyv5 --node http://127.0.0.1:26667 --output json
+'
+```
+
+规则：
+
+- `/health?probe=1` 只允许报告 `degraded`，不应再触发链上 `deactivate`
+- 如果当前 capability 已经 `inactive`，注册一个新的 capability 并把 `oasyce-provider.service.d/capability.conf` 切到新 ID
+- 切换后重启 provider，并手动跑一次 consumer，确认链路恢复
+
+```bash
+ssh -p 29222 root@47.93.32.88 '
+sudo -u oasyce env \
+  OASYCE_PROVIDER_KEY=validator \
+  OASYCED_CHAIN_ID=oasyce-testnet-1 \
+  OASYCED_KEYRING=test \
+  OASYCE_CHAIN_REST=http://127.0.0.1:11317 \
+  OASYCE_CHAIN_RPC=http://127.0.0.1:26667 \
+  UPSTREAM_API_URL=http://127.0.0.1:8090/v1/chat \
+  PROVIDER_PORT=8430 \
+  /usr/bin/python3 /opt/oasyce/src/scripts/provider_agent.py --register --name "Claude AI (Opus 4.6)" --price 500000 --description "Claude Opus 4.6 AI assistant via Oasyce proxy." --tags ai,claude,llm,chat
+'
+```
+
 ### 磁盘空间不足
 
 ```bash

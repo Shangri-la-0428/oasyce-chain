@@ -31,6 +31,8 @@ class ProviderAgentTests(unittest.TestCase):
         provider_agent._capability_check_ts = 0
         provider_agent._capability_error = ""
         provider_agent._deactivated = False
+        provider_agent._buyer_failure_streak = 0
+        provider_agent.AUTO_DEACTIVATE_FAILURE_THRESHOLD = 3
 
     def tearDown(self):
         self.tempdir.cleanup()
@@ -61,6 +63,7 @@ class ProviderAgentTests(unittest.TestCase):
     def test_buyer_path_failure_fails_invocation_and_deactivates(self):
         with mock.patch.object(provider_agent, "activate_alert_once") as mock_alert, \
              mock.patch.object(provider_agent, "oasyced_tx", side_effect=[(True, "failed"), (True, "deactivated")]) as mock_tx:
+            provider_agent.AUTO_DEACTIVATE_FAILURE_THRESHOLD = 1
             provider_agent.handle_buyer_path_failure("INV_TEST", "upstream HTTP 503")
 
         self.assertFalse(provider_agent._upstream_ok)
@@ -75,6 +78,16 @@ class ProviderAgentTests(unittest.TestCase):
             ],
         )
         mock_alert.assert_called_once()
+
+    def test_buyer_path_failure_below_threshold_only_fails_invocation(self):
+        with mock.patch.object(provider_agent, "activate_alert_once") as mock_alert, \
+             mock.patch.object(provider_agent, "oasyced_tx", return_value=(True, "failed")) as mock_tx:
+            provider_agent.handle_buyer_path_failure("INV_TEST", "upstream HTTP 503")
+
+        self.assertEqual(provider_agent._buyer_failure_streak, 1)
+        self.assertFalse(provider_agent._deactivated)
+        mock_tx.assert_called_once_with(["oasyce_capability", "fail-invocation", "INV_TEST"])
+        mock_alert.assert_not_called()
 
     def test_register_refuses_unreachable_upstream(self):
         with mock.patch.object(provider_agent, "probe_upstream", return_value=(False, "upstream down")), \
