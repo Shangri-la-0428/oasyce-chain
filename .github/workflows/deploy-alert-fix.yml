@@ -1,0 +1,60 @@
+name: Deploy Alert Fix
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install SSH key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Deploy runtime files
+        env:
+          VPS_HOST: 47.93.32.88
+          VPS_PORT: 29222
+          VPS_USER: root
+        run: |
+          SCP_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -P ${VPS_PORT}"
+          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -p ${VPS_PORT}"
+
+          scp ${SCP_OPTS} deploy/healthcheck.sh "${VPS_USER}@${VPS_HOST}:/tmp/oasyce-healthcheck.sh"
+          scp ${SCP_OPTS} scripts/consumer_agent.py "${VPS_USER}@${VPS_HOST}:/tmp/oasyce-consumer_agent.py"
+
+          ssh ${SSH_OPTS} "${VPS_USER}@${VPS_HOST}" 'bash -s' <<'EOF'
+          set -euo pipefail
+
+          install -d -m 755 /var/lib/oasyce-healthcheck
+          install -d -m 755 /var/lib/oasyce-consumer
+          chown oasyce:oasyce /var/lib/oasyce-consumer
+
+          install -m 755 /tmp/oasyce-healthcheck.sh /opt/oasyce/src/deploy/healthcheck.sh
+          install -m 644 /tmp/oasyce-consumer_agent.py /opt/oasyce/src/scripts/consumer_agent.py
+
+          if [ -f /tmp/consumer_agent_state.json ] && [ ! -f /var/lib/oasyce-consumer/state.json ]; then
+            cp /tmp/consumer_agent_state.json /var/lib/oasyce-consumer/state.json
+            chown oasyce:oasyce /var/lib/oasyce-consumer/state.json
+          fi
+
+          rm -f /tmp/oasyce_health_state /tmp/oasyce_health_state.sent
+          rm -rf /tmp/oasyce_health_state_alerts
+
+          /opt/oasyce/src/scripts/healthcheck.sh
+
+          echo "=== healthcheck state ==="
+          find /var/lib/oasyce-healthcheck -maxdepth 2 -type f -print -exec sh -c "echo '---'; cat \"\$1\" || true" _ {} \;
+          echo "=== consumer state ==="
+          ls -la /var/lib/oasyce-consumer || true
+          cat /var/lib/oasyce-consumer/state.json || true
+          echo "=== current health ==="
+          curl -fsS http://127.0.0.1:11317/health || curl -fsS http://127.0.0.1:1317/health
+          EOF
