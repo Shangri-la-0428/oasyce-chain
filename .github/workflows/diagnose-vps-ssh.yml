@@ -1,0 +1,80 @@
+name: Diagnose VPS SSH
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Install SSH key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Collect SSH diagnostics
+        env:
+          VPS_HOST: 47.93.32.88
+          VPS_PORT: 29222
+          VPS_USER: root
+        run: |
+          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -p ${VPS_PORT}"
+
+          ssh ${SSH_OPTS} "${VPS_USER}@${VPS_HOST}" 'bash -s' <<'EOF'
+          set -euo pipefail
+
+          echo "=== whoami ==="
+          whoami
+          echo
+
+          echo "=== sshd service ==="
+          systemctl status ssh --no-pager || systemctl status sshd --no-pager || true
+          echo
+
+          echo "=== sshd config summary ==="
+          sshd -T | egrep '^(port|maxstartups|maxsessions|logingracetime|passwordauthentication|pubkeyauthentication|permitrootlogin|allowusers|allowgroups|denygroups|denyusers|banner|listenaddress) ' || true
+          echo
+
+          echo "=== listening sockets ==="
+          ss -ltnp | egrep ':(22|29222)\s' || true
+          echo
+
+          echo "=== fail2ban ==="
+          systemctl is-active fail2ban || true
+          fail2ban-client status || true
+          fail2ban-client status sshd || true
+          echo
+
+          echo "=== ufw ==="
+          ufw status verbose || true
+          echo
+
+          echo "=== iptables INPUT ==="
+          iptables -S INPUT || true
+          echo
+
+          echo "=== iptables raw/filter excerpts ==="
+          iptables-save | egrep '29222|dpt:29222|f2b|DROP|REJECT|recent|connlimit|hashlimit|TARPIT' || true
+          echo
+
+          echo "=== nft ruleset excerpts ==="
+          nft list ruleset 2>/dev/null | egrep '29222|drop|reject|limit|ssh|fail2ban' || true
+          echo
+
+          echo "=== auth logs (recent ssh) ==="
+          journalctl -u ssh -u sshd --since '24 hours ago' --no-pager | tail -200 || true
+          echo
+          grep -iE 'sshd|fail2ban|disconnect|banner|timeout|maxstartups|invalid user|refused|drop' /var/log/auth.log | tail -200 || true
+          echo
+
+          echo "=== recent connections ==="
+          ss -tn state established '( sport = :29222 or dport = :29222 )' || true
+          echo
+
+          echo "=== system limits relevant to sshd ==="
+          systemctl show ssh --property=TasksMax --property=LimitNOFILE --property=LimitNPROC || systemctl show sshd --property=TasksMax --property=LimitNOFILE --property=LimitNPROC || true
+          EOF
