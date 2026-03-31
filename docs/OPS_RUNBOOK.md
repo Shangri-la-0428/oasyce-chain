@@ -32,6 +32,15 @@ Cloud Assistant 标准执行入口：
 scripts/ecs_cloud_run.sh 'hostname && whoami && systemctl is-active ssh'
 ```
 
+固定脚本入口：
+
+```bash
+scripts/ecs_chain_status.sh
+scripts/ecs_alert_status.sh
+scripts/ecs_tail_unit.sh oasyced
+scripts/ecs_service_restart.sh oasyced
+```
+
 ---
 
 ## 每日巡检（5 分钟）
