@@ -3,7 +3,13 @@
 # Self-heals first, then alerts via email (msmtp)
 
 ALERT_EMAIL="${OASYCE_ALERT_EMAIL:-ptc0428@qq.com}"
-STATE_DIR="${OASYCE_HEALTH_STATE_DIR:-/var/lib/oasyce-healthcheck}"
+STATE_FILE="${OASYCE_HEALTH_STATE_FILE:-}"
+if [ -n "$STATE_FILE" ]; then
+    DEFAULT_STATE_DIR="$(dirname "$STATE_FILE")"
+else
+    DEFAULT_STATE_DIR="/var/lib/oasyce-healthcheck"
+fi
+STATE_DIR="${OASYCE_HEALTH_STATE_DIR:-$DEFAULT_STATE_DIR}"
 STATE_FILE="${OASYCE_HEALTH_STATE_FILE:-${STATE_DIR}/health_state}"
 ALERT_LOG="${OASYCE_ALERT_LOG:-/var/log/oasyce-alert.log}"
 ECON_LOG="${OASYCE_ECON_LOG:-/var/log/oasyce-econ.log}"
@@ -82,10 +88,13 @@ clear_alert_state() {
     local key="$1"
     local msg="${2:-}"
     local path
+    local stamp_path
     ensure_alert_state_dir
     path=$(alert_state_path "$key")
+    stamp_path="${path%.active}.sent_at"
     if [ -f "$path" ]; then
         rm -f "$path"
+        rm -f "$stamp_path"
         if [ -n "$msg" ]; then
             log_alert_event "RESOLVED" "$msg"
         fi
@@ -135,9 +144,11 @@ economy_stale_message() {
 
 main() {
     ensure_alert_state_dir
-    exec 9>"$LOCK_FILE"
-    if ! flock -n 9; then
-        exit 0
+    if command -v flock >/dev/null 2>&1; then
+        exec 9>"$LOCK_FILE"
+        if ! flock -n 9; then
+            exit 0
+        fi
     fi
 
     # 0. Self-heal: check and restart dead services
