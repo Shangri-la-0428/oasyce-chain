@@ -4,16 +4,51 @@
 
 ---
 
+## 控制面原则
+
+VPS 运维现在有三条控制面，优先级固定如下：
+
+1. **Alibaba Cloud CLI + Cloud Assistant**
+2. **GitHub Actions 手动运维 workflow**
+3. **直接 SSH**
+
+原因：
+
+- 直接 SSH 是一个入口，不应成为唯一入口
+- Cloud Assistant 已在线，能稳定执行命令
+- GitHub Actions runner 也能稳定通过 SSH 进入机器
+- 所以即使本机到 `47.93.32.88:29222` 的 SSH 路径抽风，VPS 仍然可维护
+
+本地推荐先验证控制面：
+
+```bash
+aliyun ecs DescribeInstances --RegionId cn-beijing --InstanceIds '["i-2ze3c737ux27bp7j38rq"]'
+aliyun ecs DescribeCloudAssistantStatus --RegionId cn-beijing --InstanceId '["i-2ze3c737ux27bp7j38rq"]'
+```
+
+Cloud Assistant 标准执行入口：
+
+```bash
+scripts/ecs_cloud_run.sh 'hostname && whoami && systemctl is-active ssh'
+```
+
+---
+
 ## 每日巡检（5 分钟）
 
 ```bash
-# 一键巡检（本地执行）
-ssh -p 29222 root@47.93.32.88 '
+# 一键巡检（优先走 Cloud Assistant）
+scripts/ecs_cloud_run.sh '
 echo "=== Node ===" && systemctl is-active oasyced && systemctl is-active oasyce-faucet
 echo "=== Block ===" && curl -s localhost:26657/status | python3 -c "import sys,json;d=json.load(sys.stdin)[\"result\"][\"sync_info\"];print(\"height:\",d[\"latest_block_height\"],\" catching_up:\",d[\"catching_up\"])"
 echo "=== Disk ===" && df -h / | tail -1
 echo "=== Mem ===" && free -m | grep Mem
 '
+```
+
+```bash
+# 如果 Cloud Assistant 临时不可用，再退回 SSH
+ssh -p 29222 root@47.93.32.88 'hostname'
 ```
 
 ```bash
@@ -81,19 +116,19 @@ gh run view <run-id> -R Shangri-la-0428/oasyce-chain --json conclusion,status,jo
 
 ```bash
 # 1. 检查服务状态
-ssh -p 29222 root@47.93.32.88 'systemctl status oasyced'
+scripts/ecs_cloud_run.sh 'systemctl status oasyced --no-pager'
 
 # 2. 查看最近日志
-ssh -p 29222 root@47.93.32.88 'journalctl -u oasyced --since "5 min ago" --no-pager | tail -50'
+scripts/ecs_cloud_run.sh 'journalctl -u oasyced --since "5 min ago" --no-pager | tail -50'
 
 # 3. 重启
-ssh -p 29222 root@47.93.32.88 'systemctl restart oasyced && sleep 5 && systemctl is-active oasyced'
+scripts/ecs_cloud_run.sh 'systemctl restart oasyced && sleep 5 && systemctl is-active oasyced'
 ```
 
 ### Faucet 无响应
 
 ```bash
-ssh -p 29222 root@47.93.32.88 'systemctl restart oasyce-faucet && sleep 2 && curl -s localhost:8080/faucet?address=oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en4gyv5'
+scripts/ecs_cloud_run.sh 'systemctl restart oasyce-faucet && sleep 2 && curl -s localhost:8080/faucet?address=oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en4gyv5'
 ```
 
 ### Provider capability 被自动停用
@@ -101,7 +136,7 @@ ssh -p 29222 root@47.93.32.88 'systemctl restart oasyce-faucet && sleep 2 && cur
 先区分是短暂 upstream 抖动，还是 capability 真被链上停用：
 
 ```bash
-ssh -p 29222 root@47.93.32.88 '
+scripts/ecs_cloud_run.sh '
 curl -s http://127.0.0.1:8430/health
 curl -s http://127.0.0.1:8430/health?probe=1
 oasyced q oasyce_capability by-provider oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en4gyv5 --node http://127.0.0.1:26667 --output json
@@ -115,9 +150,7 @@ oasyced q oasyce_capability by-provider oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en
 - 切换后重启 provider，并手动跑一次 consumer，确认链路恢复
 
 ```bash
-ssh -p 29222 root@47.93.32.88 '
-bash /opt/oasyce/src/scripts/rotate_provider_capability.sh
-'
+scripts/ecs_cloud_run.sh 'bash /opt/oasyce/src/scripts/rotate_provider_capability.sh'
 ```
 
 ### Provider capability 生命周期
@@ -134,7 +167,7 @@ bash /opt/oasyce/src/scripts/rotate_provider_capability.sh
 如果邮箱再次出现历史告警集中送达，先区分是“现在又在触发”，还是“旧邮件延迟投递”：
 
 ```bash
-ssh -p 29222 root@47.93.32.88 '
+scripts/ecs_cloud_run.sh '
 tail -n 50 /var/log/oasyce-alert.log 2>/dev/null || true
 find /var/lib/oasyce-healthcheck -maxdepth 2 -type f -print -exec cat {} \;
 '
@@ -149,7 +182,7 @@ find /var/lib/oasyce-healthcheck -maxdepth 2 -type f -print -exec cat {} \;
 
 ```bash
 # 清理旧日志
-ssh -p 29222 root@47.93.32.88 'journalctl --vacuum-size=100M'
+scripts/ecs_cloud_run.sh 'journalctl --vacuum-size=100M'
 ```
 
 ### 部署新二进制（热更新，不丢数据）
@@ -198,3 +231,17 @@ scp -P 29222 root@47.93.32.88:/tmp/oasyce-secrets.tar.gz ./backups/
 ```bash
 ssh -p 29222 root@47.93.32.88
 ```
+
+如果本机 SSH 卡在 `Connection timed out during banner exchange`，先不要默认判断成 `sshd` 坏了。当前已验证过：
+
+- VPS 侧 `sshd` 可以正常监听 `29222`
+- `UFW` 和安全组都已放行 `29222/tcp`
+- GitHub Actions runner 能稳定用同一把 key 登录
+- Cloud Assistant 也在线
+
+这时更可能是“本机到 ECS 的路径问题”，不是 VPS 内部问题。先改用：
+
+- `scripts/ecs_cloud_run.sh`
+- GitHub Actions 手动运维 workflow
+
+不要因为单一本地 SSH 入口异常就误判整台 VPS 不可维护。

@@ -147,6 +147,28 @@ The current healthcheck is hardened to reduce live churn:
 
 If email bursts happen again, check `/var/log/oasyce-alert.log` and `/var/lib/oasyce-healthcheck/` first. If there are no new `ALERT:` lines and no new `.active` state files, the mailbox is receiving delayed delivery rather than fresh alerts.
 
+### My local Mac cannot SSH to `47.93.32.88:29222`, but GitHub Actions or Cloud Assistant can. Is the VPS broken?
+
+Not necessarily.
+
+We have already verified a failure mode where:
+
+- the VPS `sshd` process is healthy
+- port `29222` is listening
+- `UFW` and the ECS security group both allow `29222/tcp`
+- GitHub Actions runners can log in with the same key
+- Cloud Assistant is online and can run commands
+
+In that situation, the remaining fault is usually **the path between your local machine and the ECS edge**, not the VPS itself.
+
+Operational rule:
+
+- treat **Alibaba Cloud CLI + Cloud Assistant** as the primary control plane
+- treat **GitHub Actions manual workflows** as the secondary control plane
+- treat **direct SSH** as a convenient entry, not the only entry
+
+If local SSH still hangs during banner exchange, continue operating through `scripts/ecs_cloud_run.sh` or the GitHub Actions workflows instead of assuming the VPS is down.
+
 ### Can I update my price?
 
 Yes:
