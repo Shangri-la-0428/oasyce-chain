@@ -3,18 +3,22 @@
 # Self-heals first, then alerts via email (msmtp)
 
 ALERT_EMAIL="${OASYCE_ALERT_EMAIL:-ptc0428@qq.com}"
-STATE_FILE="${OASYCE_HEALTH_STATE_FILE:-/tmp/oasyce_health_state}"
+STATE_DIR="${OASYCE_HEALTH_STATE_DIR:-/var/lib/oasyce-healthcheck}"
+STATE_FILE="${OASYCE_HEALTH_STATE_FILE:-${STATE_DIR}/health_state}"
 ALERT_LOG="${OASYCE_ALERT_LOG:-/var/log/oasyce-alert.log}"
 ECON_LOG="${OASYCE_ECON_LOG:-/var/log/oasyce-econ.log}"
 ALERT_STATE_DIR="${OASYCE_ALERT_STATE_DIR:-${STATE_FILE}_alerts}"
 API="${OASYCE_CHAIN_API:-http://127.0.0.1:11317}"
 PROVIDER_HEALTH_URL="${OASYCE_PROVIDER_HEALTH_URL:-http://127.0.0.1:8430/health}"
-CONSUMER_STATE="${OASYCE_CONSUMER_STATE_FILE:-/tmp/consumer_agent_state.json}"
+CONSUMER_STATE="${OASYCE_CONSUMER_STATE_FILE:-/var/lib/oasyce-consumer/state.json}"
 PROVIDER_ADDR="${OASYCE_PROVIDER_ADDR:-oasyce1a57fdrtq2wu65tjeyx9jyg4cku4evr8en4gyv5}"
 HEALTHCHECK_INTERVAL_MIN="${OASYCE_HEALTHCHECK_INTERVAL_MIN:-5}"
 ECON_STALE_WINDOW_HOURS="${OASYCE_ECON_STALE_WINDOW_HOURS:-12}"
 MONITOR_ECONOMY_STALE="${OASYCE_MONITOR_ECONOMY_STALE:-0}"
 MONITOR_PROVIDER_HTTP="${OASYCE_MONITOR_PROVIDER_HTTP:-0}"
+MONITOR_CONSUMER_STALE="${OASYCE_MONITOR_CONSUMER_STALE:-auto}"
+ALERT_COOLDOWN_MINUTES="${OASYCE_ALERT_COOLDOWN_MINUTES:-180}"
+LOCK_FILE="${OASYCE_HEALTHCHECK_LOCK_FILE:-${STATE_DIR}/healthcheck.lock}"
 FAUCET_ADDR="oasyce1msmqqjw64k8m827w3apda97umxt9lgfxszr25d"
 FAUCET_MIN_UOAS=200000000  # 200 OAS
 
@@ -36,6 +40,7 @@ log_alert_event() {
 }
 
 ensure_alert_state_dir() {
+    mkdir -p "$STATE_DIR"
     mkdir -p "$ALERT_STATE_DIR"
 }
 
@@ -50,11 +55,26 @@ activate_alert_once() {
     local key="$1"
     local msg="$2"
     local path
+    local stamp_path
+    local last_sent=0
+    local now_ts
+    local cooldown_seconds
     ensure_alert_state_dir
     path=$(alert_state_path "$key")
+    stamp_path="${path%.active}.sent_at"
+    now_ts=$(date +%s)
+    cooldown_seconds=$((ALERT_COOLDOWN_MINUTES * 60))
+    if [ -f "$stamp_path" ]; then
+        last_sent=$(cat "$stamp_path" 2>/dev/null || echo 0)
+    fi
     if [ ! -f "$path" ]; then
+        if [ "$last_sent" -gt 0 ] 2>/dev/null && [ $((now_ts - last_sent)) -lt "$cooldown_seconds" ] 2>/dev/null; then
+            printf '1\n' > "$path"
+            return
+        fi
         send_alert "$msg"
         printf '1\n' > "$path"
+        printf '%s\n' "$now_ts" > "$stamp_path"
     fi
 }
 
@@ -90,12 +110,36 @@ provider_http_monitoring_enabled() {
     [ "$MONITOR_PROVIDER_HTTP" = "1" ]
 }
 
+consumer_stale_monitoring_enabled() {
+    case "$MONITOR_CONSUMER_STALE" in
+        1|true|TRUE|yes|YES|on|ON)
+            return 0
+            ;;
+        0|false|FALSE|no|NO|off|OFF)
+            return 1
+            ;;
+    esac
+    if systemctl list-unit-files --type=service 2>/dev/null | grep -q '^oasyce-consumer\.service'; then
+        return 0
+    fi
+    if crontab -u oasyce -l 2>/dev/null | grep -q 'consumer_agent.py'; then
+        return 0
+    fi
+    return 1
+}
+
 economy_stale_message() {
     local total_calls="$1"
     printf "Economy STALE — no new invocations in %s+ hours (total_calls=%s)" "$ECON_STALE_WINDOW_HOURS" "$total_calls"
 }
 
 main() {
+    ensure_alert_state_dir
+    exec 9>"$LOCK_FILE"
+    if ! flock -n 9; then
+        exit 0
+    fi
+
     # 0. Self-heal: check and restart dead services
     OASYCED_ACTIVE=$(systemctl is-active oasyced 2>/dev/null)
     FAUCET_ACTIVE=$(systemctl is-active oasyce-faucet 2>/dev/null)
@@ -205,17 +249,21 @@ main() {
         echo "$STALE_COUNT" > "${STATE_FILE}_stale"
     fi
 
-    # 5. Consumer agent liveness — alert if last_run > 90 min ago
-    if [ -f "$CONSUMER_STATE" ]; then
-        LAST_RUN=$(python3 -c 'import sys,json; print(json.load(open("'"$CONSUMER_STATE"'")).get("last_run",""))' 2>/dev/null)
-        if [ -n "$LAST_RUN" ]; then
-            AGE_MIN=$(python3 -c 'from datetime import datetime; d=datetime.strptime("'"$LAST_RUN"'","%Y-%m-%d %H:%M:%S"); print(int((datetime.now()-d).total_seconds()/60))' 2>/dev/null)
-            if [ -n "$AGE_MIN" ] && [ "$AGE_MIN" -gt 90 ] 2>/dev/null; then
-                activate_alert_once "consumer_stale" "Consumer agent STALE — last run ${AGE_MIN}min ago (expected every 30min)"
-            else
-                clear_alert_state "consumer_stale" "Consumer agent OK — recent run observed"
+    # 5. Consumer agent liveness only when consumer is actually deployed.
+    if consumer_stale_monitoring_enabled; then
+        if [ -f "$CONSUMER_STATE" ]; then
+            LAST_RUN=$(python3 -c 'import sys,json; print(json.load(open("'"$CONSUMER_STATE"'")).get("last_run",""))' 2>/dev/null)
+            if [ -n "$LAST_RUN" ]; then
+                AGE_MIN=$(python3 -c 'from datetime import datetime; d=datetime.strptime("'"$LAST_RUN"'","%Y-%m-%d %H:%M:%S"); print(int((datetime.now()-d).total_seconds()/60))' 2>/dev/null)
+                if [ -n "$AGE_MIN" ] && [ "$AGE_MIN" -gt 90 ] 2>/dev/null; then
+                    activate_alert_once "consumer_stale" "Consumer agent STALE — last run ${AGE_MIN}min ago (expected every 30min)"
+                else
+                    clear_alert_state "consumer_stale" "Consumer agent OK — recent run observed"
+                fi
             fi
         fi
+    else
+        clear_alert_state "consumer_stale" "Consumer stale monitoring disabled"
     fi
 
     # 6. Provider HTTP monitoring is opt-in. Provider availability should normally
@@ -240,7 +288,11 @@ main() {
     fi
 
     # 7. Log economic summary (no alert, just for dashboarding)
-    CONSUMER_INV=$(python3 -c 'import json; d=json.load(open("'"$CONSUMER_STATE"'")); print(d.get("total_invocations",0), d.get("total_settlements",0))' 2>/dev/null)
+    if [ -f "$CONSUMER_STATE" ]; then
+        CONSUMER_INV=$(python3 -c 'import json; d=json.load(open("'"$CONSUMER_STATE"'")); print(d.get("total_invocations",0), d.get("total_settlements",0))' 2>/dev/null)
+    else
+        CONSUMER_INV="0 0"
+    fi
     echo "$(date '+%Y-%m-%d %H:%M:%S') height=$HEIGHT calls=$TOTAL_CALLS earned=${TOTAL_EARNED}uoas consumer=$CONSUMER_INV" >> "$ECON_LOG"
 }
 

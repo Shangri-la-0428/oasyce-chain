@@ -21,6 +21,25 @@ echo "=== Mem ===" && free -m | grep Mem
 curl -s http://47.93.32.88:1317/cosmos/bank/v1beta1/balances/oasyce1msmqqjw64k8m827w3apda97umxt9lgfxszr25d
 ```
 
+### Healthcheck 运行边界
+
+当前健康巡检只有两条真实入口：
+
+- `root` crontab：`*/5 * * * * /opt/oasyce/src/scripts/healthcheck.sh`
+- `oasyce` crontab：`*/30 * * * * /usr/bin/python3 /opt/oasyce/src/scripts/consumer_agent.py >> /var/log/oasyce-consumer.log 2>&1`
+
+状态文件不再放在 `/tmp`，而是：
+
+- healthcheck state: `/var/lib/oasyce-healthcheck/`
+- consumer state: `/var/lib/oasyce-consumer/state.json`
+
+这意味着：
+
+- `/tmp` 清理不会再重置告警去重状态
+- healthcheck 会自动探测 consumer 是否真的部署，未部署时不再误报 `Consumer agent STALE`
+- healthcheck 有执行锁，同一时间只允许一份实例运行
+- 每个告警 key 都有冷却窗口，避免重复邮件风暴
+
 ## 发布后必须确认
 
 每次 `main` 推送后，先确认 GitHub Actions，不要只看 VPS 还活着：
@@ -109,6 +128,22 @@ bash /opt/oasyce/src/scripts/rotate_provider_capability.sh
 - 当前 ID 固定写在 `/etc/oasyce/provider-capability.env`
 - 轮换时总是“先注册新 capability，再切 current，最后退役旧 active capability”
 - consumer 默认优先选择最新 active capability
+
+### 邮件风暴排查
+
+如果邮箱再次出现历史告警集中送达，先区分是“现在又在触发”，还是“旧邮件延迟投递”：
+
+```bash
+ssh -p 29222 root@47.93.32.88 '
+tail -n 50 /var/log/oasyce-alert.log 2>/dev/null || true
+find /var/lib/oasyce-healthcheck -maxdepth 2 -type f -print -exec cat {} \;
+'
+```
+
+判断标准：
+
+- 如果 `/var/log/oasyce-alert.log` 没有新的 `ALERT:`，而 state 目录也没有新的 `.active` 文件，通常是旧邮件延迟投递
+- 如果出现新的 `.active` 文件，说明当前 incident 还在触发，继续查 live 服务与探针
 
 ### 磁盘空间不足
 

@@ -57,7 +57,10 @@ FAUCET_URL = os.environ.get("FAUCET_URL", "http://127.0.0.1:18080").rstrip("/")
 MIN_BALANCE_UOAS = int(os.environ.get("MIN_BALANCE_UOAS", "5000000"))
 TX_FEE_UOAS = int(os.environ.get("TX_FEE_UOAS", "10000"))
 
-STATE_FILE = os.environ.get("CONSUMER_STATE_FILE", "/tmp/consumer_agent_state.json")
+STATE_FILE = os.environ.get(
+    "CONSUMER_STATE_FILE", "/var/lib/oasyce-consumer/state.json"
+)
+LEGACY_STATE_FILE = "/tmp/consumer_agent_state.json"
 STATE_DEFAULTS = {
     "total_invocations": 0,
     "total_settlements": 0,
@@ -172,11 +175,14 @@ def oasyced_tx(args, retries=2):
 
 
 def load_state():
-    try:
-        with open(STATE_FILE) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = {}
+    data = {}
+    for candidate in (STATE_FILE, LEGACY_STATE_FILE):
+        try:
+            with open(candidate) as f:
+                data = json.load(f)
+            break
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
     merged = dict(STATE_DEFAULTS)
     if isinstance(data, dict):
         merged.update(data)
@@ -185,12 +191,18 @@ def load_state():
 
 def save_state(state):
     try:
+        state_dir = os.path.dirname(STATE_FILE)
+        if state_dir:
+            os.makedirs(state_dir, exist_ok=True)
         with open(STATE_FILE, "w") as f:
             json.dump(state, f)
     except PermissionError:
         # State file owned by different user — recreate
         try:
             os.remove(STATE_FILE)
+            state_dir = os.path.dirname(STATE_FILE)
+            if state_dir:
+                os.makedirs(state_dir, exist_ok=True)
             with open(STATE_FILE, "w") as f:
                 json.dump(state, f)
         except OSError as e:

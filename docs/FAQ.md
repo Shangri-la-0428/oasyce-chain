@@ -130,6 +130,23 @@ Single transient upstream failures do **not** deactivate the capability. The pro
 oasyced tx oasyce_capability fail-invocation INV_001 --from provider
 ```
 
+### Why did I receive a burst of old alert emails?
+
+There are two different failure modes:
+
+1. **Live alert churn** — the monitor is still emitting fresh alerts.
+2. **Delayed delivery** — the SMTP provider delivers older messages late.
+
+The current healthcheck is hardened to reduce live churn:
+
+- alert dedupe state is persisted under `/var/lib/oasyce-healthcheck`
+- one healthcheck instance runs at a time via a lock file
+- each alert key has a cooldown window before the same incident can mail again
+- consumer stale monitoring is only enabled when the consumer is actually deployed
+- provider HTTP monitoring and economy stale monitoring remain opt-in by default
+
+If email bursts happen again, check `/var/log/oasyce-alert.log` and `/var/lib/oasyce-healthcheck/` first. If there are no new `ALERT:` lines and no new `.active` state files, the mailbox is receiving delayed delivery rather than fresh alerts.
+
 ### Can I update my price?
 
 Yes:
