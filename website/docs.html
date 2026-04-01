@@ -113,6 +113,7 @@ pre{background:var(--code-bg);border-radius:0 0 6px 6px;padding:16px;overflow-x:
   <a href="#dr-dispute">Get Dispute</a>
   <a href="#dr-disputes">List Disputes</a>
   <a href="#dr-children">Version Tree</a>
+  <a href="#dr-access">Access Level</a>
 
   <h2>Settlement</h2>
   <a href="#esc-get">Get Escrow</a>
@@ -212,10 +213,10 @@ curl http://&lt;node&gt;:1317/oasyce/capability/v1/capabilities</pre>
 <table class="const-table">
 <tr><th>Constant</th><th>Value</th></tr>
 <tr><td>Denomination</td><td><code>1 OAS = 1,000,000 uoas</code></td></tr>
-<tr><td>Fee Split (escrow)</td><td><code>93% creator · 3% validator · 2% burn · 2% treasury</code></td></tr>
+<tr><td>Fee Split (escrow)</td><td><code>90% provider · 5% protocol · 2% burn · 3% treasury</code></td></tr>
 <tr><td>Bonding Curve</td><td><code>CW = 0.50 · tokens = supply × (√(1 + payment/reserve) − 1)</code></td></tr>
 <tr><td>Sell Formula</td><td><code>payout = reserve × (1 − (1 − tokens/supply)²) · 95% cap</code></td></tr>
-<tr><td>Sell Fee</td><td><code>3% protocol fee</code></td></tr>
+<tr><td>Sell Fee</td><td><code>5% protocol fee</code></td></tr>
 <tr><td>Access Levels</td><td><code>≥0.1% → L0 · ≥1% → L1 · ≥5% → L2 · ≥10% → L3</code></td></tr>
 <tr><td>Block Rewards</td><td><code>4→2→1→0.5 OAS/block (halving every 10M blocks)</code></td></tr>
 <tr><td>Burn Rate</td><td><code>2% on escrow release</code></td></tr>
@@ -395,6 +396,25 @@ for h in holders:
   <div class="endpoint-desc">Get all versioned children (forks) of a data asset.</div>
   <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
   <div class="code-panel active" data-lang="curl"><pre>curl http://&lt;node&gt;:1317/oasyce/datarights/v1/asset_children/ASSET_001</pre></div>
+</div>
+</section>
+
+<section id="dr-access">
+<div class="endpoint">
+  <div class="endpoint-header"><span class="method get">GET</span><span class="path">/oasyce/datarights/v1/access_level/{asset_id}/{address}</span></div>
+  <div class="endpoint-desc">Query access level for an address on a data asset. Returns L0-L3 based on equity share percentage.</div>
+  <div class="code-tabs"><span class="code-tab active" onclick="switchTab(this,'curl')">curl</span></div>
+  <div class="code-panel active" data-lang="curl"><pre>curl http://&lt;node&gt;:1317/oasyce/datarights/v1/access_level/ASSET_001/oasyce1abc...
+
+# Response
+{
+  "access_level": "L1",
+  "equity_bps": 150,
+  "shares": "150",
+  "total_shares": "10000"
+}
+
+# Equity thresholds: ≥0.1% → L0, ≥1% → L1, ≥5% → L2, ≥10% → L3</pre></div>
 </div>
 </section>
 
