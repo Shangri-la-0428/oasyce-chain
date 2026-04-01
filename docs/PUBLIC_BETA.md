@@ -326,14 +326,14 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 Chain onboarding gets you onto `oasyce-chain`. Day-to-day usage usually moves to the product-side tools:
 
 - `oas` for account, market, capabilities, portfolio, and Dashboard
-- `DataVault` for directory-scale data scanning, privacy checks, and safe registration
+- `oasyce-agent` for directory-scale data scanning, privacy checks, and safe registration
 - `oasyce-sdk` for Python-native queries and transaction builders
 
 The shortest product-side path after chain onboarding is:
 
 ```bash
-pip install oasyce              # AI-first CLI + Dashboard + bundled DataVault
-oas bootstrap                   # self-update + wallet/device readiness + DataVault readiness
+pip install oasyce              # AI-first CLI + Dashboard + bundled oasyce-agent
+oas bootstrap                   # self-update + wallet/device readiness + agent readiness
 export OASYCE_NETWORK_MODE=testnet
 export OASYCE_STRICT_CHAIN=1
 oas doctor --public-beta --json
@@ -353,7 +353,7 @@ oas start
 If you want the full product-side guide, continue with:
 
 - [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
-- [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)
+- [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)
 
 ## Python Toolchain
 
@@ -362,33 +362,33 @@ Beyond direct HTTP calls, you can use the Python toolchain for more efficient op
 ### Install
 
 ```bash
-pip install oasyce              # AI-first CLI + DataVault
-oas bootstrap                   # self-update + wallet + DataVault readiness
+pip install oasyce              # AI-first CLI + oasyce-agent
+oas bootstrap                   # self-update + wallet + agent readiness
 pip install -U "oasyce-sdk>=0.5.0"   # Python SDK (chain queries + TX builders)
 ```
 
-### DataVault: Scan Local Data
+### oasyce-agent: Scan Local Data
 
-Treat DataVault as the default data ingress, not an optional add-on. Use it when you are working with a directory, repeated scans, or AI-managed data assets. Keep `oas register` for explicit single-file registration and debugging.
+Treat `oasyce-agent` as the default data ingress, not an optional add-on. Use it when you are working with a directory, repeated scans, or AI-managed data assets. Keep `oas register` for explicit single-file registration and debugging.
 
 Before registering data assets, scan your local files:
 
 ```bash
-datavault scan ~/Documents        # scan directory, SHA-256 hashes
-datavault privacy                  # PII detection (emails, phone numbers, IDs, etc.)
-datavault report ~/Documents       # review results
+oasyce-agent scan ~/Documents        # scan directory, SHA-256 hashes
+oasyce-agent privacy                  # PII detection (emails, phone numbers, IDs, etc.)
+oasyce-agent scan ~/Documents --json  # review results
 ```
 
 Risk levels: `safe` (auto-register) → `low` (review first) → `medium` (confirmation) → `high`/`critical` (**blocked**)
 
 Once confirmed safe:
 ```bash
-datavault register ~/Documents --confirm --json   # register only safe files
+oasyce-agent scan ~/Documents --register --confirm --json   # register only safe files
 ```
 
 ### Oasyce CLI (oas)
 
-Before using `oas` or `datavault` against the public beta, force testnet + strict chain mode:
+Before using `oas` or `oasyce-agent` against the public beta, force testnet + strict chain mode:
 
 ```bash
 export OASYCE_NETWORK_MODE=testnet
@@ -401,8 +401,8 @@ Proceed only when `oas doctor --public-beta --json` reports `status: ok`.
 For normal day-to-day usage after onboarding:
 
 ```bash
-oas agent status                  # inspect autonomy / DataVault-first status
-datavault report ~/Documents      # review safe vs risky files
+oas agent status                  # inspect autonomy / agent status
+oasyce-agent scan ~/Documents --json  # review safe vs risky files
 oas start                         # open Dashboard
 ```
 
@@ -462,7 +462,7 @@ SDK docs: [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk)
 | Method | Use Case | Install |
 |--------|----------|---------|
 | **Direct HTTP** | Any language/environment, minimal deps | Nothing needed |
-| **oas CLI** | Interactive, Dashboard, DataVault scanning | `pip install oasyce` |
+| **oas CLI** | Interactive, Dashboard, agent scanning | `pip install oasyce` |
 | **Python SDK** | Programmatic integration, automated agents | `pip install oasyce-sdk` |
 
 ---

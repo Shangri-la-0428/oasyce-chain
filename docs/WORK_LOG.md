@@ -54,7 +54,7 @@
 |------|-----------|---------|
 | Oasyce Client | **98%** | 0 阻塞 |
 | oasyce-chain | **98%** | 0 阻塞 (已推送 GitHub) |
-| DataVault | **95%** | 0 阻塞 |
+| ~~DataVault~~ (absorbed into oasyce-sdk) | **N/A** | replaced by `oasyce-agent` CLI |
 
 ### oasyce-chain — 阻塞项 (必须完成)
 

@@ -93,7 +93,7 @@ echo "  ────────────────────────
 echo "  DATA_a90389e4c88b3e01       Oasyce L1 Chain — Source Code"
 echo "  DATA_a0f70d30ce54f622       Oasyce Python SDK"
 echo "  DATA_85f126a67cda335a       Oasyce Agent Client + Dashboard"
-echo "  DATA_3683634c323830ef       DataVault — AI Data Asset Scanner"
+echo "  DATA_3683634c323830ef       oasyce-sdk — AI Data Agent Scanner"
 echo ""
 ok "4 real data assets available"
 

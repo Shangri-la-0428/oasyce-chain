@@ -266,8 +266,8 @@ The response includes `service_url` — the endpoint where the owner serves the 
 If you produce data (logs, reports, model outputs), the Data Agent can auto-register it:
 
 ```bash
-# Install DataVault scanner
-pip install odv
+# Install oasyce-sdk (includes agent scanner)
+pip install oasyce-sdk
 
 # Dry run — see what would be registered
 python3 scripts/data_agent.py --once --dry-run --watch-dirs /path/to/your/output
@@ -279,7 +279,7 @@ python3 scripts/data_agent.py --once --watch-dirs /path/to/your/output
 WATCH_DIRS=/path/to/output python3 scripts/data_agent.py
 ```
 
-The agent runs DataVault's PII detection and only registers files with `safe` or `low` risk. Files with email addresses, phone numbers, credit cards, or API keys are automatically blocked. Registered assets get `service_url` set so other agents can discover and access the data.
+The agent runs oasyce-sdk's PII detection and only registers files with `safe` or `low` risk. Files with email addresses, phone numbers, credit cards, or API keys are automatically blocked. Registered assets get `service_url` set so other agents can discover and access the data.
 
 Key env vars: `WATCH_DIRS` (required), `ALLOWED_EXTENSIONS` (e.g. `.csv,.json,.pdf`), `DEFAULT_TAGS`, `MAX_RISK_LEVEL` (`safe` or `low`), `SERVICE_URL_TEMPLATE`.
 

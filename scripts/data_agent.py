@@ -2,7 +2,7 @@
 """
 Oasyce Data Agent -- Autonomous data asset registration.
 
-Scans directories for files, runs DataVault privacy detection, and
+Scans directories for files, runs oasyce-sdk privacy detection, and
 auto-registers safe assets (risk=safe/low) on-chain. Zero human intervention.
 
 USAGE
@@ -167,14 +167,14 @@ def oasyced_tx(args):
 
 
 # ---------------------------------------------------------------------------
-# DataVault integration
+# oasyce-sdk agent integration (formerly DataVault)
 # ---------------------------------------------------------------------------
 
 
 def scan_and_filter(watch_dir):
-    """Run DataVault scan with privacy detection. Returns filtered file list."""
-    from datavault.scanner import scan_directory
-    from datavault.inventory import Inventory
+    """Run oasyce-sdk agent scan with privacy detection. Returns filtered file list."""
+    from oasyce_sdk.scanner import scan_directory
+    from oasyce_sdk.inventory import Inventory
 
     inventory = Inventory()
     result = scan_directory(
@@ -497,12 +497,12 @@ def main():
         log.error("No watch directories configured. Set WATCH_DIRS or use --watch-dirs.")
         sys.exit(1)
 
-    # Verify datavault is importable
+    # Verify oasyce-sdk is importable
     try:
-        from datavault.scanner import scan_directory  # noqa: F401
-        from datavault.inventory import Inventory  # noqa: F401
+        from oasyce_sdk.scanner import scan_directory  # noqa: F401
+        from oasyce_sdk.inventory import Inventory  # noqa: F401
     except ImportError:
-        log.error("datavault package not found. Install: pip install odv")
+        log.error("oasyce-sdk package not found. Install: pip install oasyce-sdk")
         sys.exit(1)
 
     # Load persistent state

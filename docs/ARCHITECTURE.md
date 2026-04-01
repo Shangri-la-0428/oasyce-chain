@@ -9,7 +9,7 @@ Oasyce Chain is built on Cosmos SDK v0.50.10 + CometBFT consensus with 7 custom 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    Client Layer                      │
-│  oasyce CLI (Python)  │  DataVault (AI Skill)       │
+│  oasyce CLI (Python)  │  oasyce-sdk (Agent)         │
 └──────────┬────────────┴───────────┬──────────────────┘
            │ gRPC / REST            │ CLI tx
 ┌──────────▼────────────────────────▼──────────────────┐

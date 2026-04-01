@@ -55,7 +55,7 @@ Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is just
 
 The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA.md).
 
-If you are using the AI-first `oas + DataVault` workflow, complete the chain-side onboarding first, then return to the product-side guide.
+If you are using the AI-first `oas + oasyce-sdk` workflow, complete the chain-side onboarding first, then return to the product-side guide.
 
 - Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)
 - Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`
@@ -66,8 +66,8 @@ If you are using the AI-first `oas + DataVault` workflow, complete the chain-sid
 - Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`
 - Product-side guide: [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
 - Dashboard: `pip install oasyce && oas bootstrap && oas start`
-- Data ingress: [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)
-- Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.5.0"`
+- Agent SDK: `pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk))
+- Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.8.0"`
 - API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)
 - Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)
 - Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)
@@ -239,10 +239,10 @@ oasyced query reputation leaderboard
                     +-------------+-------------+
                                   |
                     +-------------v-------------+
-                    |   DataVault (AI Skill)    |
-                    |   Local data management   |
-                    |   scan/classify/privacy   |
-                    |   bundled with oasyce     |
+                    |   oasyce-sdk (Agent SDK)  |
+                    |   Wallet/signer/data mgmt |
+                    |   MCP Server + LangChain  |
+                    |   pip install oasyce-sdk  |
                     +---------------------------+
 ```
 
@@ -252,7 +252,7 @@ oasyced query reputation leaderboard
 |-----------|------|---------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | L1 settlement chain | `make build` |
 | [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python agent client + CLI + Dashboard | `pip install oasyce && oas bootstrap` |
-| [DataVault](https://github.com/Shangri-la-0428/DataVault) | AI agent data asset management skill | `bundled with oasyce` / `pip install odv` |
+| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Python Agent SDK (wallet/signer/MCP/LangChain) | `pip install oasyce-sdk` |
 
 ---
 

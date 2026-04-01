@@ -85,14 +85,14 @@ All 8 modules verified with real transactions:
 
 ### Data Agent (Autonomous Registration) — COMPLETE ✅
 - **Script**: `scripts/data_agent.py` — autonomous data asset registration daemon
-- **Pipeline**: DataVault scan → classify → PII detection → auto-register safe assets on-chain
+- **Pipeline**: oasyce-sdk agent: scan → classify → PII detection → auto-register safe assets on-chain
 - **Risk gate**: Only `safe` and `low` risk files are registered (configurable via `MAX_RISK_LEVEL`)
-- **Dedup**: Uses `~/.datavault/inventory.db` `oasyce_registered` field + content hash comparison
+- **Dedup**: Uses `~/.oasyce/agent.db` `oasyce_registered` field + content hash comparison
 - **Modes**: `--once` (single cycle), `--dry-run` (no TX), daemon (default, scans every `SCAN_INTERVAL` seconds)
 - **Health**: `GET /health` on port 8431 (configurable via `DATA_AGENT_PORT`)
 - **Config**: All via env vars — `WATCH_DIRS` (required), `ALLOWED_EXTENSIONS`, `EXCLUDE_PATTERNS`, `DEFAULT_TAGS`, `SERVICE_URL_TEMPLATE`
 - **Service**: `deploy/oasyce-data-agent.service` for systemd
-- **Dependency**: `pip install odv` (DataVault scanner package)
+- **Dependency**: `pip install oasyce-sdk` (agent scanner package)
 
 ### Known Genesis Param Issues
 - `oasyce_capability.min_provider_stake`: defaults to 0 uoas — set to 5,000,000 (5 OAS) for testnet

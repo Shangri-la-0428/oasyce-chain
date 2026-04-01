@@ -326,14 +326,14 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 链侧接入只是把你带进 `oasyce-chain`。日常使用通常转到产品侧工具：
 
 - `oas`：账户、市场、能力、持仓、Dashboard
-- `DataVault`：目录级扫描、隐私检查、安全注册
+- `oasyce-agent`：目录级扫描、隐私检查、安全注册
 - `oasyce-sdk`：Python 原生查询和交易构建
 
 链上接入完成后，最短的产品侧路径是：
 
 ```bash
-pip install oasyce                   # AI-first CLI + Dashboard + 内置 DataVault
-oas bootstrap                        # 自更新 + 钱包/设备就绪 + DataVault 就绪
+pip install oasyce                   # AI-first CLI + Dashboard + 内置 oasyce-agent
+oas bootstrap                        # 自更新 + 钱包/设备就绪 + agent 就绪
 export OASYCE_NETWORK_MODE=testnet
 export OASYCE_STRICT_CHAIN=1
 oas doctor --public-beta --json
@@ -353,7 +353,7 @@ oas start
 如果你要看完整产品侧说明，继续读：
 
 - [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
-- [DataVault README](https://github.com/Shangri-la-0428/DataVault/blob/main/README.md)
+- [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)
 
 ## Python 工具链
 
@@ -362,33 +362,33 @@ oas start
 ### 安装
 
 ```bash
-pip install oasyce                   # AI-first CLI + DataVault
-oas bootstrap                        # 自更新 + 钱包 + DataVault 就绪
+pip install oasyce                   # AI-first CLI + oasyce-agent
+oas bootstrap                        # 自更新 + 钱包 + agent 就绪
 pip install -U "oasyce-sdk>=0.5.0"   # Python SDK（链查询 + 交易构建）
 ```
 
-### DataVault：扫描本地数据
+### oasyce-agent：扫描本地数据
 
-把 DataVault 当成默认数据入口，而不是可有可无的附属工具。面对目录、批量文件或 AI 持续扫描时，优先走 DataVault；只有显式单文件注册和调试时，才优先用 `oas register`。
+把 `oasyce-agent` 当成默认数据入口，而不是可有可无的附属工具。面对目录、批量文件或 AI 持续扫描时，优先走 `oasyce-agent`；只有显式单文件注册和调试时，才优先用 `oas register`。
 
 在注册数据资产之前，先扫描本地文件：
 
 ```bash
-datavault scan ~/Documents        # 扫描目录，SHA-256 哈希
-datavault privacy                  # PII 检测（邮箱、手机号、身份证等）
-datavault report ~/Documents       # 查看结果
+oasyce-agent scan ~/Documents        # 扫描目录，SHA-256 哈希
+oasyce-agent privacy                  # PII 检测（邮箱、手机号、身份证等）
+oasyce-agent scan ~/Documents --json  # 查看结果
 ```
 
 风险等级：`safe`（可自动注册）→ `low`（先复核）→ `medium`（需要确认）→ `high`/`critical`（**阻止注册**）
 
 确认安全后注册：
 ```bash
-datavault register ~/Documents --confirm --json   # 仅注册 safe 文件
+oasyce-agent scan ~/Documents --register --confirm --json   # 仅注册 safe 文件
 ```
 
 ### Oasyce CLI（oas）
 
-在公开测试里用 `oas` 或 `datavault` 前，先强制切到**测试网 + 严格链模式**：
+在公开测试里用 `oas` 或 `oasyce-agent` 前，先强制切到**测试网 + 严格链模式**：
 
 ```bash
 export OASYCE_NETWORK_MODE=testnet
@@ -401,8 +401,8 @@ oas doctor --public-beta --json
 完成接入后，日常使用最常见的三条是：
 
 ```bash
-oas agent status                  # 查看自治 / DataVault-first 状态
-datavault report ~/Documents      # 查看 safe 和 risky 文件
+oas agent status                  # 查看自治 agent 状态
+oasyce-agent scan ~/Documents --json  # 查看 safe 和 risky 文件
 oas start                         # 打开 Dashboard
 ```
 
@@ -462,7 +462,7 @@ SDK 文档: [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk)
 | 方式 | 适用场景 | 安装 |
 |------|---------|------|
 | **HTTP 直接调用** | 任何语言/环境，最小依赖 | 无需安装 |
-| **oas CLI** | 交互式操作，Dashboard，DataVault 扫描 | `pip install oasyce` |
+| **oas CLI** | 交互式操作，Dashboard，agent 扫描 | `pip install oasyce` |
 | **Python SDK** | 编程集成，自动化 Agent | `pip install oasyce-sdk` |
 
 ---
