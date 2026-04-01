@@ -47,8 +47,10 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 | **x/reputation** | 信用评分——时间衰减（30 天半衰期）、影响定价和仲裁资格 | 2 | 3 |
 | **x/work** | 可验证计算——commit-reveal 防抄袭、多执行者共识 | 6 | 8 |
 | **x/onboarding** | 无许可准入——PoW 防女巫、空投减半经济学 | 2 | 3 |
+| **x/anchor** | 批量锚定 Thronglets 轨迹上链——不可篡改的 P2P 信任证明 | 2 | 4 |
+| **x/halving** | 通缩区块奖励——4→2→1→0.5 OAS/block，每 10M 块减半 | 0 | 2 |
 
-**合计**：32 种交易类型，33 个查询端点，66+ 条 CLI 命令。
+**合计**：35 种交易类型，39 个查询端点，92 条 CLI 命令。
 
 ---
 
@@ -73,8 +75,6 @@ Oasyce Testnet-1 现已上线。
 | Windows 账户 | `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` |
 | 准备节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)` |
 | 启动节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)` |
-| 产品侧指南 | [oasyce-net 公测指南](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md) |
-| Dashboard | `pip install oasyce && oas bootstrap && oas start` |
 | oasyce-agent | [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md) |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
 | Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
@@ -135,7 +135,7 @@ bash scripts/start_testnet.sh
 ### 运行测试
 
 ```bash
-make test   # 130+ tests across 10 suites
+make test   # 278 tests
 ```
 
 ---
@@ -266,14 +266,8 @@ oasyced query reputation leaderboard --output json
                     |      oasyce-chain (Go)    |
                     |    Cosmos SDK v0.50.10    |
                     |   CometBFT Consensus     |
-                    |   7 custom modules        |
+                    |   8 custom modules        |
                     |   gRPC :9090 / REST :1317 |
-                    +-------------+-------------+
-                                  |
-                    +-------------v-------------+
-                    |   oasyce (Python CLI)     |
-                    |   Agent 客户端 + Dashboard |
-                    |   pip install oasyce      |
                     +-------------+-------------+
                                   |
                     +-------------v-------------+
@@ -289,8 +283,7 @@ oasyced query reputation leaderboard --output json
 | 组件 | 定位 | 安装 |
 |------|------|------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (本仓库) | L1 结算链 | `make build` |
-| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python Agent 客户端 + CLI + Dashboard | `pip install oasyce && oas bootstrap` |
-| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Python Agent SDK（钱包/签名/MCP/LangChain） | `pip install oasyce-sdk` |
+| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Agent Runtime + 钱包/签名/MCP/LangChain | `pip install oasyce-sdk` |
 
 ---
 
