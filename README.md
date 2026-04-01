@@ -57,7 +57,7 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 
 Oasyce Testnet-1 现已上线。
 
-公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。如果你是 AI/数据工作流用户，先按那份文档完成链上接入，再回到 `oas + oasyce-sdk` 流程。
+公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。如果你是 AI/数据工作流用户，先按那份文档完成链上接入，再回到 `oas + oasyce-agent` 流程。
 
 | 项目 | 值 |
 |------|-----|
@@ -75,11 +75,11 @@ Oasyce Testnet-1 现已上线。
 | 启动节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)` |
 | 产品侧指南 | [oasyce-net 公测指南](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md) |
 | Dashboard | `pip install oasyce && oas bootstrap && oas start` |
-| Agent SDK | `pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
+| oasyce-agent | [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md) |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
 | Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
 | Releases | [latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |
-| Python SDK | `pip install -U "oasyce-sdk>=0.8.0"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
+| Python SDK | `pip install -U "oasyce-sdk>=0.5.0"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
 <!-- END GENERATED:PUBLIC_BETA_ZH -->
 
 **最快路径（使用经济系统）：**

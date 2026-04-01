@@ -55,7 +55,7 @@ Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is just
 
 The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA.md).
 
-If you are using the AI-first `oas + oasyce-sdk` workflow, complete the chain-side onboarding first, then return to the product-side guide.
+If you are using the AI-first `oas + oasyce-agent` workflow, complete the chain-side onboarding first, then return to the product-side guide.
 
 - Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)
 - Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`
@@ -66,8 +66,8 @@ If you are using the AI-first `oas + oasyce-sdk` workflow, complete the chain-si
 - Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`
 - Product-side guide: [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
 - Dashboard: `pip install oasyce && oas bootstrap && oas start`
-- Agent SDK: `pip install oasyce-sdk` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk))
-- Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.8.0"`
+- Data ingress: [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)
+- Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.5.0"`
 - API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)
 - Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)
 - Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)
