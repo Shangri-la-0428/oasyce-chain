@@ -1,5 +1,7 @@
 # Oasyce Capability Marketplace — FAQ
 
+> Looking for the general Oasyce FAQ (for users, investors, and developers)? See [oasyce-sdk/FAQ.md](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/FAQ.md).
+
 ## General
 
 ### What is the capability marketplace?
