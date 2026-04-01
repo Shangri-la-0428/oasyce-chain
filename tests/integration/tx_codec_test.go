@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogoproto "github.com/cosmos/gogoproto/proto"
 
+	anchortypes "github.com/oasyce/chain/x/anchor/types"
 	captypes "github.com/oasyce/chain/x/capability/types"
 	drtypes "github.com/oasyce/chain/x/datarights/types"
 	obrtypes "github.com/oasyce/chain/x/onboarding/types"
@@ -74,6 +75,13 @@ func allModuleMessages() map[string]sdk.Msg {
 		"MsgSelfRegister": &obrtypes.MsgSelfRegister{Creator: testAddr},
 		"MsgRepayDebt":    &obrtypes.MsgRepayDebt{Creator: testAddr},
 
+		// anchor
+		"MsgAnchorTrace": &anchortypes.MsgAnchorTrace{Signer: testAddr},
+		"MsgAnchorBatch": &anchortypes.MsgAnchorBatch{Signer: testAddr},
+
+		// datarights: MsgUpdateServiceUrl
+		"MsgUpdateServiceUrl": &drtypes.MsgUpdateServiceUrl{Creator: testAddr},
+
 		// MsgUpdateParams (all modules — authority as signer)
 		"settlement/MsgUpdateParams":  &settypes.MsgUpdateParams{Authority: testAddr},
 		"capability/MsgUpdateParams":  &captypes.MsgUpdateParams{Authority: testAddr},
@@ -117,6 +125,7 @@ func TestAllMessagesRegisterInterfaces(t *testing.T) {
 	drtypes.RegisterInterfaces(registry)
 	worktypes.RegisterInterfaces(registry)
 	obrtypes.RegisterInterfaces(registry)
+	anchortypes.RegisterInterfaces(registry)
 
 	t.Log("All modules registered successfully")
 }
@@ -131,6 +140,7 @@ func TestAllMessagesMarshalRoundtrip(t *testing.T) {
 	drtypes.RegisterInterfaces(registry)
 	worktypes.RegisterInterfaces(registry)
 	obrtypes.RegisterInterfaces(registry)
+	anchortypes.RegisterInterfaces(registry)
 
 	for name, msg := range allModuleMessages() {
 		t.Run(name, func(t *testing.T) {
@@ -168,6 +178,7 @@ func TestAllMsgServiceDescsResolve(t *testing.T) {
 		{"datarights", drtypes.RegisterInterfaces},
 		{"work", worktypes.RegisterInterfaces},
 		{"onboarding", obrtypes.RegisterInterfaces},
+		{"anchor", anchortypes.RegisterInterfaces},
 	}
 
 	for _, m := range modules {

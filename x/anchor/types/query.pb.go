@@ -31,6 +31,9 @@ type QueryAnchorRequest struct {
 func (m *QueryAnchorRequest) Reset()         { *m = QueryAnchorRequest{} }
 func (m *QueryAnchorRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAnchorRequest) ProtoMessage()    {}
+func (*QueryAnchorRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{0}
+}
 func (m *QueryAnchorRequest) GetTraceId() []byte {
 	if m != nil {
 		return m.TraceId
@@ -45,6 +48,9 @@ type QueryAnchorResponse struct {
 func (m *QueryAnchorResponse) Reset()         { *m = QueryAnchorResponse{} }
 func (m *QueryAnchorResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAnchorResponse) ProtoMessage()    {}
+func (*QueryAnchorResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{1}
+}
 func (m *QueryAnchorResponse) GetAnchor() AnchorRecord {
 	if m != nil {
 		return m.Anchor
@@ -59,6 +65,9 @@ type QueryIsAnchoredRequest struct {
 func (m *QueryIsAnchoredRequest) Reset()         { *m = QueryIsAnchoredRequest{} }
 func (m *QueryIsAnchoredRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryIsAnchoredRequest) ProtoMessage()    {}
+func (*QueryIsAnchoredRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{2}
+}
 func (m *QueryIsAnchoredRequest) GetTraceId() []byte {
 	if m != nil {
 		return m.TraceId
@@ -73,6 +82,9 @@ type QueryIsAnchoredResponse struct {
 func (m *QueryIsAnchoredResponse) Reset()         { *m = QueryIsAnchoredResponse{} }
 func (m *QueryIsAnchoredResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryIsAnchoredResponse) ProtoMessage()    {}
+func (*QueryIsAnchoredResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{3}
+}
 func (m *QueryIsAnchoredResponse) GetAnchored() bool {
 	if m != nil {
 		return m.Anchored
@@ -88,6 +100,9 @@ type QueryAnchorsByCapabilityRequest struct {
 func (m *QueryAnchorsByCapabilityRequest) Reset()         { *m = QueryAnchorsByCapabilityRequest{} }
 func (m *QueryAnchorsByCapabilityRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAnchorsByCapabilityRequest) ProtoMessage()    {}
+func (*QueryAnchorsByCapabilityRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{4}
+}
 func (m *QueryAnchorsByCapabilityRequest) GetCapability() string {
 	if m != nil {
 		return m.Capability
@@ -109,6 +124,9 @@ type QueryAnchorsByCapabilityResponse struct {
 func (m *QueryAnchorsByCapabilityResponse) Reset()         { *m = QueryAnchorsByCapabilityResponse{} }
 func (m *QueryAnchorsByCapabilityResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAnchorsByCapabilityResponse) ProtoMessage()    {}
+func (*QueryAnchorsByCapabilityResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{5}
+}
 func (m *QueryAnchorsByCapabilityResponse) GetAnchors() []AnchorRecord {
 	if m != nil {
 		return m.Anchors
@@ -130,6 +148,9 @@ type QueryAnchorsByNodeRequest struct {
 func (m *QueryAnchorsByNodeRequest) Reset()         { *m = QueryAnchorsByNodeRequest{} }
 func (m *QueryAnchorsByNodeRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAnchorsByNodeRequest) ProtoMessage()    {}
+func (*QueryAnchorsByNodeRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{6}
+}
 func (m *QueryAnchorsByNodeRequest) GetNodePubkey() []byte {
 	if m != nil {
 		return m.NodePubkey
@@ -151,6 +172,9 @@ type QueryAnchorsByNodeResponse struct {
 func (m *QueryAnchorsByNodeResponse) Reset()         { *m = QueryAnchorsByNodeResponse{} }
 func (m *QueryAnchorsByNodeResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAnchorsByNodeResponse) ProtoMessage()    {}
+func (*QueryAnchorsByNodeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_anchor_query, []int{7}
+}
 func (m *QueryAnchorsByNodeResponse) GetAnchors() []AnchorRecord {
 	if m != nil {
 		return m.Anchors

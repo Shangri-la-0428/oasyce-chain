@@ -145,7 +145,7 @@ All 8 modules verified with real transactions:
 - **Store key prefixes**: `0x01` (primary: trace_id -> AnchorRecord), `0x02` (by capability index), `0x03` (by node pubkey index)
 - **No gRPC-gateway REST**: Query types use raw bytes fields that don't map to REST path params; use gRPC or CLI
 - **Genesis**: full export/import of all anchor records via `IterateAllAnchors`
-- **File descriptor generation**: `tools/gen_anchor_fd` — generates file descriptors; uses extension field 11110000 for cosmos.msg.v1.signer (same as `patch_descriptors`)
+- **File descriptor**: managed by `tools/patch_descriptors` (same unified tool as all other modules)
 - **E2E verified**: anchor-trace TX → DeliverTx code 0 → query back via CLI ✅
 - ConsensusVersion = 1
 - Files: `x/anchor/`, `proto/oasyce/anchor/v1/`
@@ -262,9 +262,8 @@ Common errors from missing pieces:
 - No Marshal entry: field written to store but reads back as zero value (silent!)
 - UninterpretedOption instead of extension: signer option silently ignored
 
-Tools:
-- `go run ./tools/patch_descriptors` — patches file descriptors for all modules, adds missing RPCs, messages, signer options
-- `go run ./tools/gen_anchor_fd` — generates file descriptors specifically for x/anchor module
+Tool:
+- `go run ./tools/patch_descriptors` — unified tool for ALL modules (including anchor): patches file descriptors, adds missing RPCs, messages, signer options, validates consistency
 
 ### Protocol Constants (x/settlement/types/types.go)
 ```go

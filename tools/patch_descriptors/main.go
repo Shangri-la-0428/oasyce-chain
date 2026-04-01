@@ -34,8 +34,10 @@ var modules = []moduleInfo{
 	{dir: "x/datarights/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_f4554f457b53c7be"},
 	{dir: "x/work/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_6b9943cdc07cfdd8"},
 	{dir: "x/onboarding/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_c794ac0b330f1318"},
+	{dir: "x/anchor/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_anchor_tx"},
 	// Query descriptors
 	{dir: "x/capability/types", pbFile: "query.pb.go", fdVarName: "fileDescriptor_76eec79927870477"},
+	{dir: "x/anchor/types", pbFile: "query.pb.go", fdVarName: "fileDescriptor_anchor_query"},
 }
 
 // Known message definitions for types that exist in Go code but not in file descriptors.
@@ -457,12 +459,14 @@ func ensureSignerOptions(fd *descriptorpb.FileDescriptorProto, pkg string) bool 
 				continue
 			}
 		}
-		// Determine signer field name
+		// Determine signer field name: prefer "authority", then "signer", default "creator"
 		signerField := "creator"
 		for _, f := range msg.GetField() {
-			if f.GetName() == "authority" {
+			switch f.GetName() {
+			case "authority":
 				signerField = "authority"
-				break
+			case "signer":
+				signerField = "signer"
 			}
 		}
 		// Build amino type URL: e.g. "oasyce/capability/MsgUpdateParams"
