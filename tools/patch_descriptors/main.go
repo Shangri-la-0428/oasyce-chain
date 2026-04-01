@@ -96,6 +96,16 @@ var challengeMessages = map[string]*descriptorpb.DescriptorProto{
 		},
 	},
 	"MsgDisputeInvocationResponse":  emptyMessage("MsgDisputeInvocationResponse"),
+	// Datarights: MsgUpdateServiceUrl (hand-written, Descriptor() returns nil)
+	"MsgUpdateServiceUrl": {
+		Name: proto.String("MsgUpdateServiceUrl"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			stringField("creator", 1),
+			stringField("asset_id", 2),
+			stringField("service_url", 3),
+		},
+	},
+	"MsgUpdateServiceUrlResponse": emptyMessage("MsgUpdateServiceUrlResponse"),
 }
 
 func stringField(name string, num int32) *descriptorpb.FieldDescriptorProto {
@@ -202,10 +212,6 @@ func patchModule(root string, m moduleInfo) error {
 
 	// Add missing RPC methods + message types
 	for _, method := range goMethods {
-		if existingRPCs[method] {
-			continue
-		}
-
 		// Naming convention: tx -> Msg{Method}/Msg{Method}Response, query -> Query{Method}Request/Query{Method}Response
 		var reqName, respName string
 		if isQuery {
@@ -216,20 +222,22 @@ func patchModule(root string, m moduleInfo) error {
 			respName = "Msg" + method + "Response"
 		}
 
-		// Add request message if missing
+		// Add request message if missing (even if RPC already exists)
 		if !existingMsgs[reqName] {
 			if def, ok := challengeMessages[reqName]; ok {
 				fd.MessageType = append(fd.MessageType, def)
 			} else if method == "UpdateParams" {
 				addUpdateParamsMessages(&fd, pkg)
-			} else if method == "UpdateServiceUrl" {
-				// Messages are hand-written in tx.pb.go with RegisterType;
-				// do NOT add to file descriptor to avoid double-registration.
 			} else {
 				fmt.Printf("  WARNING: no message definition for %s\n", reqName)
+				if existingRPCs[method] {
+					continue
+				}
 				continue
 			}
 			existingMsgs[reqName] = true
+			changed = true
+			fmt.Printf("  Added message: %s\n", reqName)
 		}
 		// Add response message if missing
 		if !existingMsgs[respName] {
@@ -237,15 +245,18 @@ func patchModule(root string, m moduleInfo) error {
 				fd.MessageType = append(fd.MessageType, def)
 			} else if method == "UpdateParams" {
 				// Already added by addUpdateParamsMessages
-			} else if method == "UpdateServiceUrl" {
-				// Hand-written in tx.pb.go, skip
 			} else {
 				fd.MessageType = append(fd.MessageType, emptyMessage(respName))
 			}
 			existingMsgs[respName] = true
+			changed = true
+			fmt.Printf("  Added message: %s\n", respName)
 		}
 
-		// Add RPC method
+		// Add RPC method if missing
+		if existingRPCs[method] {
+			continue
+		}
 		rpc := &descriptorpb.MethodDescriptorProto{
 			Name:       proto.String(method),
 			InputType:  proto.String("." + pkg + "." + reqName),

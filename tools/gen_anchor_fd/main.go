@@ -100,6 +100,18 @@ func genesisDescriptor() *descriptorpb.FileDescriptorProto {
 }
 
 func txDescriptor() *descriptorpb.FileDescriptorProto {
+	// Build message options with proper extension field encoding
+	// (not UninterpretedOption — Cosmos SDK reads raw extension field 11110000)
+	anchorTraceOpts := &descriptorpb.MessageOptions{}
+	anchorTraceOpts.ProtoReflect().SetUnknown(buildSignerOptions("signer", "oasyce/anchor/MsgAnchorTrace"))
+
+	anchorBatchOpts := &descriptorpb.MessageOptions{}
+	anchorBatchOpts.ProtoReflect().SetUnknown(buildSignerOptions("signer", "oasyce/anchor/MsgAnchorBatch"))
+
+	// Service-level cosmos.msg.v1.service option (field 11110000, empty value)
+	svcOpts := &descriptorpb.ServiceOptions{}
+	svcOpts.ProtoReflect().SetUnknown(buildServiceOption())
+
 	return &descriptorpb.FileDescriptorProto{
 		Name:    proto.String("oasyce/anchor/v1/tx.proto"),
 		Package: proto.String("oasyce.anchor.v1"),
@@ -116,16 +128,7 @@ func txDescriptor() *descriptorpb.FileDescriptorProto {
 					uint64Field("timestamp", 6),
 					bytesField("trace_signature", 7),
 				},
-				Options: &descriptorpb.MessageOptions{
-					UninterpretedOption: []*descriptorpb.UninterpretedOption{
-						{
-							Name: []*descriptorpb.UninterpretedOption_NamePart{
-								{NamePart: proto.String("cosmos.msg.v1.signer"), IsExtension: proto.Bool(true)},
-							},
-							StringValue: []byte("signer"),
-						},
-					},
-				},
+				Options: anchorTraceOpts,
 			},
 			emptyMessage("MsgAnchorTraceResponse"),
 			{
@@ -141,16 +144,7 @@ func txDescriptor() *descriptorpb.FileDescriptorProto {
 						JsonName: proto.String("anchors"),
 					},
 				},
-				Options: &descriptorpb.MessageOptions{
-					UninterpretedOption: []*descriptorpb.UninterpretedOption{
-						{
-							Name: []*descriptorpb.UninterpretedOption_NamePart{
-								{NamePart: proto.String("cosmos.msg.v1.signer"), IsExtension: proto.Bool(true)},
-							},
-							StringValue: []byte("signer"),
-						},
-					},
-				},
+				Options: anchorBatchOpts,
 			},
 			{
 				Name: proto.String("MsgAnchorBatchResponse"),
@@ -175,18 +169,44 @@ func txDescriptor() *descriptorpb.FileDescriptorProto {
 						OutputType: proto.String(".oasyce.anchor.v1.MsgAnchorBatchResponse"),
 					},
 				},
-				Options: &descriptorpb.ServiceOptions{
-					UninterpretedOption: []*descriptorpb.UninterpretedOption{
-						{
-							Name: []*descriptorpb.UninterpretedOption_NamePart{
-								{NamePart: proto.String("cosmos.msg.v1.service"), IsExtension: proto.Bool(true)},
-							},
-						},
-					},
-				},
+				Options: svcOpts,
 			},
 		},
 	}
+}
+
+// buildSignerOptions constructs raw protobuf bytes for cosmos.msg.v1.signer and amino options.
+// Extension field 11110000 = cosmos.msg.v1.signer (string, wire type 2)
+// Extension field 11110001 = amino type URL (string, wire type 2)
+func buildSignerOptions(signer, aminoURL string) []byte {
+	var buf []byte
+	// Field 11110000, wire type 2 (LDel)
+	buf = appendVarint(buf, (11110000<<3)|2)
+	buf = appendVarint(buf, uint64(len(signer)))
+	buf = append(buf, signer...)
+	// Field 11110001, wire type 2 (LDel)
+	buf = appendVarint(buf, (11110001<<3)|2)
+	buf = appendVarint(buf, uint64(len(aminoURL)))
+	buf = append(buf, aminoURL...)
+	return buf
+}
+
+// buildServiceOption constructs raw protobuf bytes for cosmos.msg.v1.service option.
+// This is a bool-like marker — field 11110000, varint value 0 (or just the tag).
+func buildServiceOption() []byte {
+	var buf []byte
+	// Field 11110000, wire type 0 (varint), value = 0 (present = true)
+	buf = appendVarint(buf, (11110000<<3)|0)
+	buf = append(buf, 0)
+	return buf
+}
+
+func appendVarint(buf []byte, x uint64) []byte {
+	for x >= 0x80 {
+		buf = append(buf, byte(x)|0x80)
+		x >>= 7
+	}
+	return append(buf, byte(x))
 }
 
 func queryDescriptor() *descriptorpb.FileDescriptorProto {

@@ -1,14 +1,12 @@
 package keeper
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	"github.com/oasyce/chain/x/anchor/types"
 )
@@ -89,10 +87,14 @@ func (k Keeper) SetAnchor(ctx sdk.Context, record types.AnchorRecord) error {
 // AnchorTrace validates and stores a single anchor record.
 // Returns true if anchored, false if skipped (duplicate).
 func (k Keeper) AnchorTrace(ctx sdk.Context, msg *types.MsgAnchorTrace) (bool, error) {
-	// Verify signer matches pubkey derivation: sha256(pubkey)[:20] -> bech32
-	if err := k.verifySigner(msg.Signer, msg.NodePubkey); err != nil {
-		return false, err
+	// Validate node_pubkey is 32 bytes (ed25519).
+	if len(msg.NodePubkey) != 32 {
+		return false, types.ErrInvalidSigner.Wrapf("node_pubkey must be 32 bytes, got %d", len(msg.NodePubkey))
 	}
+	// NOTE: Signer is the fee payer (secp256k1 Cosmos account).
+	// Node identity is proven by trace_signature (ed25519) — verified off-chain by consumers.
+	// We do NOT require signer == sha256(node_pubkey)[:20] because Cosmos addresses derive
+	// from secp256k1 keys (ripemd160(sha256(pubkey))), making the check impossible to satisfy.
 
 	// Check for duplicate anchor.
 	if k.IsAnchored(ctx, msg.TraceId) {
@@ -124,39 +126,6 @@ func (k Keeper) AnchorTrace(ctx sdk.Context, msg *types.MsgAnchorTrace) (bool, e
 	))
 
 	return true, nil
-}
-
-// verifySigner checks that the signer address is derived from the pubkey.
-// Derivation: sha256(pubkey)[:20] -> bech32("oasyce", ...)
-func (k Keeper) verifySigner(signer string, pubkey []byte) error {
-	hash := sha256.Sum256(pubkey)
-	addrBytes := hash[:20]
-
-	// Decode the signer's bech32 address to get the raw bytes.
-	hrp, signerBytes, err := bech32.DecodeAndConvert(signer)
-	if err != nil {
-		return types.ErrInvalidSigner.Wrapf("cannot decode signer address: %s", err)
-	}
-
-	_ = hrp // we don't enforce HRP here since SDK already validates it
-
-	// Compare the derived address bytes with the signer's address bytes.
-	if len(signerBytes) != len(addrBytes) {
-		return types.ErrInvalidSigner.Wrapf(
-			"signer address length mismatch: expected %d, got %d",
-			len(addrBytes), len(signerBytes),
-		)
-	}
-	for i := range addrBytes {
-		if addrBytes[i] != signerBytes[i] {
-			return types.ErrInvalidSigner.Wrapf(
-				"signer does not match sha256(pubkey)[:20]; expected %x, got %x",
-				addrBytes, signerBytes,
-			)
-		}
-	}
-
-	return nil
 }
 
 // ---------------------------------------------------------------------------

@@ -131,7 +131,7 @@ All 8 modules verified with real transactions:
 ### x/anchor Module (Thronglets Trace Anchoring) — COMPLETE ✅
 - **Purpose**: Optional trust layer for the Thronglets P2P network — stores trace hash + ed25519 signature on-chain as immutable proof
 - **Design**: Content-addressed records, ~110 bytes per anchor, secondary indexes by capability and node
-- **Signer verification**: `sha256(ed25519_pubkey)[:20]` must match the bech32-decoded signer address bytes
+- **Signer model**: Signer is the fee payer (any funded Cosmos account). Node identity proven by trace_signature (ed25519). node_pubkey must be 32 bytes.
 - **Msg types**:
   - `MsgAnchorTrace` — anchor a single trace record on-chain
   - `MsgAnchorBatch` — anchor up to 50 traces in one tx (`MaxBatchSize = 50`); skips duplicates and validation errors, returns anchored/skipped counts
@@ -145,7 +145,8 @@ All 8 modules verified with real transactions:
 - **Store key prefixes**: `0x01` (primary: trace_id -> AnchorRecord), `0x02` (by capability index), `0x03` (by node pubkey index)
 - **No gRPC-gateway REST**: Query types use raw bytes fields that don't map to REST path params; use gRPC or CLI
 - **Genesis**: full export/import of all anchor records via `IterateAllAnchors`
-- **File descriptor generation**: `tools/gen_anchor_fd` — generates file descriptors for hand-written protobuf types
+- **File descriptor generation**: `tools/gen_anchor_fd` — generates file descriptors; uses extension field 11110000 for cosmos.msg.v1.signer (same as `patch_descriptors`)
+- **E2E verified**: anchor-trace TX → DeliverTx code 0 → query back via CLI ✅
 - ConsensusVersion = 1
 - Files: `x/anchor/`, `proto/oasyce/anchor/v1/`
 
@@ -191,6 +192,7 @@ go test ./...   ✅ (130+ tests across 10 suites)
   - `MsgUpdateServiceUrl` — owner-only endpoint update, empty string clears
   - CLI: `oasyced tx datarights update-service-url [asset-id] [service-url]`
   - Content integrity via `content_hash` (immutable), access endpoint via `service_url` (mutable)
+  - **IMPORTANT**: field 17 requires hand-coded Marshal/Unmarshal/Size entries in types.pb.go + file descriptor entry — all 4 are now present and E2E verified
 - Dead code cleanup: removed unused SettlementKeeper interface from datarights module
 
 ### x/onboarding Module (PoW Self-Registration) — COMPLETE ✅
@@ -247,13 +249,22 @@ Chain nodes now serve AI-discoverable endpoints:
 - Docs: `AGENTS.md` (integration guide), `docs/AGENT_WORKFLOWS.md` (5 workflows)
 
 ### Proto Descriptor Requirements
-Hand-written protobuf message types (msg_update_params.go, msgs_challenge_pb.go) MUST have:
+Hand-written protobuf message types MUST have ALL of these in sync:
 1. `Descriptor()` method returning `(fileDescriptor_xxx, []int{N})` where N = message index in file descriptor
-2. `cosmos.msg.v1.signer` option in file descriptor (set by `tools/patch_descriptors`)
+2. `cosmos.msg.v1.signer` option as extension field 11110000 (NOT UninterpretedOption — SDK doesn't read those)
 3. `proto.RegisterType` in `init()` function
-Without Descriptor(): SDK error "does not have a Descriptor() method: tx parse error"
-Without signer option: SDK error "no cosmos.msg.v1.signer option found"
-Tool: `go run ./tools/patch_descriptors` — adds missing RPCs, messages, and signer options to file descriptors
+4. `MarshalToSizedBuffer()` / `Unmarshal()` / `Size()` covering ALL struct fields (missing = silent data loss)
+5. File descriptor must list the message type (or Descriptor() has nothing to point to)
+
+Common errors from missing pieces:
+- No Descriptor(): `"does not have a Descriptor() method: tx parse error"`
+- No signer option: `"no cosmos.msg.v1.signer option found"`
+- No Marshal entry: field written to store but reads back as zero value (silent!)
+- UninterpretedOption instead of extension: signer option silently ignored
+
+Tools:
+- `go run ./tools/patch_descriptors` — patches file descriptors for all modules, adds missing RPCs, messages, signer options
+- `go run ./tools/gen_anchor_fd` — generates file descriptors specifically for x/anchor module
 
 ### Protocol Constants (x/settlement/types/types.go)
 ```go

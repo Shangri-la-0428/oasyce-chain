@@ -51,9 +51,9 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context) {
 	return k, ctx
 }
 
-// makePubkeyAndSigner creates a 32-byte test pubkey and its derived bech32
-// signer address. The derivation matches the keeper's verifySigner logic:
-// sha256(pubkey)[:20] -> bech32("oasyce", ...).
+// makePubkeyAndSigner creates a 32-byte test pubkey and a derived bech32
+// signer address. Uses sha256(pubkey)[:20] -> bech32("oasyce", ...) for
+// deterministic test address generation.
 func makePubkeyAndSigner(seed string) ([]byte, string) {
 	// Build a deterministic 32-byte pubkey from the seed.
 	h := sha256.Sum256([]byte(seed))
@@ -163,23 +163,42 @@ func TestAnchorTrace_Duplicate(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 3. TestAnchorTrace_InvalidSigner — signer doesn't match pubkey derivation
+// 3. TestAnchorTrace_InvalidPubkeyLength — node_pubkey must be 32 bytes
 // ---------------------------------------------------------------------------
 
-func TestAnchorTrace_InvalidSigner(t *testing.T) {
-	_, ctx := setupKeeper(t)
-	k, _ := setupKeeper(t)
+func TestAnchorTrace_InvalidPubkeyLength(t *testing.T) {
+	k, ctx := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
 
-	pubkey, _ := makePubkeyAndSigner("node-1")
-	_, wrongSigner := makePubkeyAndSigner("node-other")
+	_, signer := makePubkeyAndSigner("node-1")
 
-	traceID := makeTraceID("trace-invalid-signer")
-	msg := validMsg(traceID, pubkey, wrongSigner, "text-generation")
+	traceID := makeTraceID("trace-invalid-pubkey")
+	msg := validMsg(traceID, []byte("too-short"), signer, "text-generation")
 
 	_, err := ms.AnchorTrace(ctx, msg)
 	if err == nil {
-		t.Fatal("expected invalid signer error, got nil")
+		t.Fatal("expected invalid pubkey length error, got nil")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 3b. TestAnchorTrace_AnySigner — any valid signer can anchor any node's trace
+// ---------------------------------------------------------------------------
+
+func TestAnchorTrace_AnySigner(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	ms := keeper.NewMsgServer(k)
+
+	pubkey, _ := makePubkeyAndSigner("node-1")
+	_, differentSigner := makePubkeyAndSigner("node-other")
+
+	traceID := makeTraceID("trace-any-signer")
+	msg := validMsg(traceID, pubkey, differentSigner, "text-generation")
+
+	// Should succeed — signer is just the fee payer, not tied to node_pubkey
+	_, err := ms.AnchorTrace(ctx, msg)
+	if err != nil {
+		t.Fatalf("expected success with different signer, got: %v", err)
 	}
 }
 
