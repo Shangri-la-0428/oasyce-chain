@@ -110,6 +110,9 @@ func (k Keeper) SetEscrow(ctx sdk.Context, escrow types.Escrow) error {
 // RebuildEscrowIndex rebuilds secondary indexes for an escrow (used during InitGenesis).
 func (k Keeper) RebuildEscrowIndex(ctx sdk.Context, escrow types.Escrow) {
 	k.setEscrowIndex(ctx, escrow.Creator, escrow.Id)
+	if escrow.Status == types.ESCROW_STATUS_LOCKED {
+		k.setExpiryIndex(ctx, escrow)
+	}
 }
 
 // setEscrowIndex creates a secondary index entry for creator -> escrow.
@@ -122,6 +125,18 @@ func (k Keeper) setEscrowIndex(ctx sdk.Context, creator, escrowID string) {
 func (k Keeper) deleteEscrowIndex(ctx sdk.Context, creator, escrowID string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.EscrowByCreatorKey(creator, escrowID))
+}
+
+// setExpiryIndex writes the time-based expiry index for an escrow.
+func (k Keeper) setExpiryIndex(ctx sdk.Context, escrow types.Escrow) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.EscrowExpiryKey(escrow.ExpiresAt.Unix(), escrow.Id), []byte{})
+}
+
+// deleteExpiryIndex removes the time-based expiry index for an escrow.
+func (k Keeper) deleteExpiryIndex(ctx sdk.Context, escrow types.Escrow) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.EscrowExpiryKey(escrow.ExpiresAt.Unix(), escrow.Id))
 }
 
 // GetEscrowsByCreator returns all escrows created by a given address.
@@ -213,6 +228,7 @@ func (k Keeper) CreateEscrow(ctx sdk.Context, creator, provider string, amount s
 		return "", err
 	}
 	k.setEscrowIndex(ctx, creator, escrowID)
+	k.setExpiryIndex(ctx, escrow)
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"escrow_created",
@@ -294,8 +310,9 @@ func (k Keeper) ReleaseEscrow(ctx sdk.Context, escrowID string, releaser string)
 		return err
 	}
 
-	// Delete secondary index since the escrow is terminal.
+	// Delete secondary indexes since the escrow is terminal.
 	k.deleteEscrowIndex(ctx, escrow.Creator, escrow.Id)
+	k.deleteExpiryIndex(ctx, escrow)
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"escrow_released",
@@ -343,8 +360,9 @@ func (k Keeper) RefundEscrow(ctx sdk.Context, escrowID string, refunder string) 
 		return err
 	}
 
-	// Delete secondary index since the escrow is terminal.
+	// Delete secondary indexes since the escrow is terminal.
 	k.deleteEscrowIndex(ctx, escrow.Creator, escrow.Id)
+	k.deleteExpiryIndex(ctx, escrow)
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"escrow_refunded",
@@ -356,27 +374,34 @@ func (k Keeper) RefundEscrow(ctx sdk.Context, escrowID string, refunder string) 
 	return nil
 }
 
-// ExpireStaleEscrows iterates all escrows and auto-refunds those that have expired.
-// This is intended to be called from EndBlock. Errors are collected and returned.
+// ExpireStaleEscrows scans the time-based expiry index for escrows that have expired
+// and auto-refunds them. O(expired) per block instead of O(total).
 func (k Keeper) ExpireStaleEscrows(ctx sdk.Context) error {
 	now := ctx.BlockTime()
 	store := ctx.KVStore(k.storeKey)
 
-	iter := storetypes.KVStorePrefixIterator(store, types.EscrowKeyPrefix)
+	// Range scan: [ExpiryPrefix, ExpiryPrefix + (now+1)) — only expired entries
+	iter := store.Iterator(types.EscrowExpiryPrefix, types.EscrowExpiryEndKey(now.Unix()))
 	defer iter.Close()
 
 	var errs []error
 
 	for ; iter.Valid(); iter.Next() {
-		var escrow types.Escrow
-		if err := k.cdc.Unmarshal(iter.Value(), &escrow); err != nil {
-			errs = append(errs, fmt.Errorf("failed to unmarshal escrow: %w", err))
+		key := iter.Key()
+		// Key format: prefix(1) + unix_seconds(8) + escrowID(variable)
+		if len(key) <= 9 {
+			store.Delete(key)
+			continue
+		}
+		escrowID := string(key[9:])
+
+		escrow, found := k.GetEscrow(ctx, escrowID)
+		if !found {
+			store.Delete(key)
 			continue
 		}
 		if escrow.Status != types.ESCROW_STATUS_LOCKED {
-			continue
-		}
-		if now.Before(escrow.ExpiresAt) {
+			store.Delete(key)
 			continue
 		}
 
@@ -384,24 +409,26 @@ func (k Keeper) ExpireStaleEscrows(ctx sdk.Context) error {
 		creatorAddr, err := sdk.AccAddressFromBech32(escrow.Creator)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("invalid creator address for escrow %s: %w", escrow.Id, err))
+			store.Delete(key)
 			continue
 		}
 		coins := sdk.NewCoins(escrow.Amount)
 		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, creatorAddr, coins); err != nil {
 			errs = append(errs, fmt.Errorf("failed to refund expired escrow %s: %w", escrow.Id, err))
+			store.Delete(key)
 			continue
 		}
 
 		escrow.Status = types.ESCROW_STATUS_EXPIRED
-		bz, err := k.cdc.Marshal(&escrow)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to marshal escrow %s: %w", escrow.Id, err))
+		if err := k.SetEscrow(ctx, escrow); err != nil {
+			errs = append(errs, fmt.Errorf("failed to save escrow %s: %w", escrow.Id, err))
+			store.Delete(key)
 			continue
 		}
-		store.Set(types.EscrowKey(escrow.Id), bz)
 
-		// Delete secondary index since the escrow is terminal.
+		// Delete all indexes since the escrow is terminal.
 		k.deleteEscrowIndex(ctx, escrow.Creator, escrow.Id)
+		store.Delete(key) // delete expiry index entry
 
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			"escrow_expired",

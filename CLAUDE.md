@@ -156,6 +156,23 @@ All 8 modules verified with real transactions:
 - Off-chain gateways query this endpoint to decide data delivery tier
 - Architecture: chain computes level, off-chain enforces gating
 
+### EndBlocker Performance — OPTIMIZED ✅
+All EndBlocker/BeginBlocker functions use time-based or height-based indexes for O(expired) scanning:
+- **x/work**: `ExpiryIndexPrefix + height(8) + taskID(8)` — range scan up to current height (reference implementation)
+- **x/settlement**: `EscrowExpiryPrefix + unix_seconds(8) + escrowID` — range scan up to current time, was O(all escrows)
+- **x/onboarding**: `DeadlineIndexPrefix + unix_seconds(8) + address` — range scan up to current time, was O(all registrations)
+
+Index lifecycle: written on create (LOCKED/ACTIVE), deleted on terminal state (RELEASED/REFUNDED/EXPIRED/REPAID/DEFAULTED).
+Genesis: `RebuildEscrowIndex`/`RebuildDeadlineIndex` called during InitGenesis for active records only.
+
+### VPS Memory Tuning (2026-04-01)
+Applied to `/home/oasyce/.oasyced/config/`:
+- `iavl-cache-size = 50000` (was 781250 — saves 200-400MB)
+- `pruning = "custom"`, `pruning-keep-recent = "1000"`, `pruning-interval = "100"` (was "default" keeping 362K states)
+- `iavl-disable-fastnode = true` (saves 100-200MB)
+- `indexer = "null"` in config.toml (saves 50-200MB, seed node doesn't need tx indexing)
+- `MemoryMax=1G`, `MemoryHigh=800M` in oasyced.service (safety net: OOM kills oasyced, not sshd)
+
 ### Build & Test Status
 ```
 go build ./...  ✅

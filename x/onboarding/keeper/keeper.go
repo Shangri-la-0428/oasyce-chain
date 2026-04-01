@@ -268,6 +268,7 @@ func (k Keeper) SelfRegister(ctx context.Context, msg types.MsgSelfRegister) (ma
 	if err := k.SetRegistration(sdkCtx, reg); err != nil {
 		return math.Int{}, err
 	}
+	k.setDeadlineIndex(sdkCtx, reg)
 
 	// Increment total registrations counter (drives halving schedule).
 	newTotal := k.IncrementTotalRegistrations(sdkCtx)
@@ -318,6 +319,7 @@ func (k Keeper) RepayDebt(ctx context.Context, msg types.MsgRepayDebt) (math.Int
 
 	if newRemaining.IsZero() {
 		reg.Status = types.REGISTRATION_STATUS_REPAID
+		k.deleteDeadlineIndex(sdkCtx, reg)
 		sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 			"debt_repaid",
 			sdk.NewAttribute("address", msg.Creator),
@@ -331,31 +333,67 @@ func (k Keeper) RepayDebt(ctx context.Context, msg types.MsgRepayDebt) (math.Int
 	return newRemaining, nil
 }
 
-// ExpireDebts iterates all active registrations and marks those past their
-// deadline as DEFAULTED. Called from EndBlocker.
+// setDeadlineIndex writes the time-based deadline index for a registration.
+func (k Keeper) setDeadlineIndex(ctx sdk.Context, reg types.Registration) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.DeadlineIndexKey(reg.Deadline.Unix(), reg.Address), []byte{})
+}
+
+// deleteDeadlineIndex removes the time-based deadline index for a registration.
+func (k Keeper) deleteDeadlineIndex(ctx sdk.Context, reg types.Registration) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.DeadlineIndexKey(reg.Deadline.Unix(), reg.Address))
+}
+
+// RebuildDeadlineIndex rebuilds the deadline index for a registration (used during InitGenesis).
+func (k Keeper) RebuildDeadlineIndex(ctx sdk.Context, reg types.Registration) {
+	if reg.Status == types.REGISTRATION_STATUS_ACTIVE {
+		k.setDeadlineIndex(ctx, reg)
+	}
+}
+
+// ExpireDebts scans the time-based deadline index for registrations past their
+// deadline and marks them as DEFAULTED. O(expired) per block instead of O(total).
 func (k Keeper) ExpireDebts(ctx sdk.Context) {
 	now := ctx.BlockTime()
+	store := ctx.KVStore(k.storeKey)
 
-	k.IterateAllRegistrations(ctx, func(reg types.Registration) bool {
-		if reg.Status != types.REGISTRATION_STATUS_ACTIVE {
-			return false
+	// Range scan: [DeadlinePrefix, DeadlinePrefix + (now+1)) — only expired entries
+	iter := store.Iterator(types.DeadlineIndexPrefix, types.DeadlineIndexEndKey(now.Unix()))
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()
+		// Key format: prefix(1) + unix_seconds(8) + address(variable)
+		if len(key) <= 9 {
+			store.Delete(key)
+			continue
 		}
-		if now.Before(reg.Deadline) {
-			return false
+		address := string(key[9:])
+
+		reg, found := k.GetRegistration(ctx, address)
+		if !found {
+			store.Delete(key)
+			continue
+		}
+		if reg.Status != types.REGISTRATION_STATUS_ACTIVE {
+			store.Delete(key)
+			continue
 		}
 
 		// Deadline passed — mark as DEFAULTED.
 		reg.Status = types.REGISTRATION_STATUS_DEFAULTED
 		if err := k.SetRegistration(ctx, reg); err != nil {
-			return false
+			store.Delete(key)
+			continue
 		}
+
+		store.Delete(key) // delete deadline index entry
 
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			"debt_defaulted",
 			sdk.NewAttribute("address", reg.Address),
 			sdk.NewAttribute("outstanding", reg.AirdropAmount.Sub(reg.RepaidAmount).String()),
 		))
-
-		return false
-	})
+	}
 }

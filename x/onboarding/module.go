@@ -102,6 +102,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		if err := am.keeper.SetRegistration(ctx, reg); err != nil {
 			panic(fmt.Sprintf("failed to set registration %s: %v", reg.Address, err))
 		}
+		am.keeper.RebuildDeadlineIndex(ctx, reg)
 	}
 
 	// Derive total_registrations counter from registration count.
