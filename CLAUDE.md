@@ -1,7 +1,45 @@
 # Oasyce L1 Chain
 
+> **Sigil role**: Necessary subsystem — the lifecycle ledger. Records all Sigil lifecycle events (GENESIS, DISSOLVE, BOND, UNBOND) as immutable, ordered, public history.
+> See [Oasyce-Sigil/ARCHITECTURE.md](../Oasyce-Sigil/ARCHITECTURE.md) for how this fits the whole.
+
+## Sigil Architecture Context
+
+This chain serves two functions in the Sigil protocol:
+
+1. **Lifecycle ledger** — Records GENESIS/DISSOLVE/BOND/UNBOND events for all Sigils. This requires a new `x/sigil` module (see roadmap below).
+2. **Economic arena** — The existing modules (settlement, capability, work, datarights, reputation) are the arena where Loops prove their individuality through economic behavior (Axiom 3: Sovereignty).
+
+### Module Mapping to Sigil
+
+| Module | Sigil function |
+|--------|---------------|
+| `x/sigil` | **NEW** — Sigil lifecycle: GENESIS, DISSOLVE, BOND, UNBOND transactions |
+| `x/onboarding` | GENESIS mechanism — PoW self-registration IS claiming a Sigil |
+| `x/anchor` | BOND evidence — Thronglets trace anchoring proves BOND activity |
+| `x/delegate` | BOND semantics — multi-agent delegation is a controlled BOND |
+| `x/settlement` | Economic arena — escrow, bonding curves |
+| `x/capability` | Economic arena — AI marketplace |
+| `x/work` | Economic arena — Proof of Useful Work tasks |
+| `x/datarights` | Economic arena — data asset ownership and trading |
+| `x/reputation` | Sigil assessment — ecosystem's view of a Sigil's reliability |
+| `x/halving` | Monetary policy — resource scarcity drives selection pressure |
+
+### x/sigil Roadmap (Phase 1)
+
+- [ ] `MsgGenesis` — create Sigil with optional lineage (parent Sigils)
+- [ ] `MsgDissolve` — retire Sigil permanently
+- [ ] `MsgBond` — record bond between two Sigils (with scope metadata)
+- [ ] `MsgUnbond` — remove bond
+- [ ] Sigil state: active/dissolved, creation height, lineage, bond edges
+- [ ] Queries: Sigil by ID, Sigil graph (bonds), lineage tree, active count
+- [ ] Refactor `x/onboarding` to emit GENESIS event via `x/sigil`
+- [ ] Refactor `x/anchor` to reference Sigil IDs instead of raw pubkeys
+
+---
+
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 9 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving, anchor, delegate.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/Net/oasyce-chain` with 9 custom modules (+1 upcoming: sigil): settlement, capability, reputation, datarights, work, onboarding, halving, anchor, delegate.
 
 ## Current Status
 
