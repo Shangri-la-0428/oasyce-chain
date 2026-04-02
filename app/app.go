@@ -120,6 +120,9 @@ import (
 	anchor "github.com/oasyce/chain/x/anchor"
 	anchorkeeper "github.com/oasyce/chain/x/anchor/keeper"
 	anchortypes "github.com/oasyce/chain/x/anchor/types"
+	delegate "github.com/oasyce/chain/x/delegate"
+	delegatekeeper "github.com/oasyce/chain/x/delegate/keeper"
+	delegatetypes "github.com/oasyce/chain/x/delegate/types"
 )
 
 const Name = "oasyce"
@@ -160,6 +163,7 @@ var (
 		onboarding.AppModuleBasic{},
 		halving.AppModuleBasic{},
 		anchor.AppModuleBasic{},
+		delegate.AppModuleBasic{},
 	)
 
 	// Module account permissions.
@@ -243,6 +247,7 @@ type OasyceApp struct {
 	OnboardingKeeper onboardingkeeper.Keeper
 	HalvingKeeper    halvingkeeper.Keeper
 	AnchorKeeper     anchorkeeper.Keeper
+	DelegateKeeper   delegatekeeper.Keeper
 
 	// Module manager
 	ModuleManager *module.Manager
@@ -316,6 +321,7 @@ func NewOasyceApp(
 		worktypes.StoreKey,
 		onboardingtypes.StoreKey,
 		anchortypes.StoreKey,
+		delegatetypes.StoreKey,
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys(ibccapabilitytypes.MemStoreKey)
@@ -578,6 +584,14 @@ func NewOasyceApp(
 		govAuthority,
 	)
 
+	app.DelegateKeeper = delegatekeeper.NewKeeper(
+		appCodec,
+		keys[delegatetypes.StoreKey],
+		app.BankKeeper,
+		app.MsgServiceRouter(),
+		govAuthority,
+	)
+
 	// --- Module Manager ---
 	app.ModuleManager = module.NewManager(
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, txConfig),
@@ -607,6 +621,7 @@ func NewOasyceApp(
 		onboarding.NewAppModule(appCodec, app.OnboardingKeeper),
 		halving.NewAppModule(app.HalvingKeeper),
 		anchor.NewAppModule(appCodec, app.AnchorKeeper),
+		delegate.NewAppModule(appCodec, app.DelegateKeeper),
 	)
 
 	// Set order of module operations.
@@ -638,6 +653,7 @@ func NewOasyceApp(
 		worktypes.ModuleName,
 		onboardingtypes.ModuleName,
 		anchortypes.ModuleName,
+		delegatetypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -667,6 +683,7 @@ func NewOasyceApp(
 		worktypes.ModuleName,
 		onboardingtypes.ModuleName,
 		anchortypes.ModuleName,
+		delegatetypes.ModuleName,
 		halvingtypes.ModuleName,
 	)
 
@@ -697,6 +714,7 @@ func NewOasyceApp(
 		worktypes.ModuleName,
 		onboardingtypes.ModuleName,
 		anchortypes.ModuleName,
+		delegatetypes.ModuleName,
 		halvingtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)

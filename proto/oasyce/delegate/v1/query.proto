@@ -1,0 +1,64 @@
+syntax = "proto3";
+package oasyce.delegate.v1;
+
+option go_package = "github.com/oasyce/chain/x/delegate/types";
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/delegate/v1/types.proto";
+
+// Query defines the delegate module's gRPC query service.
+service Query {
+  // Policy queries a principal's delegation policy.
+  rpc Policy(QueryPolicyRequest) returns (QueryPolicyResponse) {
+    option (google.api.http).get = "/oasyce/delegate/v1/policy/{principal}";
+  }
+
+  // Delegates lists all delegates enrolled under a principal.
+  rpc Delegates(QueryDelegatesRequest) returns (QueryDelegatesResponse) {
+    option (google.api.http).get = "/oasyce/delegate/v1/delegates/{principal}";
+  }
+
+  // Spend queries the current spending window for a principal.
+  rpc Spend(QuerySpendRequest) returns (QuerySpendResponse) {
+    option (google.api.http).get = "/oasyce/delegate/v1/spend/{principal}";
+  }
+
+  // Principal queries which principal a delegate belongs to.
+  rpc Principal(QueryPrincipalRequest) returns (QueryPrincipalResponse) {
+    option (google.api.http).get = "/oasyce/delegate/v1/principal/{delegate}";
+  }
+}
+
+message QueryPolicyRequest {
+  string principal = 1;
+}
+
+message QueryPolicyResponse {
+  DelegatePolicy policy = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryDelegatesRequest {
+  string principal = 1;
+}
+
+message QueryDelegatesResponse {
+  repeated DelegateRecord delegates = 1 [(gogoproto.nullable) = false];
+}
+
+message QuerySpendRequest {
+  string principal = 1;
+}
+
+message QuerySpendResponse {
+  SpendWindow window = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryPrincipalRequest {
+  string delegate = 1;
+}
+
+message QueryPrincipalResponse {
+  string principal = 1;
+  DelegateRecord record = 2 [(gogoproto.nullable) = false];
+}

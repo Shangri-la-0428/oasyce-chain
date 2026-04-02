@@ -1,0 +1,113 @@
+syntax = "proto3";
+package oasyce.delegate.v1;
+
+option go_package = "github.com/oasyce/chain/x/delegate/types";
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "google/protobuf/any.proto";
+
+// Msg defines the delegate module's gRPC message service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // SetPolicy creates or updates a delegation policy.
+  rpc SetPolicy(MsgSetPolicy) returns (MsgSetPolicyResponse);
+
+  // Enroll registers a delegate under a principal's policy.
+  rpc Enroll(MsgEnroll) returns (MsgEnrollResponse);
+
+  // Revoke removes a delegate.
+  rpc Revoke(MsgRevoke) returns (MsgRevokeResponse);
+
+  // Exec executes messages on behalf of the principal, within policy limits.
+  rpc Exec(MsgExec) returns (MsgExecResponse);
+}
+
+// MsgSetPolicy creates or updates the delegation policy for a principal.
+// One command, all rules. Agents auto-enroll with the token.
+message MsgSetPolicy {
+  option (cosmos.msg.v1.signer) = "principal";
+  option (amino.name) = "oasyce/delegate/MsgSetPolicy";
+
+  // principal is the asset owner.
+  string principal = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // per_tx_limit is the max spend per delegate execution.
+  cosmos.base.v1beta1.Coin per_tx_limit = 2 [(gogoproto.nullable) = false];
+
+  // window_limit is the shared budget per window across ALL delegates.
+  cosmos.base.v1beta1.Coin window_limit = 3 [(gogoproto.nullable) = false];
+
+  // window_seconds is the budget reset interval (default 86400).
+  uint64 window_seconds = 4;
+
+  // allowed_msgs is the whitelist of msg type URLs delegates can execute.
+  repeated string allowed_msgs = 5;
+
+  // enrollment_token is the plaintext shared secret for agent enrollment.
+  // Stored on-chain as sha256(token). Visible in TX — risk bounded by spend cap.
+  string enrollment_token = 6;
+
+  // expiration_seconds is how long the policy lasts (0 = forever).
+  uint64 expiration_seconds = 7;
+}
+
+message MsgSetPolicyResponse {}
+
+// MsgEnroll self-registers an agent as a delegate under a principal.
+// Agent signs this with its own key. Zero human interaction after initial setup.
+message MsgEnroll {
+  option (cosmos.msg.v1.signer) = "delegate";
+  option (amino.name) = "oasyce/delegate/MsgEnroll";
+
+  // delegate is the agent's own address.
+  string delegate = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // principal is the account to join.
+  string principal = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // token is the enrollment token (verified against policy's hash).
+  string token = 3;
+
+  // label is an optional human-readable tag.
+  string label = 4;
+}
+
+message MsgEnrollResponse {}
+
+// MsgRevoke removes a delegate from a principal's policy.
+message MsgRevoke {
+  option (cosmos.msg.v1.signer) = "principal";
+  option (amino.name) = "oasyce/delegate/MsgRevoke";
+
+  // principal is the asset owner.
+  string principal = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // delegate is the agent address to remove.
+  string delegate = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgRevokeResponse {}
+
+// MsgExec executes inner messages on behalf of the principal.
+// Delegate signs this TX. Chain validates policy, checks spend limits,
+// then executes inner msgs with principal as signer.
+message MsgExec {
+  option (cosmos.msg.v1.signer) = "delegate";
+  option (amino.name) = "oasyce/delegate/MsgExec";
+
+  // delegate is the agent executing the messages.
+  string delegate = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // msgs are the messages to execute on behalf of the principal.
+  repeated google.protobuf.Any msgs = 2;
+}
+
+message MsgExecResponse {
+  // results are the responses from each executed message.
+  repeated bytes results = 1;
+}

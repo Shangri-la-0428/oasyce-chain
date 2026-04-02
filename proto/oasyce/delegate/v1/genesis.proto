@@ -1,0 +1,16 @@
+syntax = "proto3";
+package oasyce.delegate.v1;
+
+option go_package = "github.com/oasyce/chain/x/delegate/types";
+
+import "gogoproto/gogo.proto";
+import "oasyce/delegate/v1/types.proto";
+
+// GenesisState defines the delegate module's genesis state.
+message GenesisState {
+  // policies is the list of all delegation policies.
+  repeated DelegatePolicy policies = 1 [(gogoproto.nullable) = false];
+
+  // delegates is the list of all enrolled delegates.
+  repeated DelegateRecord delegates = 2 [(gogoproto.nullable) = false];
+}

@@ -1,0 +1,87 @@
+syntax = "proto3";
+package oasyce.delegate.v1;
+
+option go_package = "github.com/oasyce/chain/x/delegate/types";
+
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+// EnrollmentMode defines how delegates can join a policy.
+enum EnrollmentMode {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // ENROLLMENT_MODE_UNSPECIFIED is invalid.
+  ENROLLMENT_MODE_UNSPECIFIED = 0;
+  // ENROLLMENT_MODE_TOKEN requires a shared token to enroll.
+  ENROLLMENT_MODE_TOKEN = 1;
+  // ENROLLMENT_MODE_OPEN allows anyone to enroll (risk bounded by spend cap).
+  ENROLLMENT_MODE_OPEN = 2;
+}
+
+// DelegatePolicy defines spending rules set by a principal for all delegates.
+// One principal, one policy. All delegates share the same budget.
+message DelegatePolicy {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // principal is the account that owns the assets.
+  string principal = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // per_tx_limit is the maximum spend per single MsgExec.
+  cosmos.base.v1beta1.Coin per_tx_limit = 2 [(gogoproto.nullable) = false];
+
+  // window_limit is the total spend cap within one window period.
+  cosmos.base.v1beta1.Coin window_limit = 3 [(gogoproto.nullable) = false];
+
+  // window_seconds is the budget reset interval (default 86400 = 1 day).
+  uint64 window_seconds = 4;
+
+  // allowed_msgs is the list of message type URLs delegates can execute.
+  repeated string allowed_msgs = 5;
+
+  // enrollment_mode controls how new delegates join.
+  EnrollmentMode enrollment_mode = 6;
+
+  // enrollment_token_hash is sha256(token) for TOKEN mode enrollment.
+  bytes enrollment_token_hash = 7;
+
+  // expiration_seconds is seconds from creation until policy expires (0 = no expiry).
+  uint64 expiration_seconds = 8;
+
+  // created_at_seconds is the block time when policy was created (unix).
+  int64 created_at_seconds = 9;
+}
+
+// DelegateRecord is a single enrolled delegate.
+message DelegateRecord {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // delegate is the agent's address.
+  string delegate = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // principal is the owning account.
+  string principal = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // label is an optional human-readable tag (e.g. "macbook-agent-1").
+  string label = 3;
+
+  // enrolled_at_seconds is the enrollment time (unix).
+  int64 enrolled_at_seconds = 4;
+}
+
+// SpendWindow tracks cumulative spending within a time window.
+message SpendWindow {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // principal whose budget this tracks.
+  string principal = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // window_start is the start of the current window (unix seconds).
+  int64 window_start = 2;
+
+  // spent is the cumulative amount spent in this window.
+  cosmos.base.v1beta1.Coin spent = 3 [(gogoproto.nullable) = false];
+}

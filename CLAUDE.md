@@ -1,7 +1,7 @@
 # Oasyce L1 Chain
 
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 8 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving, anchor.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 9 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving, anchor, delegate.
 
 ## Current Status
 
@@ -31,6 +31,8 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 8 cu
 - Query: `oasyced query onboarding registration|debt|params`
 - `oasyced tx anchor anchor-trace`
 - Query: `oasyced query anchor get|is-anchored|by-capability|by-node`
+- `oasyced tx delegate set-policy|enroll|revoke`
+- Query: `oasyced query delegate policy|delegates|spend|principal`
 
 ### Chain Upgrades — COMPLETE ✅
 Five economic/governance upgrades implemented and tested:
@@ -150,6 +152,27 @@ All 8 modules verified with real transactions:
 - ConsensusVersion = 1
 - Files: `x/anchor/`, `proto/oasyce/anchor/v1/`
 
+### x/delegate Module (Multi-Agent Delegation) — COMPLETE ✅
+- **Purpose**: Multiple non-communicating AI agents share one principal's on-chain assets with policy-enforced spending limits
+- **Architecture**: Principal sets ONE policy → agents self-enroll with shared token → agents execute on-chain msgs within budget
+- **Key design**: Gross outflow tracking (per-message balance decrease, not net diff) — prevents buy+sell masking from bypassing limits
+- **DelegatePolicy**: per_tx_limit, window_limit, window_seconds, allowed_msgs, enrollment_token_hash (sha256), expiration_seconds
+- **Enrollment**: Token-based (sha256 hash stored on-chain, agents present plaintext to enroll)
+- **SpendWindow**: Shared budget across all delegates of a principal, auto-resets when window expires
+- **Signer extraction**: `codec.GetMsgV1Signers` via proto annotations (same as x/authz), no reflection
+- **Msg types**:
+  - `MsgSetPolicy` — principal configures delegation rules (one command)
+  - `MsgEnroll` — agent self-registers with enrollment token
+  - `MsgRevoke` — principal removes a delegate
+  - `MsgExec` — delegate executes `repeated google.protobuf.Any msgs` on behalf of principal
+- **Query types**: Policy, Delegates (by principal), Spend (window status), Principal (reverse lookup from delegate)
+- CLI tx: `oasyced tx delegate set-policy|enroll|revoke`
+- CLI query: `oasyced query delegate policy|delegates|spend|principal`
+- **Store key prefixes**: `0x01` Policy, `0x02` Delegate, `0x03` Spend, `0x04` PrincipalDelegates (reverse index)
+- 21 tests (policy CRUD, expiration, enrollment, token verification, revoke auth, spend window reset, multi-delegate)
+- ConsensusVersion = 1
+- Files: `x/delegate/`, `proto/oasyce/delegate/v1/`
+
 ### AccessLevel Query Endpoint — COMPLETE ✅
 - REST: `GET /oasyce/datarights/v1/access_level/{asset_id}/{address}`
 - Returns: access_level (L0-L3 or empty), equity_bps, shares, total_shares
@@ -176,7 +199,7 @@ Applied to `/home/oasyce/.oasyced/config/`:
 ### Build & Test Status
 ```
 go build ./...  ✅
-go test ./...   ✅ (130+ tests across 10 suites)
+go test ./...   ✅ (150+ tests across 11 suites)
   tests/integration     — 3 tests (full capability flow w/ challenge window, Bancor curve, escrow lifecycle)
   x/capability/keeper   — 11 tests (register, invoke, complete, claim, dispute, deactivate, auth, rate limit, tags)
   x/datarights/keeper   — 16 tests (Bancor buy/sell, access gating, jury voting, lifecycle, versioning, migration)
@@ -186,6 +209,7 @@ go test ./...   ✅ (130+ tests across 10 suites)
   x/onboarding/keeper   — 4 tests (invite+claim, repay, cancel, default settlement)
   x/halving/keeper      — 13 tests (block reward boundaries, halving transitions, cumulative supply)
   x/anchor/keeper       — (trace anchoring, batch, signer verification, duplicate handling, index queries)
+  x/delegate/keeper     — 21 tests (policy CRUD, expiration, enrollment, token auth, revoke, spend window, multi-delegate)
 ```
 
 ### Datarights Lifecycle + Versioning + Migration — COMPLETE ✅
