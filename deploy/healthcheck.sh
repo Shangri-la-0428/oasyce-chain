@@ -3,13 +3,7 @@
 # Self-heals first, then alerts via email (msmtp)
 
 ALERT_EMAIL="${OASYCE_ALERT_EMAIL:-ptc0428@qq.com}"
-STATE_FILE="${OASYCE_HEALTH_STATE_FILE:-}"
-if [ -n "$STATE_FILE" ]; then
-    DEFAULT_STATE_DIR="$(dirname "$STATE_FILE")"
-else
-    DEFAULT_STATE_DIR="/var/lib/oasyce-healthcheck"
-fi
-STATE_DIR="${OASYCE_HEALTH_STATE_DIR:-$DEFAULT_STATE_DIR}"
+STATE_DIR="${OASYCE_HEALTH_STATE_DIR:-/var/lib/oasyce-healthcheck}"
 STATE_FILE="${OASYCE_HEALTH_STATE_FILE:-${STATE_DIR}/health_state}"
 ALERT_LOG="${OASYCE_ALERT_LOG:-/var/log/oasyce-alert.log}"
 ECON_LOG="${OASYCE_ECON_LOG:-/var/log/oasyce-econ.log}"
@@ -88,13 +82,10 @@ clear_alert_state() {
     local key="$1"
     local msg="${2:-}"
     local path
-    local stamp_path
     ensure_alert_state_dir
     path=$(alert_state_path "$key")
-    stamp_path="${path%.active}.sent_at"
     if [ -f "$path" ]; then
         rm -f "$path"
-        rm -f "$stamp_path"
         if [ -n "$msg" ]; then
             log_alert_event "RESOLVED" "$msg"
         fi
@@ -144,11 +135,9 @@ economy_stale_message() {
 
 main() {
     ensure_alert_state_dir
-    if command -v flock >/dev/null 2>&1; then
-        exec 9>"$LOCK_FILE"
-        if ! flock -n 9; then
-            exit 0
-        fi
+    exec 9>"$LOCK_FILE"
+    if ! flock -n 9; then
+        exit 0
     fi
 
     # 0. Self-heal: check and restart dead services
@@ -160,11 +149,15 @@ main() {
         systemctl restart oasyced
         sleep 5
         if [ "$(systemctl is-active oasyced)" = "active" ]; then
-            send_alert "oasyced was DOWN — auto-restarted successfully"
+            activate_alert_once "oasyced_recovered" "oasyced was DOWN — auto-restarted successfully"
+            clear_alert_state "oasyced_down" "oasyced recovered after restart"
         else
-            send_alert "oasyced DOWN — auto-restart FAILED, manual intervention needed"
+            activate_alert_once "oasyced_down" "oasyced DOWN — auto-restart FAILED, manual intervention needed"
             exit 1
         fi
+    else
+        clear_alert_state "oasyced_down" "oasyced is running normally"
+        clear_alert_state "oasyced_recovered"
     fi
 
     if [ "$FAUCET_ACTIVE" != "active" ]; then
@@ -172,10 +165,14 @@ main() {
         systemctl restart oasyce-faucet
         sleep 2
         if [ "$(systemctl is-active oasyce-faucet)" = "active" ]; then
-            send_alert "oasyce-faucet was DOWN — auto-restarted successfully"
+            activate_alert_once "faucet_recovered" "oasyce-faucet was DOWN — auto-restarted successfully"
+            clear_alert_state "faucet_down" "faucet recovered"
         else
-            send_alert "oasyce-faucet DOWN — auto-restart FAILED"
+            activate_alert_once "faucet_down" "oasyce-faucet DOWN — auto-restart FAILED"
         fi
+    else
+        clear_alert_state "faucet_down" "faucet running normally"
+        clear_alert_state "faucet_recovered"
     fi
 
     # 0b. Self-heal provider + claude-proxy
@@ -185,10 +182,14 @@ main() {
             systemctl restart "$SVC"
             sleep 2
             if [ "$(systemctl is-active "$SVC")" = "active" ]; then
-                send_alert "$SVC was DOWN — auto-restarted successfully"
+                activate_alert_once "${SVC}_recovered" "$SVC was DOWN — auto-restarted successfully"
+                clear_alert_state "${SVC}_down" "$SVC recovered"
             else
-                send_alert "$SVC DOWN — auto-restart FAILED"
+                activate_alert_once "${SVC}_down" "$SVC DOWN — auto-restart FAILED, manual intervention needed"
             fi
+        else
+            clear_alert_state "${SVC}_down" "$SVC running normally"
+            clear_alert_state "${SVC}_recovered"
         fi
     done
 

@@ -102,6 +102,10 @@ logging.basicConfig(
 )
 log = logging.getLogger("provider-agent")
 
+# Exit codes: EX_CONFIG for preflight/config errors (systemd will not restart),
+# 1 for runtime errors (systemd will restart).
+EX_CONFIG = 2
+
 # ---------------------------------------------------------------------------
 # Chain helpers
 # ---------------------------------------------------------------------------
@@ -822,13 +826,13 @@ def main():
     if errors:
         for e in errors:
             log.error("Config error: %s", e)
-        sys.exit(1)
+        sys.exit(EX_CONFIG)
 
     # Verify provider key exists
     addr = get_provider_address()
     if not addr:
         log.error("Provider key '%s' not found in keyring (backend=%s)", PROVIDER_KEY, KEYRING)
-        sys.exit(1)
+        sys.exit(EX_CONFIG)
     log.info("Provider address: %s", addr)
 
     # Verify capability exists on-chain
@@ -846,7 +850,7 @@ def main():
         if cap.get("provider") != addr:
             log.error("Capability %s belongs to %s, not %s",
                       CAPABILITY_ID, cap.get("provider"), addr)
-            sys.exit(1)
+            sys.exit(EX_CONFIG)
         if not _deactivated:
             _capability_ok = True
             _capability_check_ts = time.time()
