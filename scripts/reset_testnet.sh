@@ -51,8 +51,8 @@ sleep 2
 echo "    Services stopped."
 
 # ── 2. Verify mnemonics exist ──
-if [ ! -f "${SECRETS_DIR}/seed-validator.mnemonic" ]; then
-    echo "ERROR: ${SECRETS_DIR}/seed-validator.mnemonic not found."
+if [ ! -f "${SECRETS_DIR}/validator.mnemonic" ]; then
+    echo "ERROR: ${SECRETS_DIR}/validator.mnemonic not found."
     echo "       Cannot recover keys. Aborting."
     exit 1
 fi
@@ -76,7 +76,7 @@ echo "    Chain initialized."
 
 # ── 5. Recover keys ──
 echo "==> Recovering validator key..."
-VAL_MNEMONIC=$(grep -v '^#' "${SECRETS_DIR}/seed-validator.mnemonic" | grep -v '^$' | head -1)
+VAL_MNEMONIC=$(grep -v '^#' "${SECRETS_DIR}/validator.mnemonic" | grep -v '^$' | head -1)
 echo "$VAL_MNEMONIC" | sudo -u "$SERVICE_USER" "$BINARY" keys add seed-validator \
     --recover --keyring-backend test --home "$NODE_HOME" 2>/dev/null
 VAL_ADDR=$(sudo -u "$SERVICE_USER" "$BINARY" keys show seed-validator -a \
