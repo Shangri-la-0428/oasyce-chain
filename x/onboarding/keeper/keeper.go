@@ -18,10 +18,11 @@ import (
 
 // Keeper manages the onboarding module's state.
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   storetypes.StoreKey
-	bankKeeper types.BankKeeper
-	authority  string
+	cdc         codec.BinaryCodec
+	storeKey    storetypes.StoreKey
+	bankKeeper  types.BankKeeper
+	sigilKeeper types.SigilKeeper
+	authority   string
 }
 
 // NewKeeper creates a new onboarding Keeper.
@@ -29,13 +30,15 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
+	sigilKeeper types.SigilKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		bankKeeper: bankKeeper,
-		authority:  authority,
+		cdc:         cdc,
+		storeKey:    storeKey,
+		bankKeeper:  bankKeeper,
+		sigilKeeper: sigilKeeper,
+		authority:   authority,
 	}
 }
 
@@ -270,12 +273,19 @@ func (k Keeper) SelfRegister(ctx context.Context, msg types.MsgSelfRegister) (ma
 	}
 	k.setDeadlineIndex(sdkCtx, reg)
 
+	// Create a Sigil for this newly registered identity.
+	sigilID, err := k.sigilKeeper.RegisterSigil(sdkCtx, msg.Creator, userAddr.Bytes(), fmt.Sprintf(`{"source":"onboarding","nonce":%d}`, msg.Nonce))
+	if err != nil {
+		return math.Int{}, fmt.Errorf("sigil genesis failed: %w", err)
+	}
+
 	// Increment total registrations counter (drives halving schedule).
 	newTotal := k.IncrementTotalRegistrations(sdkCtx)
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
 		"self_registered",
 		sdk.NewAttribute("address", msg.Creator),
+		sdk.NewAttribute("sigil_id", sigilID),
 		sdk.NewAttribute("airdrop_amount", airdropAmt.String()),
 		sdk.NewAttribute("epoch", fmt.Sprintf("%d", epoch)),
 		sdk.NewAttribute("total_registrations", fmt.Sprintf("%d", newTotal)),

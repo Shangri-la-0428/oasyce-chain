@@ -76,6 +76,8 @@ Arguments:
 				return fmt.Errorf("invalid trace_signature hex: %w", err)
 			}
 
+			sigilID, _ := cmd.Flags().GetString("sigil-id")
+
 			msg := &types.MsgAnchorTrace{
 				Signer:         clientCtx.GetFromAddress().String(),
 				TraceId:        traceID,
@@ -84,12 +86,14 @@ Arguments:
 				Outcome:        uint32(outcome),
 				Timestamp:      timestamp,
 				TraceSignature: signature,
+				SigilId:        sigilID,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	cmd.Flags().String("sigil-id", "", "Optional Sigil ID to associate with this trace")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

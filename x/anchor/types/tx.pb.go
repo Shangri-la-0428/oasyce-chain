@@ -37,6 +37,7 @@ type MsgAnchorTrace struct {
 	Outcome        uint32 `protobuf:"varint,5,opt,name=outcome,proto3" json:"outcome,omitempty"`
 	Timestamp      uint64 `protobuf:"varint,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	TraceSignature []byte `protobuf:"bytes,7,opt,name=trace_signature,json=traceSignature,proto3" json:"trace_signature,omitempty"`
+	SigilId        string `protobuf:"bytes,8,opt,name=sigil_id,json=sigilId,proto3" json:"sigil_id,omitempty"`
 }
 
 func (m *MsgAnchorTrace) Reset()         { *m = MsgAnchorTrace{} }
@@ -119,6 +120,13 @@ func (m *MsgAnchorTrace) GetTraceSignature() []byte {
 		return m.TraceSignature
 	}
 	return nil
+}
+
+func (m *MsgAnchorTrace) GetSigilId() string {
+	if m != nil {
+		return m.SigilId
+	}
+	return ""
 }
 
 // MsgAnchorTraceResponse is the response for MsgAnchorTrace.
@@ -425,6 +433,13 @@ func (m *MsgAnchorTrace) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.SigilId) > 0 {
+		i -= len(m.SigilId)
+		copy(dAtA[i:], m.SigilId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.SigilId)))
+		i--
+		dAtA[i] = 0x42
+	}
 	if len(m.TraceSignature) > 0 {
 		i -= len(m.TraceSignature)
 		copy(dAtA[i:], m.TraceSignature)
@@ -636,6 +651,10 @@ func (m *MsgAnchorTrace) Size() (n int) {
 		n += 1 + sovTx(uint64(m.Timestamp))
 	}
 	l = len(m.TraceSignature)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.SigilId)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -926,6 +945,38 @@ func (m *MsgAnchorTrace) Unmarshal(dAtA []byte) error {
 			if m.TraceSignature == nil {
 				m.TraceSignature = []byte{}
 			}
+			iNdEx = postIndex
+		case 8: // sigil_id
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SigilId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SigilId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

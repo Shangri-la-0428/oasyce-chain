@@ -1,45 +1,69 @@
 # Oasyce L1 Chain
 
-> **Sigil role**: Necessary subsystem — the lifecycle ledger. Records all Sigil lifecycle events (GENESIS, DISSOLVE, BOND, UNBOND) as immutable, ordered, public history.
-> See [Oasyce-Sigil/ARCHITECTURE.md](../Oasyce-Sigil/ARCHITECTURE.md) for how this fits the whole.
+> **Sigil role**: Necessary subsystem — the lifecycle ledger. Records Sigil lifecycle events as immutable, ordered, public history. Economic settlement layer for Sigil interactions.
+> See [Oasyce-Sigil/ARCHITECTURE.md](../../Oasyce-Sigil/ARCHITECTURE.md) for how this fits the whole.
 
-## Sigil Architecture Context
+## Chain = Sigil Graph's Immutable History
 
-This chain serves two functions in the Sigil protocol:
+From Spec 05: Chain records the Sigil graph's history — lifecycle events and their signatures. It does not store Loop state.
 
-1. **Lifecycle ledger** — Records GENESIS/DISSOLVE/BOND/UNBOND events for all Sigils. This requires a new `x/sigil` module (see roadmap below).
-2. **Economic arena** — The existing modules (settlement, capability, work, datarights, reputation) are the arena where Loops prove their individuality through economic behavior (Axiom 3: Sovereignty).
+Two functions:
+1. **Lifecycle ledger** (Axiom 2) — GENESIS/DISSOLVE/BOND/UNBOND/FORK/MERGE via x/sigil
+2. **Economic settlement** (Axiom 3) — OAS transfers, escrow, monetary policy
 
-### Module Mapping to Sigil
+## Module Tiers
 
-| Module | Sigil function |
-|--------|---------------|
-| `x/sigil` | **NEW** — Sigil lifecycle: GENESIS, DISSOLVE, BOND, UNBOND transactions |
-| `x/onboarding` | GENESIS mechanism — PoW self-registration IS claiming a Sigil |
-| `x/anchor` | BOND evidence — Thronglets trace anchoring proves BOND activity |
-| `x/delegate` | BOND semantics — multi-agent delegation is a controlled BOND |
-| `x/settlement` | Economic arena — escrow, bonding curves |
-| `x/capability` | Economic arena — AI marketplace |
-| `x/work` | Economic arena — Proof of Useful Work tasks |
-| `x/datarights` | Economic arena — data asset ownership and trading |
-| `x/reputation` | Sigil assessment — ecosystem's view of a Sigil's reliability |
-| `x/halving` | Monetary policy — resource scarcity drives selection pressure |
+### Tier 1: Protocol Core
 
-### x/sigil Roadmap (Phase 1)
+Must exist. Directly implement Sigil axioms.
 
-- [ ] `MsgGenesis` — create Sigil with optional lineage (parent Sigils)
-- [ ] `MsgDissolve` — retire Sigil permanently
-- [ ] `MsgBond` — record bond between two Sigils (with scope metadata)
-- [ ] `MsgUnbond` — remove bond
-- [ ] Sigil state: active/dissolved, creation height, lineage, bond edges
-- [ ] Queries: Sigil by ID, Sigil graph (bonds), lineage tree, active count
-- [ ] Refactor `x/onboarding` to emit GENESIS event via `x/sigil`
-- [ ] Refactor `x/anchor` to reference Sigil IDs instead of raw pubkeys
+| Module | Axiom | Function |
+|--------|-------|----------|
+| **x/sigil** | 2 | Sigil lifecycle: GENESIS, DISSOLVE, BOND, UNBOND, FORK, MERGE. Liveness decay. |
+| **x/anchor** | BOND | Bridge from Thronglets traces to chain — immutable evidence |
+| **x/delegate** | 1 | AI agents acting on behalf of principals — controlled BOND semantics |
+| **x/settlement** | 3 | Escrow, bonding curves — value settlement between Sigils |
+| **x/halving** | 3 | Monetary policy — resource scarcity drives selection pressure |
+| **x/onboarding** | 2 | PoW GENESIS provider — anti-Sybil + airdrop. Calls x/sigil.RegisterSigil() |
+
+### Tier 2: Application Layer
+
+| Module | Function |
+|--------|----------|
+| **x/datarights** | Data asset ownership, shares, disputes — App's data economy |
+
+### Tier 3: Superseded by Emergence
+
+Every function of these modules decomposes into Tier 1 primitives + Thronglets.
+
+| Module | Designed function | Sigil-native composition |
+|--------|------------------|-------------------------|
+| **x/capability** | Capability registry + invocation | Discovery: Thronglets pheromone. Invocation: BOND + settlement escrow. |
+| **x/reputation** | Feedback submission + leaderboard | Pheromone decay + attribution boost = emergent reputation. |
+| **x/work** | Task marketplace + commit-reveal | Discovery: Thronglets. Agreement: BOND. Evidence: anchor. Payment: settlement. |
+
+Not deleted (backward compat). New development composes from Tier 1: BOND (agreement) + Thronglets traces (work) + anchor (evidence) + settlement escrow (payment).
+
+## x/sigil — COMPLETE ✅
+
+- [x] `MsgGenesis` — create Sigil with optional lineage (parent Sigils)
+- [x] `MsgDissolve` — retire Sigil permanently
+- [x] `MsgBond` — record bond between two Sigils (with scope metadata)
+- [x] `MsgUnbond` — remove bond
+- [x] `MsgFork` — fork a child Sigil from parent (Lamarckian inheritance)
+- [x] `MsgMerge` — merge two Sigils (absorption mode)
+- [x] `MsgUpdateParams` — governance-gated parameter updates
+- [x] Sigil state: active/dormant/dissolved, creation height, lineage, bond edges
+- [x] Queries: Sigil by ID, Bond by ID, bonds-by-sigil, lineage tree, active count, params
+- [x] BeginBlocker: liveness decay (active→dormant→dissolved)
+- [x] 14 keeper tests passing
+- [x] Refactor `x/onboarding` to emit GENESIS event via `x/sigil`
+- [x] Refactor `x/anchor` to reference Sigil IDs instead of raw pubkeys
 
 ---
 
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/Net/oasyce-chain` with 9 custom modules (+1 upcoming: sigil): settlement, capability, reputation, datarights, work, onboarding, halving, anchor, delegate.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/Net/oasyce-chain` with 10 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving, anchor, delegate, sigil.
 
 ## Current Status
 
@@ -55,7 +79,7 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/Net/oasyce-chain` with 
 - All custom module queries work
 
 ### CLI Commands — COMPLETE ✅
-- All 7 modules have CLI tx + query commands (`x/*/cli/`)
+- All 8 modules have CLI tx + query commands (`x/*/cli/`)
 - `oasyced tx datarights register|buy-shares|file-dispute|resolve-dispute|update-service-url`
 - `oasyced tx settlement create-escrow|release-escrow|refund-escrow`
 - `oasyced tx oasyce_capability register|invoke|complete-invocation|fail-invocation|claim-invocation|dispute-invocation`
@@ -71,6 +95,8 @@ Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/Net/oasyce-chain` with 
 - Query: `oasyced query anchor get|is-anchored|by-capability|by-node`
 - `oasyced tx delegate set-policy|enroll|revoke`
 - Query: `oasyced query delegate policy|delegates|spend|principal`
+- `oasyced tx sigil genesis|dissolve|bond|unbond|fork|merge`
+- Query: `oasyced query sigil sigil|bond|bonds-by-sigil|lineage|active-count|params`
 
 ### Chain Upgrades — COMPLETE ✅
 Five economic/governance upgrades implemented and tested:
@@ -211,6 +237,32 @@ All 8 modules verified with real transactions:
 - ConsensusVersion = 1
 - Files: `x/delegate/`, `proto/oasyce/delegate/v1/`
 
+### x/sigil Module (AI Identity Lifecycle) — COMPLETE ✅
+- **Purpose**: On-chain lifecycle ledger for AI agent identities (Sigils) — genesis, dissolution, bonding, forking, merging
+- **Core types**: Sigil (identity with pubkey, status, state root, lineage), Bond (relationship between two Sigils)
+- **Deterministic IDs**: `DeriveSigilID(pubkey) = "SIG_" + hex(sha256[:16])`, `DeriveBondID(a,b) = "BOND_" + hex(sha256(sorted(a|b))[:16])`
+- **Liveness decay**: Active →(DormantThreshold blocks)→ Dormant →(DissolveThreshold blocks)→ auto-DISSOLVE via BeginBlocker
+- **Lamarckian inheritance**: Fork copies parent's full state root to child
+- **Merge modes**: Absorption (A absorbs B, B dissolved)
+- **Msg types**:
+  - `MsgGenesis` — create Sigil with pubkey, optional lineage parents, state root, metadata
+  - `MsgDissolve` — retire Sigil permanently (owner only)
+  - `MsgBond` — create bond between two active Sigils (with terms hash + scope)
+  - `MsgUnbond` — remove bond (must own one bonded Sigil)
+  - `MsgFork` — fork child from parent (Lamarckian state inheritance)
+  - `MsgMerge` — merge two Sigils (absorption mode)
+  - `MsgUpdateParams` — governance-gated parameter updates
+- **Query types**: Sigil, Bond, BondsBySigil, Lineage, ActiveCount, Params
+- CLI tx: `oasyced tx sigil genesis|dissolve|bond|unbond|fork|merge`
+- CLI query: `oasyced query sigil sigil|bond|bonds-by-sigil|lineage|active-count|params`
+- **Store key prefixes**: `0x01` Sigil, `0x02` Bond, `0x03` BondsBySigil, `0x04` Lineage, `0x05` StatusIndex, `0x06` LivenessIndex, `0x10` ActiveCount, `0x20` Params
+- **Default params**: DormantThreshold=100000 (~6 days), DissolveThreshold=1000000 (~58 days after dormant), SubmitWindow=100
+- 15 tests (CRUD, msg flows, fork inheritance, merge absorption, BeginBlocker dormancy, genesis validation, RegisterSigil event)
+- **Cross-module: x/onboarding → x/sigil**: SelfRegister auto-creates a Sigil via `SigilKeeper.RegisterSigil()`. Both `sigil_genesis` (from x/sigil) and `self_registered` (from x/onboarding) events are emitted — consistent event stream regardless of GENESIS path.
+- **Cross-module: x/anchor + sigil_id**: `AnchorRecord.SigilId` (proto field 8) — optional Sigil reference on trace anchoring. `AnchorBySigilPrefix 0x04` index. CLI: `--sigil-id`, Query: `by-sigil`.
+- ConsensusVersion = 1
+- Files: `x/sigil/`, `tools/gen_sigil_descriptors/`
+
 ### AccessLevel Query Endpoint — COMPLETE ✅
 - REST: `GET /oasyce/datarights/v1/access_level/{asset_id}/{address}`
 - Returns: access_level (L0-L3 or empty), equity_bps, shares, total_shares
@@ -237,7 +289,7 @@ Applied to `/home/oasyce/.oasyced/config/`:
 ### Build & Test Status
 ```
 go build ./...  ✅
-go test ./...   ✅ (150+ tests across 11 suites)
+go test ./...   ✅ (160+ tests across 12 suites)
   tests/integration     — 3 tests (full capability flow w/ challenge window, Bancor curve, escrow lifecycle)
   x/capability/keeper   — 11 tests (register, invoke, complete, claim, dispute, deactivate, auth, rate limit, tags)
   x/datarights/keeper   — 16 tests (Bancor buy/sell, access gating, jury voting, lifecycle, versioning, migration)
@@ -248,6 +300,7 @@ go test ./...   ✅ (150+ tests across 11 suites)
   x/halving/keeper      — 13 tests (block reward boundaries, halving transitions, cumulative supply)
   x/anchor/keeper       — (trace anchoring, batch, signer verification, duplicate handling, index queries)
   x/delegate/keeper     — 21 tests (policy CRUD, expiration, enrollment, token auth, revoke, spend window, multi-delegate)
+  x/sigil/keeper        — 15 tests (CRUD, msg flows, fork, merge, BeginBlocker dormancy, genesis validation, RegisterSigil event)
 ```
 
 ### Datarights Lifecycle + Versioning + Migration — COMPLETE ✅

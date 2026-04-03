@@ -107,13 +107,15 @@ if [ -n "$SEED_NODE" ]; then
     echo "==> Configuring seed node: $SEED_NODE"
     CONFIG="$DATA_DIR/config/config.toml"
     if [ -f "$CONFIG" ]; then
-        # Use portable sed (works on both macOS and Linux)
+        # Use seeds (not persistent_peers) — lighter, PEX discovers other peers
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|persistent_peers = \".*\"|persistent_peers = \"$SEED_NODE\"|" "$CONFIG"
+            sed -i '' "s|seeds = \".*\"|seeds = \"$SEED_NODE\"|" "$CONFIG"
+            sed -i '' "s|addr_book_strict = true|addr_book_strict = false|" "$CONFIG"
         else
-            sed -i "s|persistent_peers = \".*\"|persistent_peers = \"$SEED_NODE\"|" "$CONFIG"
+            sed -i "s|seeds = \".*\"|seeds = \"$SEED_NODE\"|" "$CONFIG"
+            sed -i "s|addr_book_strict = true|addr_book_strict = false|" "$CONFIG"
         fi
-        echo "    Peer configured."
+        echo "    Seed configured (PEX enabled for peer discovery)."
     fi
 fi
 

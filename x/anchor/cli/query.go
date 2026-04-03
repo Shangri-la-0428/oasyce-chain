@@ -25,6 +25,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdIsAnchored(),
 		CmdAnchorsByCapability(),
 		CmdAnchorsByNode(),
+		CmdAnchorsBySigil(),
 	)
 	return cmd
 }
@@ -106,6 +107,32 @@ func CmdAnchorsByCapability() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.AnchorsByCapability(cmd.Context(), &types.QueryAnchorsByCapabilityRequest{
 				Capability: args[0],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdAnchorsBySigil queries anchors by sigil ID.
+func CmdAnchorsBySigil() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "by-sigil [sigil-id]",
+		Short: "Query anchors by sigil ID",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.AnchorsBySigil(cmd.Context(), &types.QueryAnchorsBySigilRequest{
+				SigilId: args[0],
 			})
 			if err != nil {
 				return err

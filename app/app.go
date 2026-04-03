@@ -123,6 +123,9 @@ import (
 	delegate "github.com/oasyce/chain/x/delegate"
 	delegatekeeper "github.com/oasyce/chain/x/delegate/keeper"
 	delegatetypes "github.com/oasyce/chain/x/delegate/types"
+	sigil "github.com/oasyce/chain/x/sigil"
+	sigilkeeper "github.com/oasyce/chain/x/sigil/keeper"
+	sigiltypes "github.com/oasyce/chain/x/sigil/types"
 )
 
 const Name = "oasyce"
@@ -164,6 +167,7 @@ var (
 		halving.AppModuleBasic{},
 		anchor.AppModuleBasic{},
 		delegate.AppModuleBasic{},
+		sigil.AppModuleBasic{},
 	)
 
 	// Module account permissions.
@@ -248,6 +252,7 @@ type OasyceApp struct {
 	HalvingKeeper    halvingkeeper.Keeper
 	AnchorKeeper     anchorkeeper.Keeper
 	DelegateKeeper   delegatekeeper.Keeper
+	SigilKeeper      sigilkeeper.Keeper
 
 	// Module manager
 	ModuleManager *module.Manager
@@ -322,6 +327,7 @@ func NewOasyceApp(
 		onboardingtypes.StoreKey,
 		anchortypes.StoreKey,
 		delegatetypes.StoreKey,
+		sigiltypes.StoreKey,
 	)
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := storetypes.NewMemoryStoreKeys(ibccapabilitytypes.MemStoreKey)
@@ -569,10 +575,17 @@ func NewOasyceApp(
 		govAuthority,
 	)
 
+	app.SigilKeeper = sigilkeeper.NewKeeper(
+		appCodec,
+		keys[sigiltypes.StoreKey],
+		govAuthority,
+	)
+
 	app.OnboardingKeeper = onboardingkeeper.NewKeeper(
 		appCodec,
 		keys[onboardingtypes.StoreKey],
 		app.BankKeeper,
+		app.SigilKeeper,
 		govAuthority,
 	)
 
@@ -622,6 +635,7 @@ func NewOasyceApp(
 		halving.NewAppModule(app.HalvingKeeper),
 		anchor.NewAppModule(appCodec, app.AnchorKeeper),
 		delegate.NewAppModule(appCodec, app.DelegateKeeper),
+		sigil.NewAppModule(appCodec, app.SigilKeeper),
 	)
 
 	// Set order of module operations.
@@ -654,6 +668,7 @@ func NewOasyceApp(
 		onboardingtypes.ModuleName,
 		anchortypes.ModuleName,
 		delegatetypes.ModuleName,
+		sigiltypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -684,6 +699,7 @@ func NewOasyceApp(
 		onboardingtypes.ModuleName,
 		anchortypes.ModuleName,
 		delegatetypes.ModuleName,
+		sigiltypes.ModuleName,
 		halvingtypes.ModuleName,
 	)
 
@@ -715,6 +731,7 @@ func NewOasyceApp(
 		onboardingtypes.ModuleName,
 		anchortypes.ModuleName,
 		delegatetypes.ModuleName,
+		sigiltypes.ModuleName,
 		halvingtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
@@ -748,11 +765,21 @@ func NewOasyceApp(
 	// Must be set before LoadLatestVersion so the multistore knows
 	// which new keys to expect at the upgrade height.
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-	if err == nil && upgradeInfo.Name == UpgradeV053 && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		storeUpgrades := storetypes.StoreUpgrades{
-			Added: []string{anchortypes.StoreKey},
+	if err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		var storeUpgrades *storetypes.StoreUpgrades
+		switch upgradeInfo.Name {
+		case UpgradeV053:
+			storeUpgrades = &storetypes.StoreUpgrades{
+				Added: []string{anchortypes.StoreKey},
+			}
+		case UpgradeV070:
+			storeUpgrades = &storetypes.StoreUpgrades{
+				Added: []string{sigiltypes.StoreKey},
+			}
 		}
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+		if storeUpgrades != nil {
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+		}
 	}
 
 	if loadLatest {

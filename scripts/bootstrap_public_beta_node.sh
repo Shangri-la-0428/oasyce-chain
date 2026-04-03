@@ -77,7 +77,11 @@ configure_node() {
   app="$HOME_DIR/config/app.toml"
 
   log "==> Configuring seed peer and APIs"
-  portable_sed "s|^persistent_peers = \".*\"|persistent_peers = \"$SEED_NODE\"|" "$config"
+  # Use seeds (not persistent_peers) — connect, get peers via PEX, disconnect.
+  # This is the standard Cosmos pattern: lighter, more resilient.
+  portable_sed "s|^seeds = \".*\"|seeds = \"$SEED_NODE\"|" "$config"
+  # Allow peers behind NAT (addr_book_strict = false allows private IPs in address book)
+  portable_sed "s|^addr_book_strict = true|addr_book_strict = false|" "$config"
   portable_sed "s|^enable = false|enable = true|" "$app"
   portable_sed "s|^address = \"tcp://localhost:1317\"|address = \"tcp://0.0.0.0:1317\"|" "$app"
   portable_sed "s|^minimum-gas-prices = \".*\"|minimum-gas-prices = \"$MIN_GAS_PRICES\"|" "$app"

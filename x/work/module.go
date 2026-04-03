@@ -1,3 +1,14 @@
+// Package work provides an on-chain task marketplace with commit-reveal settlement.
+//
+// Tier 3 (Superseded): Every function decomposes into Tier 1 primitives:
+//   - Discovery: Thronglets pheromone field (emergent matching)
+//   - Agreement: x/sigil BOND (formalized relationship)
+//   - Execution: Thronglets traces (off-chain work evidence)
+//   - Evidence:  x/anchor (immutable proof on chain)
+//   - Payment:   x/settlement escrow (economic finality)
+//
+// This module remains functional for backward compatibility.
+// New development should compose from these primitives.
 package work
 
 import (

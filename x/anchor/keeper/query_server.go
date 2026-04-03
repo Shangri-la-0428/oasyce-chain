@@ -90,3 +90,23 @@ func (q queryServer) AnchorsByNode(goCtx context.Context, req *types.QueryAnchor
 		Anchors: anchors,
 	}, nil
 }
+
+// AnchorsBySigil returns anchors by sigil ID with pagination.
+func (q queryServer) AnchorsBySigil(goCtx context.Context, req *types.QueryAnchorsBySigilRequest) (*types.QueryAnchorsBySigilResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if req.SigilId == "" {
+		return nil, types.ErrInvalidTraceID.Wrap("sigil_id cannot be empty")
+	}
+
+	limit := uint64(100)
+	if req.Pagination != nil && req.Pagination.Limit > 0 {
+		limit = req.Pagination.Limit
+	}
+
+	anchors := q.Keeper.GetAnchorsBySigil(ctx, req.SigilId, limit)
+
+	return &types.QueryAnchorsBySigilResponse{
+		Anchors: anchors,
+	}, nil
+}

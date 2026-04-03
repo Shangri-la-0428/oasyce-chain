@@ -12,6 +12,7 @@ import (
 const (
 	UpgradeV053 = "v0.5.3"
 	UpgradeV060 = "v0.6.0"
+	UpgradeV070 = "v0.7.0"
 )
 
 // registerUpgradeHandlers registers all chain upgrade handlers.
@@ -25,6 +26,10 @@ func (app *OasyceApp) registerUpgradeHandlers() {
 		UpgradeV060,
 		app.upgradeHandlerV060(),
 	)
+	app.UpgradeKeeper.SetUpgradeHandler(
+		UpgradeV070,
+		app.upgradeHandlerV070(),
+	)
 }
 
 // upgradeHandlerV053 handles the v0.5.2 → v0.5.3 upgrade.
@@ -37,6 +42,21 @@ func (app *OasyceApp) upgradeHandlerV053() func(ctx context.Context, plan upgrad
 	return func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		app.Logger().Info(
 			fmt.Sprintf("applying upgrade %s at height %d — adding anchor module store", plan.Name, plan.Height),
+		)
+		return app.ModuleManager.RunMigrations(ctx, app.Configurator(), vm)
+	}
+}
+
+// upgradeHandlerV070 handles the v0.6.0 → v0.7.0 upgrade.
+//
+// Changes in v0.7.0:
+//   - x/sigil module added (new store key) — AI identity lifecycle
+//   - x/onboarding → x/sigil cross-module integration (auto-creates Sigil on self-register)
+//   - x/anchor sigil_id field + index (AnchorsBySigil query)
+func (app *OasyceApp) upgradeHandlerV070() func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		app.Logger().Info(
+			fmt.Sprintf("applying upgrade %s at height %d — adding sigil module store", plan.Name, plan.Height),
 		)
 		return app.ModuleManager.RunMigrations(ctx, app.Configurator(), vm)
 	}

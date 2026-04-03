@@ -16,9 +16,10 @@ const (
 
 // Key prefixes for the anchor store.
 var (
-	AnchorKeyPrefix     = []byte{0x01} // anchor/ -> AnchorRecord by trace_id
-	AnchorByCapPrefix   = []byte{0x02} // anchor_by_cap/ -> trace_id index by capability
-	AnchorByNodePrefix  = []byte{0x03} // anchor_by_node/ -> trace_id index by node pubkey
+	AnchorKeyPrefix      = []byte{0x01} // anchor/ -> AnchorRecord by trace_id
+	AnchorByCapPrefix    = []byte{0x02} // anchor_by_cap/ -> trace_id index by capability
+	AnchorByNodePrefix   = []byte{0x03} // anchor_by_node/ -> trace_id index by node pubkey
+	AnchorBySigilPrefix  = []byte{0x04} // anchor_by_sigil/ -> trace_id index by sigil ID
 )
 
 // AnchorKey returns the store key for an anchor record by trace_id.
@@ -52,6 +53,21 @@ func AnchorByNodeKey(nodePubkey []byte, traceID []byte) []byte {
 // AnchorByNodeIteratorPrefix returns the prefix for iterating anchors by node pubkey.
 func AnchorByNodeIteratorPrefix(nodePubkey []byte) []byte {
 	key := append(AnchorByNodePrefix, nodePubkey...)
+	key = append(key, '/')
+	return key
+}
+
+// AnchorBySigilKey returns the store key for indexing an anchor by sigil ID.
+func AnchorBySigilKey(sigilID string, traceID []byte) []byte {
+	key := append(AnchorBySigilPrefix, []byte(sigilID)...)
+	key = append(key, '/')
+	key = append(key, traceID...)
+	return key
+}
+
+// AnchorBySigilIteratorPrefix returns the prefix for iterating anchors by sigil ID.
+func AnchorBySigilIteratorPrefix(sigilID string) []byte {
+	key := append(AnchorBySigilPrefix, []byte(sigilID)...)
 	key = append(key, '/')
 	return key
 }

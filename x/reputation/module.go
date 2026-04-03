@@ -1,3 +1,9 @@
+// Package reputation provides explicit feedback submission and leaderboards.
+//
+// Tier 3 (Superseded): Reputation is now an emergent property of Thronglets —
+// pheromone decay + attribution boost produce reputation without explicit feedback.
+// This module remains functional for backward compatibility.
+// New development should use Thronglets trace aggregation.
 package reputation
 
 import (

@@ -108,6 +108,42 @@ var challengeMessages = map[string]*descriptorpb.DescriptorProto{
 		},
 	},
 	"MsgUpdateServiceUrlResponse": emptyMessage("MsgUpdateServiceUrlResponse"),
+	// Anchor query: AnchorsBySigil
+	"QueryAnchorsBySigilRequest": {
+		Name: proto.String("QueryAnchorsBySigilRequest"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			stringField("sigil_id", 1),
+			{
+				Name:     proto.String("pagination"),
+				Number:   proto.Int32(2),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+				TypeName: proto.String(".cosmos.base.query.v1beta1.PageRequest"),
+				JsonName: proto.String("pagination"),
+			},
+		},
+	},
+	"QueryAnchorsBySigilResponse": {
+		Name: proto.String("QueryAnchorsBySigilResponse"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			{
+				Name:     proto.String("anchors"),
+				Number:   proto.Int32(1),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+				TypeName: proto.String(".oasyce.anchor.v1.AnchorRecord"),
+				JsonName: proto.String("anchors"),
+			},
+			{
+				Name:     proto.String("pagination"),
+				Number:   proto.Int32(2),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+				TypeName: proto.String(".cosmos.base.query.v1beta1.PageResponse"),
+				JsonName: proto.String("pagination"),
+			},
+		},
+	},
 }
 
 func stringField(name string, num int32) *descriptorpb.FieldDescriptorProto {

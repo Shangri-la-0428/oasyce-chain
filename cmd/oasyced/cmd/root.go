@@ -46,6 +46,7 @@ import (
 	onboardingcli "github.com/oasyce/chain/x/onboarding/cli"
 	anchorcli "github.com/oasyce/chain/x/anchor/cli"
 	delegatecli "github.com/oasyce/chain/x/delegate/cli"
+	sigilcli "github.com/oasyce/chain/x/sigil/cli"
 )
 
 // NewRootCmd creates the root command for the oasyced daemon.
@@ -189,6 +190,7 @@ func initRootCmd(rootCmd *cobra.Command, txCfg client.TxConfig) {
 		onboardingcli.GetTxCmd(),
 		anchorcli.GetTxCmd(),
 		delegatecli.GetTxCmd(),
+		sigilcli.GetTxCmd(),
 	)
 	txCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 

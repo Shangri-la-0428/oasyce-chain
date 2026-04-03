@@ -77,6 +77,11 @@ func (k Keeper) SetAnchor(ctx sdk.Context, record types.AnchorRecord) error {
 	// Secondary index: node_pubkey -> trace_id
 	store.Set(types.AnchorByNodeKey(record.NodePubkey, record.TraceId), record.TraceId)
 
+	// Secondary index: sigil_id -> trace_id (optional, only if provided)
+	if record.SigilId != "" {
+		store.Set(types.AnchorBySigilKey(record.SigilId, record.TraceId), record.TraceId)
+	}
+
 	return nil
 }
 
@@ -110,20 +115,25 @@ func (k Keeper) AnchorTrace(ctx sdk.Context, msg *types.MsgAnchorTrace) (bool, e
 		Timestamp:      msg.Timestamp,
 		AnchorHeight:   ctx.BlockHeight(),
 		TraceSignature: msg.TraceSignature,
+		SigilId:        msg.SigilId,
 	}
 
 	if err := k.SetAnchor(ctx, record); err != nil {
 		return false, err
 	}
 
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	event := sdk.NewEvent(
 		"trace_anchored",
 		sdk.NewAttribute("trace_id", hex.EncodeToString(msg.TraceId)),
 		sdk.NewAttribute("node_pubkey", hex.EncodeToString(msg.NodePubkey)),
 		sdk.NewAttribute("capability", msg.Capability),
 		sdk.NewAttribute("outcome", fmt.Sprintf("%d", msg.Outcome)),
 		sdk.NewAttribute("anchor_height", fmt.Sprintf("%d", ctx.BlockHeight())),
-	))
+	)
+	if msg.SigilId != "" {
+		event = event.AppendAttributes(sdk.NewAttribute("sigil_id", msg.SigilId))
+	}
+	ctx.EventManager().EmitEvent(event)
 
 	return true, nil
 }
@@ -159,6 +169,29 @@ func (k Keeper) GetAnchorsByCapability(ctx sdk.Context, capability string, limit
 func (k Keeper) GetAnchorsByNode(ctx sdk.Context, nodePubkey []byte, limit uint64) []types.AnchorRecord {
 	store := ctx.KVStore(k.storeKey)
 	prefix := types.AnchorByNodeIteratorPrefix(nodePubkey)
+	iter := storetypes.KVStorePrefixIterator(store, prefix)
+	defer iter.Close()
+
+	var anchors []types.AnchorRecord
+	var count uint64
+	for ; iter.Valid(); iter.Next() {
+		if limit > 0 && count >= limit {
+			break
+		}
+		traceID := iter.Value()
+		record, found := k.GetAnchor(ctx, traceID)
+		if found {
+			anchors = append(anchors, record)
+			count++
+		}
+	}
+	return anchors
+}
+
+// GetAnchorsBySigil returns all anchor records for a given sigil ID.
+func (k Keeper) GetAnchorsBySigil(ctx sdk.Context, sigilID string, limit uint64) []types.AnchorRecord {
+	store := ctx.KVStore(k.storeKey)
+	prefix := types.AnchorBySigilIteratorPrefix(sigilID)
 	iter := storetypes.KVStorePrefixIterator(store, prefix)
 	defer iter.Close()
 

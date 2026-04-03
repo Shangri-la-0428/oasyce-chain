@@ -13,3 +13,8 @@ type BankKeeper interface {
 	MintCoins(ctx context.Context, moduleName string, amounts sdk.Coins) error
 	BurnCoins(ctx context.Context, moduleName string, amounts sdk.Coins) error
 }
+
+// SigilKeeper defines the expected sigil module keeper interface.
+type SigilKeeper interface {
+	RegisterSigil(ctx sdk.Context, creator string, pubkey []byte, metadata string) (string, error)
+}

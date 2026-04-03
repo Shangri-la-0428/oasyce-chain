@@ -7,7 +7,7 @@
 | | |
 |---|---|
 | Chain ID | `oasyce-testnet-1` |
-| Seed node | `3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656` |
+| Seed node | `3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656` (PEX enabled — nodes discover each other) |
 | RPC | `http://47.93.32.88:26657` |
 | REST API | `http://47.93.32.88:1317` |
 | gRPC | `47.93.32.88:9090` |
@@ -115,8 +115,12 @@ echo "dcc6508926567bc384220d1e92ef538d25c8e5431c380420459b0210d30c7739  $HOME/.o
 ### 5. Configure
 
 ```bash
-# Add seed peer
-sed -i.bak 's/persistent_peers = ""/persistent_peers = "3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656"/' \
+# Add seed node (PEX discovers other peers automatically)
+sed -i.bak 's/seeds = ""/seeds = "3e5a914ab7e7400091ddf461fb14992de785b0cb@47.93.32.88:26656"/' \
+  ~/.oasyced/config/config.toml
+
+# Allow peers behind NAT
+sed -i.bak 's/addr_book_strict = true/addr_book_strict = false/' \
   ~/.oasyced/config/config.toml
 
 # Enable REST API
@@ -210,12 +214,14 @@ curl -s http://localhost:1317/oasyce/capability/v1/params | jq
 
 ## Ports
 
-| Port | Protocol | Required |
-|------|----------|----------|
-| 26656 | P2P | Yes (must be open) |
+| Port | Protocol | Who needs it |
+|------|----------|-------------|
+| 26656 | P2P | **Validators**: must be open. **Full nodes**: optional — outbound connections work behind NAT. |
 | 26657 | RPC | Optional (local queries) |
 | 1317 | REST API | Optional |
 | 9090 | gRPC | Optional |
+
+Full nodes behind NAT (home computers, laptops) work fine without opening any ports. They connect outbound to seed nodes, discover peers via PEX, sync blocks, and submit transactions.
 
 ## Minimum Hardware
 
@@ -224,15 +230,16 @@ curl -s http://localhost:1317/oasyce/capability/v1/params | jq
 | CPU | 2 cores |
 | RAM | 2 GB |
 | Disk | 40 GB SSD |
-| Network | Stable, port 26656 open |
+| Network | Stable internet connection |
 
 ---
 
 ## Troubleshooting
 
 **Node won't sync?**
-- Check peer: `curl -s localhost:26657/net_info | jq '.result.peers[].node_info.moniker'`
-- Ensure port 26656 is open: `ufw allow 26656/tcp`
+- Check peers: `curl -s localhost:26657/net_info | jq '.result.n_peers'`
+- If 0 peers, verify seed config: `grep seeds ~/.oasyced/config/config.toml`
+- Behind NAT? That's fine — outbound connections work. No need to open ports.
 
 **Genesis mismatch?**
 - Re-download and verify SHA256 checksum above

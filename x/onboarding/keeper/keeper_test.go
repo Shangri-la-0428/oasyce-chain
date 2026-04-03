@@ -70,6 +70,27 @@ func (m *mockBankKeeper) BurnCoins(_ context.Context, moduleName string, amounts
 }
 
 // ---------------------------------------------------------------------------
+// Mock Sigil Keeper
+// ---------------------------------------------------------------------------
+
+type mockSigilKeeper struct {
+	sigils map[string]bool
+}
+
+func newMockSigilKeeper() *mockSigilKeeper {
+	return &mockSigilKeeper{sigils: make(map[string]bool)}
+}
+
+func (m *mockSigilKeeper) RegisterSigil(_ sdk.Context, _ string, pubkey []byte, _ string) (string, error) {
+	id := "SIG_mock"
+	if len(pubkey) > 0 {
+		id = "SIG_" + sdk.AccAddress(pubkey).String()[:8]
+	}
+	m.sigils[id] = true
+	return id, nil
+}
+
+// ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
 
@@ -88,7 +109,8 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context, *mockBankKeeper) {
 	cdc := codec.NewProtoCodec(registry)
 
 	bankKeeper := newMockBankKeeper()
-	k := keeper.NewKeeper(cdc, storeKey, bankKeeper, "authority")
+	sigilKeeper := newMockSigilKeeper()
+	k := keeper.NewKeeper(cdc, storeKey, bankKeeper, sigilKeeper, "authority")
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{
 		Time: time.Now().UTC(),
