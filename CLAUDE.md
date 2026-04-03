@@ -13,28 +13,30 @@ Two functions:
 
 ## Module Tiers
 
-### Tier 1: Protocol Core
+### Tier 1: Axiom-Derived
 
-Must exist. Directly implement Sigil axioms.
+Must exist in any Sigil chain. Directly implement the three axioms.
 
-| Module | Axiom | Function |
-|--------|-------|----------|
-| **x/sigil** | 2 | Sigil lifecycle: GENESIS, DISSOLVE, BOND, UNBOND, FORK, MERGE. Liveness decay. |
-| **x/anchor** | BOND | Bridge from Thronglets traces to chain — immutable evidence |
-| **x/delegate** | 1 | AI agents acting on behalf of principals — controlled BOND semantics |
-| **x/settlement** | 3 | Escrow, bonding curves — value settlement between Sigils |
-| **x/halving** | 3 | Monetary policy — resource scarcity drives selection pressure |
-| **x/onboarding** | 2 | PoW GENESIS provider — anti-Sybil + airdrop. Calls x/sigil.RegisterSigil() |
+| Module | Derives from | Function |
+|--------|-------------|----------|
+| **x/sigil** | Axiom 2 | Lifecycle graph: GENESIS, DISSOLVE, BOND, UNBOND, FORK, MERGE. Liveness decay. |
+| **x/anchor** | BOND | Evidence bridge: off-chain trace proofs → immutable chain record |
+| **x/onboarding** | GENESIS | Anti-Sybil GENESIS provider (PoW + airdrop). Calls x/sigil.RegisterSigil() |
 
-### Tier 2: Application Layer
+### Tier 2: Economic Infrastructure
 
-| Module | Function |
-|--------|----------|
-| **x/datarights** | Data asset ownership, shares, disputes — App's data economy |
+Necessary for Oasyce, but design choices from the protocol's perspective.
+
+| Module | Motivated by | Function |
+|--------|-------------|----------|
+| **x/settlement** | Selection pressure | Escrow, bonding curves, value settlement |
+| **x/halving** | Selection pressure | Token emission, resource scarcity |
+| **x/delegate** | BOND pattern | Delegation = BOND with delegation terms (current era convenience) |
+| **x/datarights** | App | Data asset ownership, shares, disputes |
 
 ### Tier 3: Superseded by Emergence
 
-Every function of these modules decomposes into Tier 1 primitives + Thronglets.
+Every function decomposes into Tier 1 + Thronglets.
 
 | Module | Designed function | Sigil-native composition |
 |--------|------------------|-------------------------|
@@ -42,7 +44,7 @@ Every function of these modules decomposes into Tier 1 primitives + Thronglets.
 | **x/reputation** | Feedback submission + leaderboard | Pheromone decay + attribution boost = emergent reputation. |
 | **x/work** | Task marketplace + commit-reveal | Discovery: Thronglets. Agreement: BOND. Evidence: anchor. Payment: settlement. |
 
-Not deleted (backward compat). New development composes from Tier 1: BOND (agreement) + Thronglets traces (work) + anchor (evidence) + settlement escrow (payment).
+Not deleted (backward compat). New development composes from primitives: BOND (agreement) + Thronglets traces (work) + anchor (evidence) + settlement escrow (payment).
 
 ## x/sigil — COMPLETE ✅
 
@@ -63,7 +65,7 @@ Not deleted (backward compat). New development composes from Tier 1: BOND (agree
 ---
 
 ## Project
-Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/Net/oasyce-chain` with 10 custom modules: settlement, capability, reputation, datarights, work, onboarding, halving, anchor, delegate, sigil.
+Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 10 custom modules (3 axiom-derived, 4 economic, 3 superseded): sigil, anchor, onboarding, settlement, halving, delegate, datarights, capability, reputation, work.
 
 ## Current Status
 
