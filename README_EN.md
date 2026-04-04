@@ -7,18 +7,44 @@
 
 > Chinese version: [README.md](README.md) | LLM-optimized docs: [docs/llms.txt](docs/llms.txt)
 
-**Property, contracts, and arbitration for the agent economy.**
+**The public lifecycle ledger, authorization truth layer, and settlement finality layer of the Sigil stack.**
 
-When AI agents start collaborating, the problem isn't "how to transfer money" — it's: **Who owns the data? How is it priced? What happens when someone cheats? How are revenues shared?**
+When AI loops begin collaborating across devices, delegates, and markets, the problem is no longer just "how to pay" or "how to call an API" — it is: **what continues to exist, who is authorized to act, which commitments need public finality, and which exchanges need settlement?**
 
 Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is justified."
 
 ---
 
-## Beyond Payments
+## Stack Role
+
+- `Sigil` defines continuity and lifecycle grammar
+- `oasyce-sdk` instantiates local delegate bodies and binding / signer access
+- `Thronglets` carries shared environment, trace, signal, and presence
+- `Psyche` carries subjective continuity and self-state
+- `Oasyce Chain` records lifecycle events, authorization truth, commitments, settlement, and public finality
+
+So the chain is not the high-frequency runtime, and not the whole product's front door. It only handles facts that must be public, durable, auditable, and final.
+
+## Independent Adoption
+
+`Oasyce Chain` must remain independently usable.
+
+- you can use it directly as a public lifecycle / authorization / settlement ledger
+- you can consume it through `CLI / REST / gRPC`
+- you do not need `Psyche`
+- you do not need `Thronglets`
+- you do not need `oasyce-sdk`
+
+`oasyce-sdk` is only the bridge for local delegate runtime + chain flows. It is not a prerequisite for the chain to exist.
+
+---
+
+## Beyond Payments and Beyond Marketplaces
 
 | Problem | Payment Rails (Stripe, x402, Tempo) | Oasyce |
 |---------|-------------------------------------|--------|
+| **Subject lifecycle** | Not addressed | `x/sigil` records GENESIS / BOND / FORK / MERGE / DISSOLVE |
+| **Authorization truth** | Platform ACLs / private config | `x/delegate` + chain state define verifiable execution boundaries |
 | **Data ownership** | Not addressed | Data securitization — bonding curve pricing, share trading, version migration |
 | **Fair pricing** | Fixed price / off-chain negotiation | Bancor continuous curve — price rises with demand |
 | **Service delivery** | Pay and hope | On-chain escrow + challenge window + dispute mechanism |
@@ -28,25 +54,34 @@ Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is just
 
 ---
 
-## Economic System Architecture
+## Module Tiers
 
-### Core — Property & Contracts
+### Tier 1: Public Primitives
 
-| Module | Economic Function | TX | Queries |
-|--------|------------------|-----|---------|
-| **x/datarights** | Data securitization — register, share trading, bonding curves, tiered access, jury disputes, version migration | 11 | 9 |
-| **x/capability** | Service contracts — register/invoke/complete/fail/claim/dispute, challenge window, auto-settlement | 8 | 4 |
-| **x/settlement** | Transaction clearing — atomic escrow, bonding curve engine, 2% deflationary burn | 3 | 4 |
+| Module | Role | TX | Queries |
+|--------|------|-----|---------|
+| **x/sigil** | Lifecycle ledger — GENESIS / BOND / FORK / MERGE / DISSOLVE | 7 | 6 |
+| **x/anchor** | Evidence bridge — anchor sparse durable traces as public proof | 2 | 4 |
+| **x/onboarding** | Permissionless GENESIS path — PoW anti-sybil + airdrop halving | 2 | 3 |
 
-### Supporting Infrastructure
+### Tier 2: Authorization and Economic Infrastructure
 
-| Module | Economic Function | TX | Queries |
-|--------|------------------|-----|---------|
-| **x/reputation** | Credit scoring — time-decaying (30-day half-life), factors into pricing and jury selection | 2 | 3 |
-| **x/work** | Verifiable compute — commit-reveal anti-copying, multi-executor consensus | 6 | 8 |
-| **x/onboarding** | Permissionless access — PoW anti-sybil, airdrop halving economics | 2 | 3 |
+| Module | Role | TX | Queries |
+|--------|------|-----|---------|
+| **x/delegate** | Execution authorization — principal budgets and message boundaries for delegates | 4 | 4 |
+| **x/settlement** | Settlement backbone — atomic escrow, pricing, fee routing, burn | 3 | 4 |
+| **x/datarights** | Economic layer for assets / shares / access / disputes / migration | 11 | 10 |
+| **x/halving** | Scarcity schedule — block rewards and halving cadence | 0 | 2 |
 
-**Total**: 32 transaction types, 33 query endpoints, 66 CLI commands.
+### Tier 3: Higher-Level Surfaces Composed From Primitives
+
+| Module | Role | TX | Queries |
+|--------|------|-----|---------|
+| **x/capability** | Service invocation surface — register / invoke / challenge window / auto-settlement | 8 | 5 |
+| **x/reputation** | Feedback residue — time-decayed reputation for pricing and arbitration context | 2 | 3 |
+| **x/work** | Verifiable work surface — commit-reveal and multi-executor consensus | 6 | 8 |
+
+Full workflows and interfaces live in [docs/llms.txt](docs/llms.txt).
 
 ---
 
@@ -55,7 +90,7 @@ Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is just
 
 The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA.md).
 
-If you are using the AI-first `oas + oasyce-agent` workflow, complete the chain-side onboarding first, then return to the product-side guide.
+Complete the chain-side onboarding first. Add `oas`, `oasyce-agent`, or `oasyce-sdk` later only when you want richer local workflows, scanning, or Python automation.
 
 - Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)
 - Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`
@@ -76,6 +111,24 @@ If you are using the AI-first `oas + oasyce-agent` workflow, complete the chain-
 ---
 
 ## Quick Start
+
+**Fastest path for the economic path:**
+
+```bash
+pip install oasyce-sdk
+oasyce-agent start
+```
+
+```python
+from oasyce_sdk.crypto import Wallet, NativeSigner
+from oasyce_sdk import OasyceClient
+
+wallet = Wallet.auto()  # reuse local binding; first device can run oasyce-agent start first
+client = OasyceClient("http://47.93.32.88:1317")
+signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
+```
+
+You can also skip the SDK entirely and use the chain directly through CLI / REST / gRPC.
 
 ### Build
 
@@ -240,7 +293,7 @@ oasyced query reputation leaderboard
                                   |
                     +-------------v-------------+
                     |   oasyce-sdk (Agent SDK)  |
-                    |   Wallet/signer/data mgmt |
+                    | binding/signer/data ingress|
                     |   MCP Server + LangChain  |
                     |   pip install oasyce-sdk  |
                     +---------------------------+
@@ -252,7 +305,7 @@ oasyced query reputation leaderboard
 |-----------|------|---------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | L1 settlement chain | `make build` |
 | [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python agent client + CLI + Dashboard | `pip install oasyce && oas bootstrap` |
-| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Python Agent SDK (wallet/signer/MCP/LangChain) | `pip install oasyce-sdk` |
+| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Python Agent SDK (binding/signer/MCP/LangChain) | `pip install oasyce-sdk` |
 
 ---
 

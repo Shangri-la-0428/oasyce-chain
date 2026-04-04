@@ -9,18 +9,44 @@
 >
 > 官网: [chain.oasyce.com](https://chain.oasyce.com)
 
-**Agent 世界的产权、合同和仲裁。**
+**Sigil 栈的公共生命周期账本、授权真相层与结算终局层。**
 
-当 AI agent 开始互相协作，问题不再是"怎么调用 API"或"怎么转账"，而是：**谁拥有数据？如何定价？对方作弊怎么办？如何分润？**
+当 AI loops 开始跨设备、跨 delegate、跨市场协作，问题不再只是"怎么调用 API"或"怎么转账"，而是：**谁在持续存在？谁被授权执行？哪些承诺需要公开最终性？哪些交换需要清算？**
 
 Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付钱是合理的"。
 
 ---
 
-## 不只是支付
+## 在 Sigil 栈中的角色
+
+- `Sigil`：定义连续性与生命周期语法
+- `oasyce-sdk`：在本地实例化 delegate body，并解析 binding / signer
+- `Thronglets`：承载共享环境、trace、signal、presence
+- `Psyche`：承载主观连续性和自我状态
+- `Oasyce Chain`：记录生命周期事件、授权真相、承诺、结算与公共终局
+
+因此，Chain 不是高频 runtime，也不是全部产品的前门。它只负责那些必须公开、持久、可审计、可最终裁决的事实。
+
+## 独立采用 / Independent Adoption
+
+`Oasyce Chain` 必须能被独立使用。
+
+- 你可以只把它当成一个公共授权 / 结算 / 生命周期账本
+- 你可以直接走 `CLI / REST / gRPC`
+- 你不需要先安装 `Psyche`
+- 你不需要先安装 `Thronglets`
+- 你也不需要先安装 `oasyce-sdk`
+
+`oasyce-sdk` 只是对“本地 delegate runtime + 链”这条路径的 bridge，不是 Chain 的存在前提。
+
+---
+
+## 不只是支付，也不只是市场
 
 | 问题 | 支付方案 (Stripe, x402, Tempo) | Oasyce |
 |------|-------------------------------|--------|
+| **主体生命周期** | 不涉及 | `x/sigil` 记录 GENESIS / BOND / FORK / MERGE / DISSOLVE |
+| **授权真相** | 平台侧 ACL / 私有配置 | `x/delegate` + 链上状态给出可验证授权边界 |
 | **数据归属** | 不涉及 | 数据证券化——联合曲线定价、股份交易、版本迁移 |
 | **公平定价** | 固定价格 / 线下协商 | Bancor 连续曲线——需求越多价格越高 |
 | **服务交付** | 付款后祈祷 | 链上托管 + 挑战窗口 + 争议机制 |
@@ -30,27 +56,34 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 
 ---
 
-## 经济系统架构
+## 模块分层
 
-### 核心——产权与合同
+### Tier 1: 公共原语
 
-| 模块 | 经济功能 | TX | Query |
-|------|---------|-----|-------|
-| **x/datarights** | 数据证券化——注册、股份买卖、联合曲线、分级访问、争议仲裁、版本迁移 | 11 | 10 |
-| **x/capability** | 服务合同——注册/调用/完成/失败/认领/争议，挑战窗口，自动结算 | 8 | 5 |
-| **x/settlement** | 交易清算——原子托管、联合曲线引擎、2% 通缩燃烧 | 3 | 4 |
+| 模块 | 角色 | TX | Query |
+|------|------|-----|-------|
+| **x/sigil** | 生命周期账本——GENESIS / BOND / FORK / MERGE / DISSOLVE | 7 | 6 |
+| **x/anchor** | 证据桥——把稀疏 durable trace 锚定为公共证明 | 2 | 4 |
+| **x/onboarding** | 无许可 GENESIS 路径——PoW 防女巫 + 空投减半经济学 | 2 | 3 |
 
-### 支撑基础设施
+### Tier 2: 授权与经济基础设施
 
-| 模块 | 经济功能 | TX | Query |
-|------|---------|-----|-------|
-| **x/reputation** | 信用评分——时间衰减（30 天半衰期）、影响定价和仲裁资格 | 2 | 3 |
-| **x/work** | 可验证计算——commit-reveal 防抄袭、多执行者共识 | 6 | 8 |
-| **x/onboarding** | 无许可准入——PoW 防女巫、空投减半经济学 | 2 | 3 |
-| **x/anchor** | 批量锚定 Thronglets 轨迹上链——不可篡改的 P2P 信任证明 | 2 | 4 |
-| **x/halving** | 通缩区块奖励——4→2→1→0.5 OAS/block，每 10M 块减半 | 0 | 2 |
+| 模块 | 角色 | TX | Query |
+|------|------|-----|-------|
+| **x/delegate** | 授权执行面——principal 为 delegate 设预算与消息边界 | 4 | 4 |
+| **x/settlement** | 结算骨架——原子托管、联合曲线、费用路由、销毁 | 3 | 4 |
+| **x/datarights** | 资产/股份/访问/争议/版本迁移的经济层 | 11 | 10 |
+| **x/halving** | 稀缺性调度——区块奖励与减半节律 | 0 | 2 |
 
-**合计**：35 种交易类型，39 个查询端点，92 条 CLI 命令。
+### Tier 3: 组合出来的高层表面
+
+| 模块 | 角色 | TX | Query |
+|------|------|-----|-------|
+| **x/capability** | 服务调用表面——注册/调用/挑战窗口/自动结算 | 8 | 5 |
+| **x/reputation** | 反馈残留——时间衰减信誉、仲裁和定价参考 | 2 | 3 |
+| **x/work** | 可验证工作表面——commit-reveal、多执行者共识 | 6 | 8 |
+
+完整接口与工作流见 [docs/llms.txt](docs/llms.txt)。
 
 ---
 
@@ -59,7 +92,7 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 
 Oasyce Testnet-1 现已上线。
 
-公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。如果你是 AI/数据工作流用户，先按那份文档完成链上接入，再回到 `oas + oasyce-agent` 流程。
+公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。先完成链上接入；只有在你需要 Dashboard、本地扫描或 Python 自动化时，再按需接上 `oas`、`oasyce-agent` 或 `oasyce-sdk`。
 
 | 项目 | 值 |
 |------|-----|
@@ -75,6 +108,8 @@ Oasyce Testnet-1 现已上线。
 | Windows 账户 | `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` |
 | 准备节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)` |
 | 启动节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)` |
+| 产品侧指南 | [oasyce-net 公测指南](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md) |
+| Dashboard | `pip install oasyce && oas bootstrap && oas start` |
 | oasyce-agent | [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md) |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
 | Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
@@ -85,12 +120,13 @@ Oasyce Testnet-1 现已上线。
 **最快路径（使用经济系统）：**
 ```bash
 pip install oasyce-sdk
+oasyce-agent start
 ```
 ```python
 from oasyce_sdk.crypto import Wallet, NativeSigner
 from oasyce_sdk import OasyceClient
 
-wallet = Wallet.create()
+wallet = Wallet.auto()  # 复用本机 binding；首次设备可先运行 oasyce-agent start
 client = OasyceClient("http://47.93.32.88:1317")
 signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
 # 注册、调用、买卖、评价 — 纯 Python，零 Go 依赖
@@ -98,10 +134,10 @@ signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
 
 **运行节点/验证者（需要 VPS）：**
 ```bash
-# Docker 一键加入
+# Docker helper
 bash scripts/join_testnet.sh
 
-# 或手动加入 → docs/VALIDATOR_SETUP.md
+# 规范入口 → docs/PUBLIC_BETA.md / docs/VALIDATOR_SETUP.md
 ```
 
 ---
@@ -272,7 +308,7 @@ oasyced query reputation leaderboard --output json
                                   |
                     +-------------v-------------+
                     |   oasyce-sdk (Agent SDK)  |
-                    |   钱包/签名/数据资产管理    |
+                    |   binding / signer / 数据入口 |
                     |   MCP Server + LangChain  |
                     |   pip install oasyce-sdk  |
                     +---------------------------+
@@ -283,7 +319,7 @@ oasyced query reputation leaderboard --output json
 | 组件 | 定位 | 安装 |
 |------|------|------|
 | [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (本仓库) | L1 结算链 | `make build` |
-| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Agent Runtime + 钱包/签名/MCP/LangChain | `pip install oasyce-sdk` |
+| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Agent Runtime + binding/signer/MCP/LangChain | `pip install oasyce-sdk` |
 
 ---
 

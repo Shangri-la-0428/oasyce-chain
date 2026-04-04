@@ -17,8 +17,7 @@ ECON_STALE_WINDOW_HOURS="${OASYCE_ECON_STALE_WINDOW_HOURS:-12}"
 MONITOR_ECONOMY_STALE="${OASYCE_MONITOR_ECONOMY_STALE:-0}"
 MONITOR_PROVIDER_HTTP="${OASYCE_MONITOR_PROVIDER_HTTP:-0}"
 MONITOR_CONSUMER_STALE="${OASYCE_MONITOR_CONSUMER_STALE:-auto}"
-ALERT_COOLDOWN_MINUTES="${OASYCE_ALERT_COOLDOWN_MINUTES:-180}"
-LOCK_FILE="${OASYCE_HEALTHCHECK_LOCK_FILE:-${STATE_DIR}/healthcheck.lock}"
+LOCK_FILE="${OASYCE_HEALTHCHECK_LOCK_FILE:-${STATE_FILE}.lock}"
 FAUCET_ADDR="oasyce1msmqqjw64k8m827w3apda97umxt9lgfxszr25d"
 FAUCET_MIN_UOAS=200000000  # 200 OAS
 
@@ -40,8 +39,50 @@ log_alert_event() {
 }
 
 ensure_alert_state_dir() {
-    mkdir -p "$STATE_DIR"
+    mkdir -p "$(dirname "$STATE_FILE")"
+    mkdir -p "$(dirname "$LOCK_FILE")"
+    mkdir -p "$(dirname "$ALERT_LOG")"
+    mkdir -p "$(dirname "$ECON_LOG")"
     mkdir -p "$ALERT_STATE_DIR"
+}
+
+fallback_lock_dir() {
+    printf '%s.dir' "$LOCK_FILE"
+}
+
+acquire_fallback_lock() {
+    local dir
+    local pid=""
+    dir=$(fallback_lock_dir)
+
+    if mkdir "$dir" 2>/dev/null; then
+        printf '%s\n' "$$" > "$dir/pid" 2>/dev/null || true
+        trap 'rm -rf "$(fallback_lock_dir)"' EXIT
+        return 0
+    fi
+
+    if [ -f "$dir/pid" ]; then
+        pid=$(cat "$dir/pid" 2>/dev/null || true)
+        if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
+            rm -rf "$dir"
+            if mkdir "$dir" 2>/dev/null; then
+                printf '%s\n' "$$" > "$dir/pid" 2>/dev/null || true
+                trap 'rm -rf "$(fallback_lock_dir)"' EXIT
+                return 0
+            fi
+        fi
+    fi
+
+    return 1
+}
+
+acquire_lock() {
+    if command -v flock >/dev/null 2>&1; then
+        exec 9>"$LOCK_FILE" || return 1
+        flock -n 9
+        return
+    fi
+    acquire_fallback_lock
 }
 
 alert_state_path() {
@@ -55,26 +96,11 @@ activate_alert_once() {
     local key="$1"
     local msg="$2"
     local path
-    local stamp_path
-    local last_sent=0
-    local now_ts
-    local cooldown_seconds
     ensure_alert_state_dir
     path=$(alert_state_path "$key")
-    stamp_path="${path%.active}.sent_at"
-    now_ts=$(date +%s)
-    cooldown_seconds=$((ALERT_COOLDOWN_MINUTES * 60))
-    if [ -f "$stamp_path" ]; then
-        last_sent=$(cat "$stamp_path" 2>/dev/null || echo 0)
-    fi
     if [ ! -f "$path" ]; then
-        if [ "$last_sent" -gt 0 ] 2>/dev/null && [ $((now_ts - last_sent)) -lt "$cooldown_seconds" ] 2>/dev/null; then
-            printf '1\n' > "$path"
-            return
-        fi
         send_alert "$msg"
         printf '1\n' > "$path"
-        printf '%s\n' "$now_ts" > "$stamp_path"
     fi
 }
 
@@ -135,8 +161,7 @@ economy_stale_message() {
 
 main() {
     ensure_alert_state_dir
-    exec 9>"$LOCK_FILE"
-    if ! flock -n 9; then
+    if ! acquire_lock; then
         exit 0
     fi
 

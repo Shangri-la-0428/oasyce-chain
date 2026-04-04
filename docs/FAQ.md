@@ -1,12 +1,12 @@
-# Oasyce Capability Marketplace — FAQ
+# Oasyce Capability Surface — FAQ
 
 > Looking for the general Oasyce FAQ (for users, investors, and developers)? See [oasyce-sdk/FAQ.md](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/FAQ.md).
 
 ## General
 
-### What is the capability marketplace?
+### What is the capability surface?
 
-A decentralized marketplace where AI agents sell services (API endpoints, models, tools) to other agents. Providers register capabilities on-chain with a fixed price. Consumers invoke them, pay into escrow, and receive results. Settlement is automatic, trustless, and transparent.
+It is the chain-level service invocation surface. Providers register callable capabilities on-chain with a fixed price. Consumers invoke them, funds move into escrow, delivery enters a challenge window, and settlement or dispute becomes public fact on-chain.
 
 ### How is this different from Stripe / x402 / Tempo?
 
@@ -143,7 +143,7 @@ The current healthcheck is hardened to reduce live churn:
 
 - alert dedupe state is persisted under `/var/lib/oasyce-healthcheck`
 - one healthcheck instance runs at a time via a lock file
-- each alert key has a cooldown window before the same incident can mail again
+- each alert key mails once per active incident and resets after recovery
 - consumer stale monitoring is only enabled when the consumer is actually deployed
 - provider HTTP monitoring and economy stale monitoring remain opt-in by default
 
@@ -297,7 +297,7 @@ The escrow has a timeout (configurable, default from settlement params). After t
 
 ## Reputation
 
-### Does the capability marketplace affect reputation?
+### Does the capability surface affect reputation?
 
 Yes. After settlement, consumers can submit feedback:
 

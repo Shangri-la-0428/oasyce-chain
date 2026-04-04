@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# One-click join Oasyce Testnet
+# Docker helper for joining Oasyce Testnet
 #
 # Works on macOS, Windows (Git Bash/WSL), and Linux.
 # Uses Docker — no firewall configuration needed.
@@ -49,7 +49,7 @@ if ! command -v docker &>/dev/null; then
     echo ""
     echo "If you want the native CLI instead of Docker:"
     echo "  bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)"
-    echo "  See docs/JOIN_TESTNET.md for the native setup path."
+    echo "  See docs/PUBLIC_BETA.md for public onboarding or docs/VALIDATOR_SETUP.md for infrastructure setup."
     exit 1
 fi
 
@@ -213,6 +213,7 @@ if [ "$STARTED" = true ]; then
     echo "    docker start oasyce-node             # restart"
     echo ""
     echo "  No firewall configuration needed — Docker handles port mapping."
+    echo "  Canonical docs: PUBLIC_BETA.md (onboarding) / VALIDATOR_SETUP.md (infra)."
 else
     echo ""
     echo "Container 'oasyce-node' may already exist. To reset:"

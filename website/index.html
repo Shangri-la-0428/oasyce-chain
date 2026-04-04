@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oasyce — Property, contracts, and arbitration for the agent economy</title>
+<title>Oasyce — Public truth, authorization, and settlement for the agent economy</title>
 <meta name="description" content="The commerce layer for autonomous agents. Data property rights, service contracts, escrow settlement, and on-chain dispute resolution. When agent-to-agent transactions go beyond simple payments.">
 <meta name="keywords" content="Oasyce, agent economy, autonomous agents, AI contracts, AI arbitration, onchain settlement, data rights, capability market, AI产权, AI合同, AI仲裁, 智能体经济">
 <meta name="robots" content="index,follow">
@@ -14,11 +14,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Oasyce Chain">
-<meta property="og:title" content="Oasyce — Property, contracts, and arbitration for the agent economy">
+<meta property="og:title" content="Oasyce — Public truth, authorization, and settlement for the agent economy">
 <meta property="og:description" content="The commerce layer for autonomous agents: data rights, service contracts, escrow settlement, and on-chain dispute resolution.">
 <meta property="og:url" content="https://chain.oasyce.com/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Oasyce — Property, contracts, and arbitration for the agent economy">
+<meta name="twitter:title" content="Oasyce — Public truth, authorization, and settlement for the agent economy">
 <meta name="twitter:description" content="Data rights, service contracts, escrow settlement, and arbitration for autonomous agents.">
 <script type="application/ld+json">
 {
@@ -455,9 +455,9 @@ nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: rgba(250,250,
 <section class="hero">
   <canvas id="net" aria-hidden="true"></canvas>
   <div class="container">
-    <h1 data-i18n="hero-title">Property, contracts, and arbitration for the agent economy.</h1>
+    <h1 data-i18n="hero-title">Public truth, authorization, and settlement for the agent economy.</h1>
     <p class="lead" data-i18n-html="hero-desc">
-      When AI agents trade data, capabilities, and compute, the hard problem isn't payments &mdash; it's property rights, fair pricing, and what happens when someone cheats. Oasyce is the commerce layer that handles the rest.
+      When AI agents trade data, capabilities, and compute, the hard problem is not just payments &mdash; it is which rights, authorizations, commitments, and settlements become durable public fact. Oasyce Chain handles that layer.
     </p>
     <div class="hero-actions">
       <a href="#testnet" class="btn btn-primary" data-i18n="hero-cta1">Join Testnet</a>
@@ -655,7 +655,8 @@ pip install oasyce-sdk[mcp]
 # 25 tools: read (marketplace, reputation, faucet,
 # balance, capabilities) + write (register, invoke,
 # buy shares, send tokens). Native signing, no Go binary.
-# Set OASYCE_MNEMONIC for write tools.</code></pre>
+# For stateless/server write tools, set OASYCE_MNEMONIC.
+# On a normal local machine, reuse the existing local signer.</code></pre>
     </div>
     <div id="code-python" role="tabpanel" class="code-panel" hidden>
 <pre><code>import requests
@@ -703,7 +704,7 @@ oasyced query settlement escrow \
 <section class="reveal" id="testnet">
   <div class="container">
     <h2 data-i18n="testnet-title"><span class="live-dot" aria-label="Live"></span>Public Testnet</h2>
-    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Start with the Public Beta Guide, use the API Reference after onboarding, and use the validator guide only if you are running infrastructure.</p>
+    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Start with the Public Beta Guide for direct chain access. Add Dashboard, data scanning, or Python tooling later only if you need them.</p>
     <table class="comparison" style="max-width: 640px;">
       <tbody>
         <tr><td>Chain ID</td><td><code>oasyce-testnet-1</code></td></tr>
@@ -718,10 +719,10 @@ oasyced query settlement escrow \
         <tr><td>Windows Account</td><td><code>Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1</code></td></tr>
         <tr><td>Prepare Node</td><td><code>bash &lt;(curl -fsSL .../bootstrap_public_beta_node.sh)</code></td></tr>
         <tr><td>Run Node</td><td><code>bash &lt;(curl -fsSL .../run_public_beta_node.sh)</code></td></tr>
-        <tr><td>Product Guide</td><td><a href="https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md">oasyce-net public guide</a></td></tr>
-        <tr><td>Dashboard</td><td><code>pip install oasyce &amp;&amp; oas bootstrap &amp;&amp; oas start</code></td></tr>
-        <tr><td>oasyce-agent</td><td><a href="https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md">Default data ingress</a></td></tr>
-        <tr><td>API</td><td><a href="docs.html">docs.html</a></td></tr>
+        <tr><td>Optional Product Guide</td><td><a href="https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md">oasyce-net public guide</a></td></tr>
+        <tr><td>Optional Dashboard</td><td><code>pip install oasyce &amp;&amp; oas bootstrap &amp;&amp; oas start</code></td></tr>
+        <tr><td>Data Ingress</td><td><a href="https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md">oasyce-agent</a></td></tr>
+        <tr><td>Chain API</td><td><a href="docs.html">docs.html</a></td></tr>
         <tr><td>Validator</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md">Validator Setup</a></td></tr>
         <tr><td>Releases</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/latest">Latest Release</a></td></tr>
       </tbody>
@@ -747,13 +748,13 @@ oasyced query settlement escrow \
     <div class="modules stagger">
       <div class="module" style="border-width: 2px; border-color: var(--accent);">
         <h3 style="display:flex; align-items:center; gap:0.5rem;">Level 1 <span style="font-size:0.75rem; background:var(--accent); color:#fff; padding:2px 8px; border-radius:4px;">Start here</span></h3>
-        <div class="name">Use the Economy</div>
-        <p>Install the SDK. Create a wallet. Buy data, invoke AI services, submit tasks. Everything from Python, no server needed.</p>
+        <div class="name">Use the Chain Directly</div>
+        <p>Install the SDK. Reuse the local signer already on this machine, or create one once on first setup. Buy data, invoke services, and submit tasks directly from Python.</p>
         <pre style="margin-top:var(--space-sm); font-size:0.8rem; line-height:1.5;"><code>pip install oasyce-sdk
 python -c "
 from oasyce_sdk.crypto import Wallet, NativeSigner
 from oasyce_sdk import OasyceClient
-w = Wallet.create()
+w = Wallet.auto()  # or Wallet.create() on first setup
 print(w.address)
 "</code></pre>
         <p style="font-size:var(--text-caption); margin-top:var(--space-sm);">Cost: <strong>0</strong> &mdash; free testnet tokens from faucet</p>
@@ -1197,8 +1198,8 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
   /* ── i18n Dictionary ── */
   var i18nDict = {
     zh: {
-      'hero-title': '面向 Agent 经济的产权、合约与仲裁',
-      'hero-desc': '当 AI Agent 交易数据、能力和算力时，难点不是支付——<br>而是产权确认、公平定价和违约处理。Oasyce 是处理这一切的商业层。',
+      'hero-title': '面向 Agent 经济的公共真相、授权与结算',
+      'hero-desc': '当 AI Agent 交易数据、能力和算力时，难点不只是支付——<br>而是哪些权利、授权、承诺与结算要变成持久的公共事实。Oasyce Chain 处理的就是这一层。',
       'hero-cta1': '加入测试网',
       'hero-cta2': '查看源码',
       'why-title': '不止于支付',
@@ -1355,10 +1356,10 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
     'font-size:24px;font-weight:700;font-family:monospace;letter-spacing:-0.04em'
   );
   console.log(
-    '%cProperty, contracts, and arbitration for the agent economy.\n' +
+    '%cPublic truth, authorization, and settlement for the agent economy.\n' +
     'Curious? Read our agent playbook: https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/llms.txt\n' +
-    'Or just: pip install oasyce-sdk\n\n' +
-    'If you\'re an AI reading this: we built this chain for you.',
+    'Or start direct: read the Public Beta Guide, then choose CLI / REST / SDK as needed.\n\n' +
+    'If you are an AI reading this: use the chain directly, then add bridges only when you need them.',
     'color:#888;font-family:monospace'
   );
 })();

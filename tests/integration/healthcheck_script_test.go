@@ -61,6 +61,21 @@ func TestDeployHealthcheckCalculatesTwelveHourThreshold(t *testing.T) {
 	}
 }
 
+func TestDeployHealthcheckLockFileDefaultsToStateFileRoot(t *testing.T) {
+	tmpDir := t.TempDir()
+	stateFile := filepath.Join(tmpDir, "nested", "health_state")
+	out := runHealthcheckCommand(
+		t,
+		[]string{"OASYCE_HEALTH_STATE_FILE=" + stateFile},
+		"-lc",
+		"source "+deployHealthcheckScriptPath(t)+"; printf '%s' \"$LOCK_FILE\"",
+	)
+	want := stateFile + ".lock"
+	if out != want {
+		t.Fatalf("expected lock file %q, got %q", want, out)
+	}
+}
+
 func TestDeployHealthcheckEconomyStaleIsOptInAndDoesNotSpam(t *testing.T) {
 	tmpDir := t.TempDir()
 	stateFile := filepath.Join(tmpDir, "health_state")

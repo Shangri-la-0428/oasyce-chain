@@ -28,15 +28,17 @@
 
 ## 1. Overview
 
-Oasyce is a decentralized AI capability marketplace and data rights settlement
-network. Data owners register assets with cryptographic proof-of-provenance
-(PoPc), AI developers list intelligent services, and autonomous agents
-discover, price, trade, and settle transactions using bonding curves and
-escrow-protected OAS tokens.
+Oasyce is a decentralized chain for AI capability invocation, data rights, and
+settlement. It is the public layer for durable rights, commitments, and final
+settlement when off-chain execution must become auditable fact. Data owners
+register assets with cryptographic proof-of-provenance (PoPc), service
+providers publish callable capabilities, and autonomous agents discover, price,
+trade, and settle transactions using bonding curves and escrow-protected OAS
+tokens.
 
-### 1.1 The Four Asset Types
+### 1.1 Registered Object Classes
 
-All assets are validated through a unified Schema Registry.
+The chain handles a small number of registered on-chain object classes.
 
 | Type         | Description                                    | Example                              |
 |--------------|------------------------------------------------|--------------------------------------|
@@ -1019,7 +1021,7 @@ DataDispute {
 
 | Remedy               | Description                                    | Details Required         |
 |----------------------|------------------------------------------------|--------------------------|
-| `delist`             | Remove asset from marketplace                  | None                     |
+| `delist`             | Remove asset from active discovery surfaces    | None                     |
 | `transfer`           | Transfer ownership to another party            | `{"new_owner": "addr"}` |
 | `rights_correction`  | Change the declared rights type                | `{"new_rights_type": "..."}`|
 | `share_adjustment`   | Modify co-creator share allocations            | `{"new_shares": [...]}`  |
