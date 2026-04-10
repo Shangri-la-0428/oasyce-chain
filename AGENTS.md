@@ -1,15 +1,38 @@
 # Oasyce L1 Chain
 
-> **Sigil role**: Necessary subsystem — the lifecycle ledger. Records Sigil lifecycle events as immutable, ordered, public history. Economic settlement layer for Sigil interactions.
+> **Sigil role**: Necessary subsystem — the lifecycle ledger and field pruning executor. Records Sigil lifecycle events as immutable, ordered, public history. Economic settlement layer for Sigil interactions.
 > See [Oasyce-Sigil/ARCHITECTURE.md](../../Oasyce-Sigil/ARCHITECTURE.md) for how this fits the whole.
 
-## Chain = Sigil Graph's Immutable History
+## Chain = Sigil Graph's Immutable History + Field Pruning Executor
 
 From Spec 05: Chain records the Sigil graph's history — lifecycle events and their signatures. It does not store Loop state.
 
 Two functions:
 1. **Lifecycle ledger** (Axiom 2) — GENESIS/DISSOLVE/BOND/UNBOND/FORK/MERGE via x/sigil
 2. **Economic settlement** (Axiom 3) — OAS transfers, escrow, monetary policy
+
+## Field Evolution Context (2026-04-11)
+
+**进化的是场（Thronglets），不是个体（Sigil）。** Chain的角色是场修剪的执行者——记录死亡事实，不决定死因。
+
+Lifecycle events reframed:
+- **DISSOLVE** = 场的突触修剪（不是个体死亡的类比）
+- **FORK** = 场在新维度分化
+- **BOND** = 场的突触形成
+- **MERGE** = 场的节点合并
+
+### Current gap: DISSOLVE is liveness-only
+
+Current x/sigil BeginBlocker only checks `LastActiveHeight`（block activity timer）。这本质上是**网络清理**，不是**存在论事件**。
+
+**设计方向——Pulse原语**：任何系统（Psyche drives, Thronglets presence, 经济活动）向Chain发送心跳。所有心跳停止 → 现有decay机制触发dissolution。Chain不需要理解心跳的语义，只看有没有收到。
+
+```
+Multiple sources → Pulse heartbeat → Chain tracks pulses
+All pulses stale → existing BeginBlocker decay → DISSOLVE
+```
+
+This extends `LastActiveHeight` from `int64` to `map<dimension, int64>`（多维度心跳）。一个新原语，零语义耦合，无限可扩展。Not yet implemented — design direction only.
 
 ## Module Tiers
 
@@ -19,7 +42,7 @@ Must exist in any Sigil chain. Directly implement the three axioms.
 
 | Module | Derives from | Function |
 |--------|-------------|----------|
-| **x/sigil** | Axiom 2 | Lifecycle graph: GENESIS, DISSOLVE, BOND, UNBOND, FORK, MERGE. Liveness decay. |
+| **x/sigil** | Axiom 2 | Lifecycle graph: GENESIS, DISSOLVE, BOND, UNBOND, FORK, MERGE. Liveness decay. **Future: Pulse多维心跳.** |
 | **x/anchor** | BOND | Evidence bridge: off-chain trace proofs → immutable chain record |
 | **x/onboarding** | GENESIS | Anti-Sybil GENESIS provider (PoW + airdrop). Calls x/sigil.RegisterSigil() |
 
@@ -63,6 +86,14 @@ Not deleted (backward compat). New development composes from primitives: BOND (a
 - [x] Refactor `x/anchor` to reference Sigil IDs instead of raw pubkeys
 
 ---
+
+## Experimental Constraints (from Primordial Soup, 2026-04-09)
+
+> Seven experiments validated Sigil architecture in simulation. One constraint is Chain-critical.
+
+**Resource rate / metabolism rate ratio determines carrying capacity and selection intensity.** Phase 1: ~200 carrying capacity emerged naturally from 2% resource rate vs 1/tick metabolism. No `max_population` was hardcoded. This means OAS emission rate, transaction costs, and staking yields are not just economic parameters — they are evolutionary parameters that determine how many agents can survive and how strong selection pressure is. Changing them changes the ecology, not just the economy.
+
+See `~/Desktop/primordial-soup-thesis.md` §13 for full constraint derivation.
 
 ## Project
 Cosmos SDK v0.50.10 chain at `/Users/wutongcheng/Desktop/oasyce-chain` with 10 custom modules (3 axiom-derived, 4 economic, 3 superseded): sigil, anchor, onboarding, settlement, halving, delegate, datarights, capability, reputation, work.
