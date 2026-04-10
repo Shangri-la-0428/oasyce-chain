@@ -67,3 +67,15 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) error {
 
 	return nil
 }
+
+// MaxPulseHeight returns the most recent activity height across all dimensions.
+// This is max(LastActiveHeight, max(DimensionPulses values)).
+func MaxPulseHeight(s types.Sigil) int64 {
+	h := s.LastActiveHeight
+	for _, v := range s.DimensionPulses {
+		if v > h {
+			h = v
+		}
+	}
+	return h
+}

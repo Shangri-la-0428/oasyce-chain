@@ -20,4 +20,5 @@ var (
 	ErrInvalidForkMode   = errors.Register(ModuleName, 16, "invalid fork mode")
 	ErrInvalidMergeMode  = errors.Register(ModuleName, 17, "invalid merge mode")
 	ErrDuplicateSigil    = errors.Register(ModuleName, 18, "duplicate sigil in genesis")
+	ErrInvalidPulse      = errors.Register(ModuleName, 19, "invalid pulse")
 )

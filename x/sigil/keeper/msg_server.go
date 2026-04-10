@@ -309,6 +309,46 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 	return &types.MsgUpdateParamsResponse{}, nil
 }
 
+// Pulse records multi-dimensional heartbeat on a Sigil.
+func (m msgServer) Pulse(goCtx context.Context, msg *types.MsgPulse) (*types.MsgPulseResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sigil, found := m.Keeper.GetSigil(ctx, msg.SigilId)
+	if !found {
+		return nil, types.ErrSigilNotFound.Wrapf("sigil %s", msg.SigilId)
+	}
+	if types.SigilStatus(sigil.Status) != types.SigilStatusActive {
+		return nil, types.ErrSigilDissolved.Wrapf("sigil %s is not active", msg.SigilId)
+	}
+	if sigil.Creator != msg.Signer {
+		return nil, types.ErrNotSigilOwner.Wrapf("expected %s, got %s", sigil.Creator, msg.Signer)
+	}
+
+	if sigil.DimensionPulses == nil {
+		sigil.DimensionPulses = make(map[string]int64)
+	}
+
+	height := ctx.BlockHeight()
+	for dim := range msg.Dimensions {
+		sigil.DimensionPulses[dim] = height
+	}
+
+	// Also update LastActiveHeight for backward compatibility.
+	m.Keeper.DeleteSigilFromLivenessIndex(ctx, sigil.LastActiveHeight, sigil.SigilId)
+	sigil.LastActiveHeight = height
+	_ = m.Keeper.SetSigil(ctx, sigil)
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		"sigil_pulse",
+		sdk.NewAttribute("sigil_id", msg.SigilId),
+		sdk.NewAttribute("signer", msg.Signer),
+		sdk.NewAttribute("dimensions", fmt.Sprintf("%d", len(msg.Dimensions))),
+		sdk.NewAttribute("height", fmt.Sprintf("%d", height)),
+	))
+
+	return &types.MsgPulseResponse{}, nil
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

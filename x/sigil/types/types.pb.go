@@ -32,7 +32,8 @@ type Sigil struct {
 	LastActiveHeight int64       `protobuf:"varint,6,opt,name=last_active_height,json=lastActiveHeight,proto3" json:"last_active_height,omitempty"`
 	StateRoot        []byte      `protobuf:"bytes,7,opt,name=state_root,json=stateRoot,proto3" json:"state_root,omitempty"`
 	Lineage          []string    `protobuf:"bytes,8,rep,name=lineage,proto3" json:"lineage,omitempty"`
-	Metadata         string      `protobuf:"bytes,9,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Metadata         string            `protobuf:"bytes,9,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	DimensionPulses  map[string]int64  `protobuf:"bytes,10,rep,name=dimension_pulses,json=dimensionPulses,proto3" json:"dimension_pulses,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }
 
 func (m *Sigil) Reset()         { *m = Sigil{} }
@@ -56,6 +57,25 @@ func (m *Sigil) MarshalTo(dAtA []byte) (int, error) {
 
 func (m *Sigil) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
+	if len(m.DimensionPulses) > 0 {
+		for k := range m.DimensionPulses {
+			v := m.DimensionPulses[k]
+			baseI := i
+			if v != 0 {
+				i = encodeVarint(dAtA, i, uint64(v))
+				i--
+				dAtA[i] = 0x10 // map value: field 2, wire type 0
+			}
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarint(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0x0a // map key: field 1, wire type 2
+			i = encodeVarint(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x52 // field 10, wire type 2
+		}
+	}
 	if len(m.Metadata) > 0 {
 		i -= len(m.Metadata)
 		copy(dAtA[i:], m.Metadata)
@@ -156,6 +176,15 @@ func (m *Sigil) Size() (n int) {
 	l = len(m.Metadata)
 	if l > 0 {
 		n += 1 + l + sovSize(uint64(l))
+	}
+	if len(m.DimensionPulses) > 0 {
+		for k, v := range m.DimensionPulses {
+			mapEntrySize := 1 + len(k) + sovSize(uint64(len(k)))
+			if v != 0 {
+				mapEntrySize += 1 + sovSize(uint64(v))
+			}
+			n += 1 + mapEntrySize + sovSize(uint64(mapEntrySize))
+		}
 	}
 	return n
 }
@@ -381,6 +410,86 @@ func (m *Sigil) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Metadata = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 10: // dimension_pulses (map<string, int64>)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DimensionPulses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return fmt.Errorf("proto: negative length found during unmarshaling")
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DimensionPulses == nil {
+				m.DimensionPulses = make(map[string]int64)
+			}
+			var mapKey string
+			var mapValue int64
+			for iNdEx < postIndex {
+				var entryWire uint64
+				for shift := uint(0); ; shift += 7 {
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					entryWire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				entryFieldNum := int32(entryWire >> 3)
+				switch entryFieldNum {
+				case 1: // key (string)
+					var stringLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					postStringIndex := iNdEx + int(stringLen)
+					if postStringIndex > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					mapKey = string(dAtA[iNdEx:postStringIndex])
+					iNdEx = postStringIndex
+				case 2: // value (int64)
+					for shift := uint(0); ; shift += 7 {
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapValue |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				default:
+					iNdEx = postIndex
+				}
+			}
+			m.DimensionPulses[mapKey] = mapValue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1105,6 +1214,7 @@ func (*GenesisState) Descriptor() ([]byte, []int) { return fileDescriptor_sigil_
 
 func init() {
 	proto.RegisterType((*Sigil)(nil), "oasyce.sigil.v1.Sigil")
+	proto.RegisterMapType((map[string]int64)(nil), "oasyce.sigil.v1.Sigil.DimensionPulsesEntry")
 	proto.RegisterType((*Bond)(nil), "oasyce.sigil.v1.Bond")
 	proto.RegisterType((*Params)(nil), "oasyce.sigil.v1.Params")
 	proto.RegisterType((*GenesisState)(nil), "oasyce.sigil.v1.GenesisState")

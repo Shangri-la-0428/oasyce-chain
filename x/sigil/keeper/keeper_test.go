@@ -472,3 +472,158 @@ func TestRegisterSigilEmitsGenesisEvent(t *testing.T) {
 	require.Equal(t, sigilID, sigilID2)
 	require.Equal(t, eventCountBefore, len(ctx.EventManager().Events()))
 }
+
+func TestMsgPulse_Happy(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	ctx = ctx.WithBlockHeight(100)
+	ms := keeper.NewMsgServer(k)
+
+	// Create a sigil first.
+	_, err := ms.Genesis(sdk.WrapSDKContext(ctx), &types.MsgGenesis{
+		Signer:    "oasyce1creator",
+		PublicKey: []byte("pubkey1234567890123456"),
+	})
+	require.NoError(t, err)
+
+	// Find the sigil ID.
+	var sigilID string
+	k.IterateAllSigils(ctx, func(s types.Sigil) bool {
+		sigilID = s.SigilId
+		return true
+	})
+	require.NotEmpty(t, sigilID)
+
+	// Pulse with two dimensions.
+	ctx = ctx.WithBlockHeight(200)
+	_, err = ms.Pulse(sdk.WrapSDKContext(ctx), &types.MsgPulse{
+		Signer:     "oasyce1creator",
+		SigilId:    sigilID,
+		Dimensions: map[string]int64{"thronglets": 1, "psyche": 1},
+	})
+	require.NoError(t, err)
+
+	// Verify dimensions and LastActiveHeight updated.
+	sigil, found := k.GetSigil(ctx, sigilID)
+	require.True(t, found)
+	require.Equal(t, int64(200), sigil.LastActiveHeight)
+	require.Len(t, sigil.DimensionPulses, 2)
+	require.Equal(t, int64(200), sigil.DimensionPulses["thronglets"])
+	require.Equal(t, int64(200), sigil.DimensionPulses["psyche"])
+}
+
+func TestMsgPulse_NotFound(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	ms := keeper.NewMsgServer(k)
+
+	_, err := ms.Pulse(sdk.WrapSDKContext(ctx), &types.MsgPulse{
+		Signer:     "oasyce1creator",
+		SigilId:    "SIG_nonexistent",
+		Dimensions: map[string]int64{"chain": 1},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not found")
+}
+
+func TestMsgPulse_NotOwner(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	ctx = ctx.WithBlockHeight(100)
+	ms := keeper.NewMsgServer(k)
+
+	_, err := ms.Genesis(sdk.WrapSDKContext(ctx), &types.MsgGenesis{
+		Signer:    "oasyce1creator",
+		PublicKey: []byte("pubkey1234567890123456"),
+	})
+	require.NoError(t, err)
+
+	var sigilID string
+	k.IterateAllSigils(ctx, func(s types.Sigil) bool {
+		sigilID = s.SigilId
+		return true
+	})
+
+	_, err = ms.Pulse(sdk.WrapSDKContext(ctx), &types.MsgPulse{
+		Signer:     "oasyce1wrong",
+		SigilId:    sigilID,
+		Dimensions: map[string]int64{"chain": 1},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not sigil owner")
+}
+
+func TestBeginBlocker_PulseKeepsSigilAlive(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	ms := keeper.NewMsgServer(k)
+
+	// Create sigil at height 1.
+	ctx = ctx.WithBlockHeight(1)
+	_, err := ms.Genesis(sdk.WrapSDKContext(ctx), &types.MsgGenesis{
+		Signer:    "oasyce1creator",
+		PublicKey: []byte("pubkey1234567890123456"),
+	})
+	require.NoError(t, err)
+
+	var sigilID string
+	k.IterateAllSigils(ctx, func(s types.Sigil) bool {
+		sigilID = s.SigilId
+		return true
+	})
+
+	// Pulse at height 50000 (well before dormant threshold of 100000).
+	ctx = ctx.WithBlockHeight(50000)
+	_, err = ms.Pulse(sdk.WrapSDKContext(ctx), &types.MsgPulse{
+		Signer:     "oasyce1creator",
+		SigilId:    sigilID,
+		Dimensions: map[string]int64{"thronglets": 1},
+	})
+	require.NoError(t, err)
+
+	// Run BeginBlocker at height 120000 (which is 70000 blocks after pulse — still under DormantThreshold of 100000).
+	ctx = ctx.WithBlockHeight(120000)
+	err = k.BeginBlocker(ctx)
+	require.NoError(t, err)
+
+	sigil, found := k.GetSigil(ctx, sigilID)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusActive, types.SigilStatus(sigil.Status), "sigil should still be active after pulse")
+}
+
+func TestDimensionPulses_MarshalRoundtrip(t *testing.T) {
+	original := types.Sigil{
+		SigilId:          "SIG_test",
+		Creator:          "oasyce1creator",
+		Status:           types.SigilStatusActive,
+		LastActiveHeight: 42,
+		DimensionPulses: map[string]int64{
+			"thronglets": 100,
+			"psyche":     200,
+			"chain":      300,
+		},
+	}
+
+	bz, err := original.Marshal()
+	require.NoError(t, err)
+	require.NotEmpty(t, bz)
+
+	var decoded types.Sigil
+	err = decoded.Unmarshal(bz)
+	require.NoError(t, err)
+
+	require.Equal(t, original.SigilId, decoded.SigilId)
+	require.Equal(t, original.Creator, decoded.Creator)
+	require.Equal(t, original.LastActiveHeight, decoded.LastActiveHeight)
+	require.Len(t, decoded.DimensionPulses, 3)
+	require.Equal(t, int64(100), decoded.DimensionPulses["thronglets"])
+	require.Equal(t, int64(200), decoded.DimensionPulses["psyche"])
+	require.Equal(t, int64(300), decoded.DimensionPulses["chain"])
+}
+
+func TestMaxPulseHeight(t *testing.T) {
+	s := types.Sigil{LastActiveHeight: 100}
+	require.Equal(t, int64(100), keeper.MaxPulseHeight(s))
+
+	s.DimensionPulses = map[string]int64{"a": 50, "b": 200}
+	require.Equal(t, int64(200), keeper.MaxPulseHeight(s))
+
+	s.LastActiveHeight = 300
+	require.Equal(t, int64(300), keeper.MaxPulseHeight(s))
+}

@@ -13,6 +13,7 @@ var (
 	_ sdk.Msg = &MsgFork{}
 	_ sdk.Msg = &MsgMerge{}
 	_ sdk.Msg = &MsgUpdateParams{}
+	_ sdk.Msg = &MsgPulse{}
 )
 
 func (msg *MsgGenesis) ValidateBasic() error {
@@ -94,6 +95,30 @@ func (msg *MsgMerge) ValidateBasic() error {
 	}
 	if msg.MergeMode != int32(MergeModeSymmetric) && msg.MergeMode != int32(MergeModeAbsorption) {
 		return ErrInvalidMergeMode.Wrapf("unknown merge_mode: %d", msg.MergeMode)
+	}
+	return nil
+}
+
+func (msg *MsgPulse) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Signer); err != nil {
+		return ErrInvalidAddress.Wrapf("invalid signer: %s", err)
+	}
+	if msg.SigilId == "" {
+		return ErrInvalidSigilID.Wrap("sigil_id cannot be empty")
+	}
+	if len(msg.Dimensions) == 0 {
+		return ErrInvalidPulse.Wrap("at least one dimension required")
+	}
+	if len(msg.Dimensions) > 8 {
+		return ErrInvalidPulse.Wrapf("too many dimensions: %d (max 8)", len(msg.Dimensions))
+	}
+	for k := range msg.Dimensions {
+		if k == "" {
+			return ErrInvalidPulse.Wrap("dimension name cannot be empty")
+		}
+		if len(k) > 32 {
+			return ErrInvalidPulse.Wrapf("dimension name too long: %q (%d chars, max 32)", k, len(k))
+		}
 	}
 	return nil
 }

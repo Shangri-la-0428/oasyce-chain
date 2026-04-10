@@ -29,6 +29,7 @@ func GetTxCmd() *cobra.Command {
 		CmdUnbond(),
 		CmdFork(),
 		CmdMerge(),
+		CmdPulse(),
 	)
 
 	return txCmd
@@ -246,6 +247,48 @@ func CmdMerge() *cobra.Command {
 
 	cmd.Flags().Int32("merge-mode", 0, "Merge mode (0=symmetric, 1=absorption)")
 	cmd.Flags().String("metadata", "", "Metadata string")
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdPulse() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pulse [sigil-id]",
+		Short: "Send multi-dimensional heartbeat pulse for a Sigil",
+		Long:  "Record a multi-dimensional heartbeat for a Sigil. Dimensions keep the Sigil alive on-chain.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			dimsStr, _ := cmd.Flags().GetString("dimensions")
+			dims := make(map[string]int64)
+			if dimsStr != "" {
+				for _, d := range strings.Split(dimsStr, ",") {
+					d = strings.TrimSpace(d)
+					if d != "" {
+						dims[d] = 1
+					}
+				}
+			}
+			if len(dims) == 0 {
+				dims["chain"] = 1
+			}
+
+			msg := &types.MsgPulse{
+				Signer:     clientCtx.GetFromAddress().String(),
+				SigilId:    args[0],
+				Dimensions: dims,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String("dimensions", "chain", "Comma-separated dimension names (e.g. thronglets,psyche)")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd

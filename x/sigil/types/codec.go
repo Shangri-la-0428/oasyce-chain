@@ -15,6 +15,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgFork{}, "oasyce/sigil/MsgFork", nil)
 	cdc.RegisterConcrete(&MsgMerge{}, "oasyce/sigil/MsgMerge", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "oasyce/sigil/MsgUpdateParams", nil)
+	cdc.RegisterConcrete(&MsgPulse{}, "oasyce/sigil/MsgPulse", nil)
 }
 
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
@@ -26,6 +27,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgFork{},
 		&MsgMerge{},
 		&MsgUpdateParams{},
+		&MsgPulse{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

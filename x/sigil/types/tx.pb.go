@@ -806,6 +806,100 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
+// ---------------------------------------------------------------------------
+// MsgPulse — multi-dimensional heartbeat
+// ---------------------------------------------------------------------------
+
+type MsgPulse struct {
+	Signer     string           `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	SigilId    string           `protobuf:"bytes,2,opt,name=sigil_id,json=sigilId,proto3" json:"sigil_id,omitempty"`
+	Dimensions map[string]int64 `protobuf:"bytes,3,rep,name=dimensions,proto3" json:"dimensions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+}
+
+func (m *MsgPulse) Reset()         { *m = MsgPulse{} }
+func (m *MsgPulse) String() string { return proto.CompactTextString(m) }
+func (*MsgPulse) ProtoMessage()    {}
+func (*MsgPulse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_sigil_tx, []int{14}
+}
+func (m *MsgPulse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgPulse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgPulse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgPulse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgPulse.Merge(m, src)
+}
+func (m *MsgPulse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgPulse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgPulse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgPulse proto.InternalMessageInfo
+
+func (m *MsgPulse) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgPulse) GetSigilId() string {
+	if m != nil {
+		return m.SigilId
+	}
+	return ""
+}
+
+func (m *MsgPulse) GetDimensions() map[string]int64 {
+	if m != nil {
+		return m.Dimensions
+	}
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// MsgPulseResponse (empty)
+// ---------------------------------------------------------------------------
+
+type MsgPulseResponse struct{}
+
+func (m *MsgPulseResponse) Reset()         { *m = MsgPulseResponse{} }
+func (m *MsgPulseResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgPulseResponse) ProtoMessage()    {}
+func (*MsgPulseResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_sigil_tx, []int{15}
+}
+func (m *MsgPulseResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgPulseResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return []byte{}, nil
+}
+func (m *MsgPulseResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgPulseResponse.Merge(m, src)
+}
+func (m *MsgPulseResponse) XXX_Size() int {
+	return 0
+}
+func (m *MsgPulseResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgPulseResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgPulseResponse proto.InternalMessageInfo
+
 // ===========================================================================
 // init + file descriptor
 // ===========================================================================
@@ -825,6 +919,9 @@ func init() {
 	proto.RegisterType((*MsgMergeResponse)(nil), "oasyce.sigil.v1.MsgMergeResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "oasyce.sigil.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "oasyce.sigil.v1.MsgUpdateParamsResponse")
+	proto.RegisterType((*MsgPulse)(nil), "oasyce.sigil.v1.MsgPulse")
+	proto.RegisterMapType((map[string]int64)(nil), "oasyce.sigil.v1.MsgPulse.DimensionsEntry")
+	proto.RegisterType((*MsgPulseResponse)(nil), "oasyce.sigil.v1.MsgPulseResponse")
 }
 
 func init() { proto.RegisterFile("oasyce/sigil/v1/tx.proto", fileDescriptor_sigil_tx) }
@@ -980,6 +1077,7 @@ type MsgServer interface {
 	Fork(context.Context, *MsgFork) (*MsgForkResponse, error)
 	Merge(context.Context, *MsgMerge) (*MsgMergeResponse, error)
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	Pulse(context.Context, *MsgPulse) (*MsgPulseResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -1005,6 +1103,9 @@ func (*UnimplementedMsgServer) Merge(ctx context.Context, req *MsgMerge) (*MsgMe
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
+}
+func (*UnimplementedMsgServer) Pulse(ctx context.Context, req *MsgPulse) (*MsgPulseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Pulse not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -1137,6 +1238,24 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_Pulse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgPulse)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Pulse(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/oasyce.sigil.v1.Msg/Pulse",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Pulse(ctx, req.(*MsgPulse))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "oasyce.sigil.v1.Msg",
@@ -1169,6 +1288,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
+		},
+		{
+			MethodName: "Pulse",
+			Handler:    _Msg_Pulse_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1708,6 +1831,73 @@ func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA), nil
 }
 
+// --- MsgPulse ---
+
+func (m *MsgPulse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgPulse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgPulse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if len(m.Dimensions) > 0 {
+		for k := range m.Dimensions {
+			v := m.Dimensions[k]
+			baseI := i
+			if v != 0 {
+				i = encodeVarintTx(dAtA, i, uint64(v))
+				i--
+				dAtA[i] = 0x10 // map value: field 2, wire type 0
+			}
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintTx(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0x0a // map key: field 1, wire type 2
+			i = encodeVarintTx(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1a // field 3, wire type 2
+		}
+	}
+	if len(m.SigilId) > 0 {
+		i -= len(m.SigilId)
+		copy(dAtA[i:], m.SigilId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.SigilId)))
+		i--
+		dAtA[i] = 0x12 // field 2, wire type 2
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0x0a // field 1, wire type 2
+	}
+	return len(dAtA) - i, nil
+}
+
+// --- MsgPulseResponse (empty) ---
+
+func (m *MsgPulseResponse) Marshal() (dAtA []byte, err error) {
+	return []byte{}, nil
+}
+func (m *MsgPulseResponse) MarshalTo(dAtA []byte) (int, error) {
+	return 0, nil
+}
+func (m *MsgPulseResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	return len(dAtA), nil
+}
+
 // ===========================================================================
 // Size methods
 // ===========================================================================
@@ -1938,6 +2128,34 @@ func (m *MsgUpdateParams) Size() (n int) {
 }
 
 func (m *MsgUpdateParamsResponse) Size() int { return 0 }
+
+func (m *MsgPulse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.SigilId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Dimensions) > 0 {
+		for k, v := range m.Dimensions {
+			mapEntrySize := 1 + len(k) + sovTx(uint64(len(k)))
+			if v != 0 {
+				mapEntrySize += 1 + sovTx(uint64(v))
+			}
+			n += 1 + mapEntrySize + sovTx(uint64(mapEntrySize))
+		}
+	}
+	return n
+}
+
+func (m *MsgPulseResponse) Size() int { return 0 }
 
 // ===========================================================================
 // encodeVarintTx / sovTx helpers
@@ -3590,6 +3808,245 @@ func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
 	}
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+// --- MsgPulse ---
+
+func (m *MsgPulse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1: // signer
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2: // sigil_id
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SigilId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SigilId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3: // dimensions (map<string, int64>)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Dimensions", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Dimensions == nil {
+				m.Dimensions = make(map[string]int64)
+			}
+			var mapKey string
+			var mapValue int64
+			for iNdEx < postIndex {
+				var entryWire uint64
+				for shift := uint(0); ; shift += 7 {
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					entryWire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				entryFieldNum := int32(entryWire >> 3)
+				switch entryFieldNum {
+				case 1: // key (string)
+					var stringLen uint64
+					for shift := uint(0); ; shift += 7 {
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLen |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					postStringIndex := iNdEx + int(stringLen)
+					if postStringIndex > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					mapKey = string(dAtA[iNdEx:postStringIndex])
+					iNdEx = postStringIndex
+				case 2: // value (int64)
+					mapValue = 0
+					for shift := uint(0); ; shift += 7 {
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapValue |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				default:
+					iNdEx = postIndex
+				}
+			}
+			m.Dimensions[mapKey] = mapValue
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+// --- MsgPulseResponse (empty) ---
+
+func (m *MsgPulseResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		_ = fieldNum
+		wireType := int(wire & 0x7)
+		_ = wireType
+		iNdEx = preIndex
+		skippy, err := skipTx(dAtA[iNdEx:])
+		if err != nil {
+			return err
+		}
+		if (skippy < 0) || (iNdEx+skippy) < 0 {
+			return ErrInvalidLengthTx
+		}
+		if (iNdEx + skippy) > l {
+			return io.ErrUnexpectedEOF
+		}
+		iNdEx += skippy
 	}
 	return nil
 }
