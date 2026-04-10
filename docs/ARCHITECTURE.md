@@ -81,14 +81,15 @@ x/halving     ──→ bank (mint block rewards → fee_collector)
 
 ## Module Details
 
-### x/sigil — Lifecycle Ledger
+### x/sigil — Lifecycle Ledger & Field Pruning Executor
 
-The constitutional core of the chain.
+The constitutional core of the chain. In the field evolution paradigm, Chain is the executor of field pruning — it records the fact of dissolution but does not determine its cause.
 
 - **Lifecycle**: `GENESIS`, `DISSOLVE`, `BOND`, `UNBOND`, `FORK`, `MERGE`
 - **Continuity history**: ordered, public, immutable event stream for continuing digital actors
 - **Liveness decay**: active → dormant → dissolved via chain time
 - **Lineage**: fork inheritance and merge absorption recorded as first-class history
+- **Design direction**: Pulse — multi-dimensional heartbeat from Psyche (drives), Thronglets (presence), and chain activity. All pulses stale → dissolution. Extends `LastActiveHeight` from single int64 to `map<dimension, int64>`. Not yet implemented.
 
 Key files:
 - `x/sigil/keeper/keeper.go` — lifecycle state transitions and indexes
