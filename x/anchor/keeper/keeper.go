@@ -9,13 +9,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/oasyce/chain/x/anchor/types"
+	sigiltypes "github.com/oasyce/chain/x/sigil/types"
 )
+
+type SigilPulseKeeper interface {
+	GetSigil(ctx sdk.Context, sigilID string) (sigiltypes.Sigil, bool)
+	TouchPulse(ctx sdk.Context, sigilID, dim string) error
+}
 
 // Keeper manages the anchor module's state.
 type Keeper struct {
 	cdc       codec.BinaryCodec
 	storeKey  storetypes.StoreKey
 	authority string
+	sigils    SigilPulseKeeper
 }
 
 // NewKeeper creates a new anchor Keeper.
@@ -23,11 +30,17 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	authority string,
+	sigils ...SigilPulseKeeper,
 ) Keeper {
+	var sigilKeeper SigilPulseKeeper
+	if len(sigils) > 0 {
+		sigilKeeper = sigils[0]
+	}
 	return Keeper{
 		cdc:       cdc,
 		storeKey:  storeKey,
 		authority: authority,
+		sigils:    sigilKeeper,
 	}
 }
 

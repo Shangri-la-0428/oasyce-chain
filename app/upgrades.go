@@ -105,6 +105,25 @@ func (app *OasyceApp) upgradeHandlerV060() func(ctx context.Context, plan upgrad
 //   - No new module stores added
 func (app *OasyceApp) upgradeHandlerV080() func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 	return func(ctx context.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		rawSigilVersion, rawSigilPresent := vm[sigiltypes.ModuleName]
+		current := app.ModuleManager.GetVersionMap()
+		if vm == nil {
+			vm = module.VersionMap{}
+		}
+		for mod, ver := range current {
+			if _, ok := vm[mod]; !ok {
+				vm[mod] = ver
+			}
+		}
+		if !rawSigilPresent || rawSigilVersion == 0 {
+			app.Logger().Info(
+				fmt.Sprintf(
+					"upgrade %s detected legacy sigil version-map state; treating existing sigil store as v1 before running v1 -> v2 migration",
+					plan.Name,
+				),
+			)
+			vm[sigiltypes.ModuleName] = 1
+		}
 		app.Logger().Info(
 			fmt.Sprintf(
 				"applying upgrade %s at height %d — sigil v1 -> v2 effective activity height migration",

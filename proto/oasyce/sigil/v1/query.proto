@@ -1,0 +1,94 @@
+syntax = "proto3";
+package oasyce.sigil.v1;
+
+option go_package = "github.com/oasyce/chain/x/sigil/types";
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oasyce/sigil/v1/types.proto";
+
+service Query {
+  rpc Sigil(QuerySigilRequest) returns (QuerySigilResponse) {
+    option (google.api.http).get = "/oasyce/sigil/v1/sigil/{sigil_id}";
+  }
+
+  rpc Bond(QueryBondRequest) returns (QueryBondResponse) {
+    option (google.api.http).get = "/oasyce/sigil/v1/bond/{bond_id}";
+  }
+
+  rpc BondsBySigil(QueryBondsBySigilRequest) returns (QueryBondsBySigilResponse) {
+    option (google.api.http).get = "/oasyce/sigil/v1/bonds_by_sigil/{sigil_id}";
+  }
+
+  rpc Lineage(QueryLineageRequest) returns (QueryLineageResponse) {
+    option (google.api.http).get = "/oasyce/sigil/v1/lineage/{sigil_id}";
+  }
+
+  rpc ActiveCount(QueryActiveCountRequest) returns (QueryActiveCountResponse) {
+    option (google.api.http).get = "/oasyce/sigil/v1/active_count";
+  }
+
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/oasyce/sigil/v1/params";
+  }
+
+  rpc Pulses(QueryPulsesRequest) returns (QueryPulsesResponse) {
+    option (google.api.http).get = "/oasyce/sigil/v1/pulses/{sigil_id}";
+  }
+}
+
+message QuerySigilRequest {
+  string sigil_id = 1;
+}
+
+message QuerySigilResponse {
+  Sigil sigil = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryBondRequest {
+  string bond_id = 1;
+}
+
+message QueryBondResponse {
+  Bond bond = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryBondsBySigilRequest {
+  string sigil_id = 1;
+}
+
+message QueryBondsBySigilResponse {
+  repeated Bond bonds = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryLineageRequest {
+  string sigil_id = 1;
+}
+
+message QueryLineageResponse {
+  repeated string children = 1;
+}
+
+message QueryActiveCountRequest {}
+
+message QueryActiveCountResponse {
+  uint64 count = 1;
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryPulsesRequest {
+  string sigil_id = 1;
+}
+
+message QueryPulsesResponse {
+  map<string, int64> dimension_pulses = 1;
+  int64 max_pulse_height = 2;
+  int64 blocks_until_dormant = 3;
+  int64 blocks_until_dissolve = 4;
+  int32 status = 5;
+}

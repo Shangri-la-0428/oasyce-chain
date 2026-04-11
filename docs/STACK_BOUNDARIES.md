@@ -91,3 +91,5 @@ V2 (direction, not yet in scope):
 - Until these are resolved, do **not** relax the `msg.Signer == sigil.Creator` check in `x/sigil/keeper/msg_server.go::Pulse`. The owner-lock is load-bearing for V1 safety.
 
 Anti-goal for the V1 → V2 transition: do **not** add a `MsgRevive` that walks dormant → active. Dormant is committed pruning; if an agent needs to come back, it creates a new Sigil and can record lineage via `MsgFork`. This keeps the state machine monotonic and the pruning metaphor honest.
+
+CI enforces the frozen blacklist inside `app/`, `cmd/`, and `x/`; if a false positive is intentional, add an inline `stack-boundary: allow <reason>` comment on that line.

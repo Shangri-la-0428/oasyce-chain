@@ -1,0 +1,46 @@
+syntax = "proto3";
+package oasyce.sigil.v1;
+
+option go_package = "github.com/oasyce/chain/x/sigil/types";
+
+import "gogoproto/gogo.proto";
+
+message Sigil {
+  option (gogoproto.goproto_getters) = false;
+
+  string sigil_id = 1;
+  string creator = 2;
+  bytes public_key = 3;
+  int32 status = 4;
+  int64 creation_height = 5;
+  int64 last_active_height = 6;
+  bytes state_root = 7;
+  repeated string lineage = 8;
+  string metadata = 9;
+  map<string, int64> dimension_pulses = 10;
+}
+
+message Bond {
+  option (gogoproto.goproto_getters) = false;
+
+  string bond_id = 1;
+  string sigil_a = 2;
+  string sigil_b = 3;
+  bytes terms_hash = 4;
+  int64 creation_height = 5;
+  string scope = 6;
+}
+
+message Params {
+  option (gogoproto.goproto_getters) = false;
+
+  int64 dormant_threshold = 1;
+  int64 dissolve_threshold = 2;
+  int64 submit_window = 3;
+}
+
+message GenesisState {
+  repeated Sigil sigils = 1 [(gogoproto.nullable) = false];
+  repeated Bond bonds = 2 [(gogoproto.nullable) = false];
+  Params params = 3 [(gogoproto.nullable) = false];
+}

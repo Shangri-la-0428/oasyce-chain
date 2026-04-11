@@ -1,0 +1,339 @@
+{
+  "source_home": "./tmp/vps-pre-v080-home-full",
+  "working_home": "./tmp/v080-replay",
+  "before": {
+    "block_height": 167701,
+    "module_version": 0,
+    "active_count": 11,
+    "active_status_count": 11,
+    "dormant_status_count": 0,
+    "dissolved_count": 0,
+    "sigils": [
+      {
+        "sigil_id": "SIG_2388db3b706e395f4c2439e07883e8ab",
+        "status": "ACTIVE",
+        "last_active_height": 64828,
+        "max_pulse_height": 64828,
+        "active_bucket_heights": [
+          64828
+        ]
+      },
+      {
+        "sigil_id": "SIG_27f9b72f64ead2bf91d143aea5857c96",
+        "status": "ACTIVE",
+        "last_active_height": 16427,
+        "max_pulse_height": 16427,
+        "active_bucket_heights": [
+          16427
+        ]
+      },
+      {
+        "sigil_id": "SIG_34131bf6cdb30c240fa1fcc46faf42f9",
+        "status": "ACTIVE",
+        "last_active_height": 45896,
+        "max_pulse_height": 45896,
+        "active_bucket_heights": [
+          45896
+        ]
+      },
+      {
+        "sigil_id": "SIG_3e5cd771391211976efcc6211888ffab",
+        "status": "ACTIVE",
+        "last_active_height": 16427,
+        "max_pulse_height": 16427,
+        "active_bucket_heights": [
+          16427
+        ]
+      },
+      {
+        "sigil_id": "SIG_536c9612986873e96a464940e3e8e822",
+        "status": "ACTIVE",
+        "last_active_height": 64831,
+        "max_pulse_height": 64831,
+        "active_bucket_heights": [
+          64831
+        ]
+      },
+      {
+        "sigil_id": "SIG_89c66a116fec9ed3664bdfaf2dff68f9",
+        "status": "ACTIVE",
+        "last_active_height": 45929,
+        "max_pulse_height": 45929,
+        "active_bucket_heights": [
+          45929
+        ]
+      },
+      {
+        "sigil_id": "SIG_8a1e49a8d73607ea45d91cbfdc095145",
+        "status": "ACTIVE",
+        "last_active_height": 16336,
+        "max_pulse_height": 16336,
+        "active_bucket_heights": [
+          16336
+        ]
+      },
+      {
+        "sigil_id": "SIG_8d61365eda04a00d7a9467209998e9ca",
+        "status": "ACTIVE",
+        "last_active_height": 61845,
+        "max_pulse_height": 61845,
+        "active_bucket_heights": [
+          61845
+        ]
+      },
+      {
+        "sigil_id": "SIG_9344ae288f66b771cf4616c734948574",
+        "status": "ACTIVE",
+        "last_active_height": 150546,
+        "max_pulse_height": 150546,
+        "active_bucket_heights": [
+          150546
+        ]
+      },
+      {
+        "sigil_id": "SIG_a9df7dab9ae7b67c3dc30cd3a5cd7039",
+        "status": "ACTIVE",
+        "last_active_height": 61849,
+        "max_pulse_height": 61849,
+        "active_bucket_heights": [
+          61849
+        ]
+      },
+      {
+        "sigil_id": "SIG_b56d2717f36ae076dbe6045300911a3c",
+        "status": "ACTIVE",
+        "last_active_height": 16336,
+        "max_pulse_height": 16336,
+        "active_bucket_heights": [
+          16336
+        ]
+      }
+    ],
+    "active_bucket": [
+      {
+        "bucket": "0x05",
+        "height": 16336,
+        "sigil_id": "SIG_8a1e49a8d73607ea45d91cbfdc095145"
+      },
+      {
+        "bucket": "0x05",
+        "height": 16336,
+        "sigil_id": "SIG_b56d2717f36ae076dbe6045300911a3c"
+      },
+      {
+        "bucket": "0x05",
+        "height": 16427,
+        "sigil_id": "SIG_27f9b72f64ead2bf91d143aea5857c96"
+      },
+      {
+        "bucket": "0x05",
+        "height": 16427,
+        "sigil_id": "SIG_3e5cd771391211976efcc6211888ffab"
+      },
+      {
+        "bucket": "0x05",
+        "height": 45896,
+        "sigil_id": "SIG_34131bf6cdb30c240fa1fcc46faf42f9"
+      },
+      {
+        "bucket": "0x05",
+        "height": 45929,
+        "sigil_id": "SIG_89c66a116fec9ed3664bdfaf2dff68f9"
+      },
+      {
+        "bucket": "0x05",
+        "height": 61845,
+        "sigil_id": "SIG_8d61365eda04a00d7a9467209998e9ca"
+      },
+      {
+        "bucket": "0x05",
+        "height": 61849,
+        "sigil_id": "SIG_a9df7dab9ae7b67c3dc30cd3a5cd7039"
+      },
+      {
+        "bucket": "0x05",
+        "height": 64828,
+        "sigil_id": "SIG_2388db3b706e395f4c2439e07883e8ab"
+      },
+      {
+        "bucket": "0x05",
+        "height": 64831,
+        "sigil_id": "SIG_536c9612986873e96a464940e3e8e822"
+      },
+      {
+        "bucket": "0x05",
+        "height": 150546,
+        "sigil_id": "SIG_9344ae288f66b771cf4616c734948574"
+      }
+    ],
+    "dormant_bucket": null
+  },
+  "after": {
+    "block_height": 167701,
+    "module_version": 2,
+    "active_count": 11,
+    "active_status_count": 11,
+    "dormant_status_count": 0,
+    "dissolved_count": 0,
+    "sigils": [
+      {
+        "sigil_id": "SIG_2388db3b706e395f4c2439e07883e8ab",
+        "status": "ACTIVE",
+        "last_active_height": 64828,
+        "max_pulse_height": 64828,
+        "active_bucket_heights": [
+          64828
+        ]
+      },
+      {
+        "sigil_id": "SIG_27f9b72f64ead2bf91d143aea5857c96",
+        "status": "ACTIVE",
+        "last_active_height": 16427,
+        "max_pulse_height": 16427,
+        "active_bucket_heights": [
+          16427
+        ]
+      },
+      {
+        "sigil_id": "SIG_34131bf6cdb30c240fa1fcc46faf42f9",
+        "status": "ACTIVE",
+        "last_active_height": 45896,
+        "max_pulse_height": 45896,
+        "active_bucket_heights": [
+          45896
+        ]
+      },
+      {
+        "sigil_id": "SIG_3e5cd771391211976efcc6211888ffab",
+        "status": "ACTIVE",
+        "last_active_height": 16427,
+        "max_pulse_height": 16427,
+        "active_bucket_heights": [
+          16427
+        ]
+      },
+      {
+        "sigil_id": "SIG_536c9612986873e96a464940e3e8e822",
+        "status": "ACTIVE",
+        "last_active_height": 64831,
+        "max_pulse_height": 64831,
+        "active_bucket_heights": [
+          64831
+        ]
+      },
+      {
+        "sigil_id": "SIG_89c66a116fec9ed3664bdfaf2dff68f9",
+        "status": "ACTIVE",
+        "last_active_height": 45929,
+        "max_pulse_height": 45929,
+        "active_bucket_heights": [
+          45929
+        ]
+      },
+      {
+        "sigil_id": "SIG_8a1e49a8d73607ea45d91cbfdc095145",
+        "status": "ACTIVE",
+        "last_active_height": 16336,
+        "max_pulse_height": 16336,
+        "active_bucket_heights": [
+          16336
+        ]
+      },
+      {
+        "sigil_id": "SIG_8d61365eda04a00d7a9467209998e9ca",
+        "status": "ACTIVE",
+        "last_active_height": 61845,
+        "max_pulse_height": 61845,
+        "active_bucket_heights": [
+          61845
+        ]
+      },
+      {
+        "sigil_id": "SIG_9344ae288f66b771cf4616c734948574",
+        "status": "ACTIVE",
+        "last_active_height": 150546,
+        "max_pulse_height": 150546,
+        "active_bucket_heights": [
+          150546
+        ]
+      },
+      {
+        "sigil_id": "SIG_a9df7dab9ae7b67c3dc30cd3a5cd7039",
+        "status": "ACTIVE",
+        "last_active_height": 61849,
+        "max_pulse_height": 61849,
+        "active_bucket_heights": [
+          61849
+        ]
+      },
+      {
+        "sigil_id": "SIG_b56d2717f36ae076dbe6045300911a3c",
+        "status": "ACTIVE",
+        "last_active_height": 16336,
+        "max_pulse_height": 16336,
+        "active_bucket_heights": [
+          16336
+        ]
+      }
+    ],
+    "active_bucket": [
+      {
+        "bucket": "0x05",
+        "height": 16336,
+        "sigil_id": "SIG_8a1e49a8d73607ea45d91cbfdc095145"
+      },
+      {
+        "bucket": "0x05",
+        "height": 16336,
+        "sigil_id": "SIG_b56d2717f36ae076dbe6045300911a3c"
+      },
+      {
+        "bucket": "0x05",
+        "height": 16427,
+        "sigil_id": "SIG_27f9b72f64ead2bf91d143aea5857c96"
+      },
+      {
+        "bucket": "0x05",
+        "height": 16427,
+        "sigil_id": "SIG_3e5cd771391211976efcc6211888ffab"
+      },
+      {
+        "bucket": "0x05",
+        "height": 45896,
+        "sigil_id": "SIG_34131bf6cdb30c240fa1fcc46faf42f9"
+      },
+      {
+        "bucket": "0x05",
+        "height": 45929,
+        "sigil_id": "SIG_89c66a116fec9ed3664bdfaf2dff68f9"
+      },
+      {
+        "bucket": "0x05",
+        "height": 61845,
+        "sigil_id": "SIG_8d61365eda04a00d7a9467209998e9ca"
+      },
+      {
+        "bucket": "0x05",
+        "height": 61849,
+        "sigil_id": "SIG_a9df7dab9ae7b67c3dc30cd3a5cd7039"
+      },
+      {
+        "bucket": "0x05",
+        "height": 64828,
+        "sigil_id": "SIG_2388db3b706e395f4c2439e07883e8ab"
+      },
+      {
+        "bucket": "0x05",
+        "height": 64831,
+        "sigil_id": "SIG_536c9612986873e96a464940e3e8e822"
+      },
+      {
+        "bucket": "0x05",
+        "height": 150546,
+        "sigil_id": "SIG_9344ae288f66b771cf4616c734948574"
+      }
+    ],
+    "dormant_bucket": null
+  },
+  "status": "ok"
+}

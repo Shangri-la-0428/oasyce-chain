@@ -33,6 +33,12 @@ func (m msgServer) AnchorTrace(goCtx context.Context, msg *types.MsgAnchorTrace)
 		return nil, types.ErrDuplicateAnchor.Wrapf("trace_id %x already anchored", msg.TraceId)
 	}
 
+	if m.Keeper.sigils != nil && msg.SigilId != "" {
+		if sigil, found := m.Keeper.sigils.GetSigil(ctx, msg.SigilId); found && sigil.Creator == msg.Signer {
+			_ = m.Keeper.sigils.TouchPulse(ctx, msg.SigilId, "anchor")
+		}
+	}
+
 	return &types.MsgAnchorTraceResponse{}, nil
 }
 

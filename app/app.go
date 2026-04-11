@@ -597,6 +597,7 @@ func NewOasyceApp(
 		appCodec,
 		keys[anchortypes.StoreKey],
 		govAuthority,
+		app.SigilKeeper,
 	)
 
 	app.DelegateKeeper = delegatekeeper.NewKeeper(

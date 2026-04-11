@@ -608,9 +608,9 @@ Response:
 
 Use this to verify the node is healthy before sending transactions.
 
-### 8d. Template-Height Software Upgrade Proposal
+### 8d. v0.8.0 Software Upgrade Proposal
 
-For the `v0.8.0` Sigil migration, render proposal artifacts from the in-repo templates:
+For the `v0.8.0` Sigil migration, render proposal artifacts from the in-repo templates and submit the rendered JSON, not the template itself:
 
 ```bash
 python3 scripts/upgrade_proposal_v080.py render \
@@ -619,7 +619,7 @@ python3 scripts/upgrade_proposal_v080.py render \
   --metadata-output /tmp/v080-metadata.json
 ```
 
-Validate the rendered proposal:
+Validate the rendered proposal before dry-run or real submission:
 
 ```bash
 python3 scripts/upgrade_proposal_v080.py validate /tmp/v080-proposal.json
@@ -632,6 +632,8 @@ python3 scripts/upgrade_proposal_v080.py dry-run \
   --height <candidate-height> \
   --network tempnet
 ```
+
+For real upgrade rehearsal and post-upgrade verification, do not rely on `oasyced export`; use the copied node home / `data/application.db` fixture flow described in [`docs/upgrades/v0.8.0/CHECKLIST.md`](./upgrades/v0.8.0/CHECKLIST.md).
 
 Once a real upgrade height is chosen, the submit shape is:
 

@@ -61,6 +61,15 @@ func (k Keeper) IterateSigilIDsByStatus(ctx sdk.Context, status types.SigilStatu
 	}
 }
 
+func (k Keeper) countSigilsByStatus(ctx sdk.Context, status types.SigilStatus) int {
+	count := 0
+	k.IterateSigilIDsByStatus(ctx, status, func(_ string) bool {
+		count++
+		return false
+	})
+	return count
+}
+
 // IterateStaleDormantSigils range-scans the dormant liveness index and emits
 // sigil IDs whose frozen effective activity height <= maxHeight.
 func (k Keeper) IterateStaleDormantSigils(ctx sdk.Context, maxHeight int64, cb func(sigilID string) bool) {

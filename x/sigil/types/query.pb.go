@@ -9,6 +9,7 @@ import (
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -24,11 +25,9 @@ var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
-const _ = proto.GoGoProtoPackageIsVersion3
-
-// ---------------------------------------------------------------------------
-// 0. QuerySigilRequest
-// ---------------------------------------------------------------------------
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type QuerySigilRequest struct {
 	SigilId string `protobuf:"bytes,1,opt,name=sigil_id,json=sigilId,proto3" json:"sigil_id,omitempty"`
@@ -38,7 +37,7 @@ func (m *QuerySigilRequest) Reset()         { *m = QuerySigilRequest{} }
 func (m *QuerySigilRequest) String() string { return proto.CompactTextString(m) }
 func (*QuerySigilRequest) ProtoMessage()    {}
 func (*QuerySigilRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{0}
+	return fileDescriptor_5e5eb4b24af71e64, []int{0}
 }
 func (m *QuerySigilRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -74,10 +73,6 @@ func (m *QuerySigilRequest) GetSigilId() string {
 	return ""
 }
 
-// ---------------------------------------------------------------------------
-// 1. QuerySigilResponse
-// ---------------------------------------------------------------------------
-
 type QuerySigilResponse struct {
 	Sigil Sigil `protobuf:"bytes,1,opt,name=sigil,proto3" json:"sigil"`
 }
@@ -86,7 +81,7 @@ func (m *QuerySigilResponse) Reset()         { *m = QuerySigilResponse{} }
 func (m *QuerySigilResponse) String() string { return proto.CompactTextString(m) }
 func (*QuerySigilResponse) ProtoMessage()    {}
 func (*QuerySigilResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{1}
+	return fileDescriptor_5e5eb4b24af71e64, []int{1}
 }
 func (m *QuerySigilResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -122,10 +117,6 @@ func (m *QuerySigilResponse) GetSigil() Sigil {
 	return Sigil{}
 }
 
-// ---------------------------------------------------------------------------
-// 2. QueryBondRequest
-// ---------------------------------------------------------------------------
-
 type QueryBondRequest struct {
 	BondId string `protobuf:"bytes,1,opt,name=bond_id,json=bondId,proto3" json:"bond_id,omitempty"`
 }
@@ -134,7 +125,7 @@ func (m *QueryBondRequest) Reset()         { *m = QueryBondRequest{} }
 func (m *QueryBondRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBondRequest) ProtoMessage()    {}
 func (*QueryBondRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{2}
+	return fileDescriptor_5e5eb4b24af71e64, []int{2}
 }
 func (m *QueryBondRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -170,10 +161,6 @@ func (m *QueryBondRequest) GetBondId() string {
 	return ""
 }
 
-// ---------------------------------------------------------------------------
-// 3. QueryBondResponse
-// ---------------------------------------------------------------------------
-
 type QueryBondResponse struct {
 	Bond Bond `protobuf:"bytes,1,opt,name=bond,proto3" json:"bond"`
 }
@@ -182,7 +169,7 @@ func (m *QueryBondResponse) Reset()         { *m = QueryBondResponse{} }
 func (m *QueryBondResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBondResponse) ProtoMessage()    {}
 func (*QueryBondResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{3}
+	return fileDescriptor_5e5eb4b24af71e64, []int{3}
 }
 func (m *QueryBondResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -218,10 +205,6 @@ func (m *QueryBondResponse) GetBond() Bond {
 	return Bond{}
 }
 
-// ---------------------------------------------------------------------------
-// 4. QueryBondsBySigilRequest
-// ---------------------------------------------------------------------------
-
 type QueryBondsBySigilRequest struct {
 	SigilId string `protobuf:"bytes,1,opt,name=sigil_id,json=sigilId,proto3" json:"sigil_id,omitempty"`
 }
@@ -230,7 +213,7 @@ func (m *QueryBondsBySigilRequest) Reset()         { *m = QueryBondsBySigilReque
 func (m *QueryBondsBySigilRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBondsBySigilRequest) ProtoMessage()    {}
 func (*QueryBondsBySigilRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{4}
+	return fileDescriptor_5e5eb4b24af71e64, []int{4}
 }
 func (m *QueryBondsBySigilRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -266,10 +249,6 @@ func (m *QueryBondsBySigilRequest) GetSigilId() string {
 	return ""
 }
 
-// ---------------------------------------------------------------------------
-// 5. QueryBondsBySigilResponse
-// ---------------------------------------------------------------------------
-
 type QueryBondsBySigilResponse struct {
 	Bonds []Bond `protobuf:"bytes,1,rep,name=bonds,proto3" json:"bonds"`
 }
@@ -278,7 +257,7 @@ func (m *QueryBondsBySigilResponse) Reset()         { *m = QueryBondsBySigilResp
 func (m *QueryBondsBySigilResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBondsBySigilResponse) ProtoMessage()    {}
 func (*QueryBondsBySigilResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{5}
+	return fileDescriptor_5e5eb4b24af71e64, []int{5}
 }
 func (m *QueryBondsBySigilResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -314,10 +293,6 @@ func (m *QueryBondsBySigilResponse) GetBonds() []Bond {
 	return nil
 }
 
-// ---------------------------------------------------------------------------
-// 6. QueryLineageRequest
-// ---------------------------------------------------------------------------
-
 type QueryLineageRequest struct {
 	SigilId string `protobuf:"bytes,1,opt,name=sigil_id,json=sigilId,proto3" json:"sigil_id,omitempty"`
 }
@@ -326,7 +301,7 @@ func (m *QueryLineageRequest) Reset()         { *m = QueryLineageRequest{} }
 func (m *QueryLineageRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryLineageRequest) ProtoMessage()    {}
 func (*QueryLineageRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{6}
+	return fileDescriptor_5e5eb4b24af71e64, []int{6}
 }
 func (m *QueryLineageRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -362,10 +337,6 @@ func (m *QueryLineageRequest) GetSigilId() string {
 	return ""
 }
 
-// ---------------------------------------------------------------------------
-// 7. QueryLineageResponse
-// ---------------------------------------------------------------------------
-
 type QueryLineageResponse struct {
 	Children []string `protobuf:"bytes,1,rep,name=children,proto3" json:"children,omitempty"`
 }
@@ -374,7 +345,7 @@ func (m *QueryLineageResponse) Reset()         { *m = QueryLineageResponse{} }
 func (m *QueryLineageResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryLineageResponse) ProtoMessage()    {}
 func (*QueryLineageResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{7}
+	return fileDescriptor_5e5eb4b24af71e64, []int{7}
 }
 func (m *QueryLineageResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -410,17 +381,14 @@ func (m *QueryLineageResponse) GetChildren() []string {
 	return nil
 }
 
-// ---------------------------------------------------------------------------
-// 8. QueryActiveCountRequest
-// ---------------------------------------------------------------------------
-
-type QueryActiveCountRequest struct{}
+type QueryActiveCountRequest struct {
+}
 
 func (m *QueryActiveCountRequest) Reset()         { *m = QueryActiveCountRequest{} }
 func (m *QueryActiveCountRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryActiveCountRequest) ProtoMessage()    {}
 func (*QueryActiveCountRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{8}
+	return fileDescriptor_5e5eb4b24af71e64, []int{8}
 }
 func (m *QueryActiveCountRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -449,10 +417,6 @@ func (m *QueryActiveCountRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryActiveCountRequest proto.InternalMessageInfo
 
-// ---------------------------------------------------------------------------
-// 9. QueryActiveCountResponse
-// ---------------------------------------------------------------------------
-
 type QueryActiveCountResponse struct {
 	Count uint64 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
 }
@@ -461,7 +425,7 @@ func (m *QueryActiveCountResponse) Reset()         { *m = QueryActiveCountRespon
 func (m *QueryActiveCountResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryActiveCountResponse) ProtoMessage()    {}
 func (*QueryActiveCountResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{9}
+	return fileDescriptor_5e5eb4b24af71e64, []int{9}
 }
 func (m *QueryActiveCountResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -497,17 +461,14 @@ func (m *QueryActiveCountResponse) GetCount() uint64 {
 	return 0
 }
 
-// ---------------------------------------------------------------------------
-// 10. QueryParamsRequest
-// ---------------------------------------------------------------------------
-
-type QueryParamsRequest struct{}
+type QueryParamsRequest struct {
+}
 
 func (m *QueryParamsRequest) Reset()         { *m = QueryParamsRequest{} }
 func (m *QueryParamsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsRequest) ProtoMessage()    {}
 func (*QueryParamsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{10}
+	return fileDescriptor_5e5eb4b24af71e64, []int{10}
 }
 func (m *QueryParamsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -536,10 +497,6 @@ func (m *QueryParamsRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryParamsRequest proto.InternalMessageInfo
 
-// ---------------------------------------------------------------------------
-// 11. QueryParamsResponse
-// ---------------------------------------------------------------------------
-
 type QueryParamsResponse struct {
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 }
@@ -548,7 +505,7 @@ func (m *QueryParamsResponse) Reset()         { *m = QueryParamsResponse{} }
 func (m *QueryParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsResponse) ProtoMessage()    {}
 func (*QueryParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_sigil_query, []int{11}
+	return fileDescriptor_5e5eb4b24af71e64, []int{11}
 }
 func (m *QueryParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -584,9 +541,125 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// ---------------------------------------------------------------------------
-// init / registration
-// ---------------------------------------------------------------------------
+type QueryPulsesRequest struct {
+	SigilId string `protobuf:"bytes,1,opt,name=sigil_id,json=sigilId,proto3" json:"sigil_id,omitempty"`
+}
+
+func (m *QueryPulsesRequest) Reset()         { *m = QueryPulsesRequest{} }
+func (m *QueryPulsesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryPulsesRequest) ProtoMessage()    {}
+func (*QueryPulsesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5e5eb4b24af71e64, []int{12}
+}
+func (m *QueryPulsesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryPulsesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryPulsesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryPulsesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPulsesRequest.Merge(m, src)
+}
+func (m *QueryPulsesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryPulsesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPulsesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryPulsesRequest proto.InternalMessageInfo
+
+func (m *QueryPulsesRequest) GetSigilId() string {
+	if m != nil {
+		return m.SigilId
+	}
+	return ""
+}
+
+type QueryPulsesResponse struct {
+	DimensionPulses     map[string]int64 `protobuf:"bytes,1,rep,name=dimension_pulses,json=dimensionPulses,proto3" json:"dimension_pulses,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	MaxPulseHeight      int64            `protobuf:"varint,2,opt,name=max_pulse_height,json=maxPulseHeight,proto3" json:"max_pulse_height,omitempty"`
+	BlocksUntilDormant  int64            `protobuf:"varint,3,opt,name=blocks_until_dormant,json=blocksUntilDormant,proto3" json:"blocks_until_dormant,omitempty"`
+	BlocksUntilDissolve int64            `protobuf:"varint,4,opt,name=blocks_until_dissolve,json=blocksUntilDissolve,proto3" json:"blocks_until_dissolve,omitempty"`
+	Status              int32            `protobuf:"varint,5,opt,name=status,proto3" json:"status,omitempty"`
+}
+
+func (m *QueryPulsesResponse) Reset()         { *m = QueryPulsesResponse{} }
+func (m *QueryPulsesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryPulsesResponse) ProtoMessage()    {}
+func (*QueryPulsesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5e5eb4b24af71e64, []int{13}
+}
+func (m *QueryPulsesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryPulsesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryPulsesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryPulsesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPulsesResponse.Merge(m, src)
+}
+func (m *QueryPulsesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryPulsesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPulsesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryPulsesResponse proto.InternalMessageInfo
+
+func (m *QueryPulsesResponse) GetDimensionPulses() map[string]int64 {
+	if m != nil {
+		return m.DimensionPulses
+	}
+	return nil
+}
+
+func (m *QueryPulsesResponse) GetMaxPulseHeight() int64 {
+	if m != nil {
+		return m.MaxPulseHeight
+	}
+	return 0
+}
+
+func (m *QueryPulsesResponse) GetBlocksUntilDormant() int64 {
+	if m != nil {
+		return m.BlocksUntilDormant
+	}
+	return 0
+}
+
+func (m *QueryPulsesResponse) GetBlocksUntilDissolve() int64 {
+	if m != nil {
+		return m.BlocksUntilDissolve
+	}
+	return 0
+}
+
+func (m *QueryPulsesResponse) GetStatus() int32 {
+	if m != nil {
+		return m.Status
+	}
+	return 0
+}
 
 func init() {
 	proto.RegisterType((*QuerySigilRequest)(nil), "oasyce.sigil.v1.QuerySigilRequest")
@@ -601,53 +674,81 @@ func init() {
 	proto.RegisterType((*QueryActiveCountResponse)(nil), "oasyce.sigil.v1.QueryActiveCountResponse")
 	proto.RegisterType((*QueryParamsRequest)(nil), "oasyce.sigil.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "oasyce.sigil.v1.QueryParamsResponse")
+	proto.RegisterType((*QueryPulsesRequest)(nil), "oasyce.sigil.v1.QueryPulsesRequest")
+	proto.RegisterType((*QueryPulsesResponse)(nil), "oasyce.sigil.v1.QueryPulsesResponse")
+	proto.RegisterMapType((map[string]int64)(nil), "oasyce.sigil.v1.QueryPulsesResponse.DimensionPulsesEntry")
 }
 
-func init() { proto.RegisterFile("oasyce/sigil/v1/query.proto", fileDescriptor_sigil_query) }
+func init() { proto.RegisterFile("oasyce/sigil/v1/query.proto", fileDescriptor_5e5eb4b24af71e64) }
 
-var fileDescriptor_sigil_query = []byte{
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x8c, 0x54, 0xcd, 0x6e, 0xd3, 0x40,
-	0x10, 0x56, 0x84, 0xed, 0xb4, 0x53, 0x24, 0x60, 0x09, 0x24, 0x31, 0x97, 0xb2, 0x50, 0xd1, 0x52,
-	0x64, 0xb7, 0x41, 0x5c, 0x91, 0x30, 0x12, 0xa2, 0x12, 0x48, 0xc5, 0x95, 0x38, 0x70, 0x41, 0xfe,
-	0x59, 0x25, 0x2b, 0xb5, 0x5e, 0xc7, 0x6b, 0x47, 0xe4, 0x6d, 0x78, 0x54, 0xe4, 0xf1, 0x24, 0xd8,
-	0xb1, 0x0d, 0x39, 0xee, 0xce, 0xf7, 0xb3, 0x33, 0xf3, 0x69, 0xe1, 0x99, 0x0a, 0xf4, 0x3a, 0x12,
-	0xae, 0x96, 0x73, 0x79, 0xeb, 0xae, 0x2e, 0xdd, 0x65, 0x21, 0xb2, 0xb5, 0x93, 0x66, 0x2a, 0x57,
-	0xec, 0x41, 0x55, 0x74, 0xb0, 0xe8, 0xac, 0x2e, 0xb9, 0x03, 0x8f, 0xbe, 0x95, 0xf5, 0x9b, 0xf2,
-	0xc2, 0x17, 0xcb, 0x42, 0xe8, 0x9c, 0x4d, 0xe1, 0x00, 0x01, 0x3f, 0x65, 0x3c, 0x19, 0x1c, 0x0f,
-	0x4e, 0x0f, 0xfd, 0x21, 0x9e, 0xaf, 0x62, 0xee, 0x01, 0xab, 0xe3, 0x75, 0xaa, 0x12, 0x2d, 0xd8,
-	0x1b, 0x30, 0x11, 0x80, 0xe8, 0xa3, 0xd9, 0x53, 0x67, 0xc7, 0xc6, 0xa9, 0xe0, 0x15, 0x88, 0x9f,
-	0xc3, 0x43, 0xd4, 0xf0, 0x54, 0x12, 0x6f, 0x2c, 0xc7, 0x30, 0x0c, 0x55, 0x12, 0xff, 0x75, 0xb4,
-	0xca, 0xe3, 0x55, 0xcc, 0xdf, 0xd3, 0x03, 0x2b, 0x30, 0xf9, 0x9d, 0x81, 0x51, 0x96, 0xc9, 0xee,
-	0x49, 0xcb, 0x0e, 0xc1, 0x08, 0xe1, 0xef, 0x60, 0xb2, 0xe5, 0x6b, 0x6f, 0xef, 0x3e, 0x3f, 0xc3,
-	0xb4, 0x83, 0x46, 0xf6, 0xe7, 0x60, 0x96, 0xda, 0x7a, 0x32, 0x38, 0xbe, 0xd7, 0xef, 0x5f, 0x61,
-	0xf8, 0x05, 0x3c, 0x46, 0xa5, 0x2f, 0x32, 0x11, 0xc1, 0x5c, 0xec, 0xe1, 0x3d, 0x83, 0x51, 0x93,
-	0x41, 0xb6, 0x36, 0x1c, 0x44, 0x0b, 0x79, 0x1b, 0x67, 0x22, 0x41, 0xe7, 0x43, 0x7f, 0x7b, 0xe6,
-	0x53, 0x18, 0x23, 0xe7, 0x43, 0x94, 0xcb, 0x95, 0xf8, 0xa8, 0x8a, 0x24, 0x27, 0x27, 0x7e, 0x41,
-	0x13, 0x68, 0x94, 0x48, 0x72, 0x04, 0x66, 0x54, 0x5e, 0xe0, 0x13, 0x0c, 0xbf, 0x3a, 0xf0, 0x11,
-	0x2d, 0xf9, 0x3a, 0xc8, 0x82, 0x3b, 0xbd, 0xd1, 0xf9, 0x44, 0x8d, 0x6c, 0x6e, 0x49, 0xc2, 0x05,
-	0x2b, 0xc5, 0x1b, 0xda, 0xc6, 0xb8, 0x35, 0x0d, 0x22, 0x10, 0x6c, 0xf6, 0xdb, 0x00, 0x13, 0x85,
-	0xd8, 0x35, 0x98, 0x38, 0x58, 0xc6, 0x5b, 0x9c, 0x56, 0x28, 0xed, 0x17, 0xff, 0xc4, 0xd0, 0x63,
-	0xbe, 0x82, 0x51, 0xce, 0x9e, 0x3d, 0xef, 0x06, 0xd7, 0x12, 0x67, 0xf7, 0x78, 0x36, 0x72, 0x26,
-	0xe0, 0x7e, 0x3d, 0x00, 0xec, 0xac, 0x9f, 0xb3, 0x93, 0x2d, 0xfb, 0xf5, 0x3e, 0x50, 0xb2, 0xf9,
-	0x0e, 0x43, 0xda, 0x35, 0x7b, 0xd9, 0x4d, 0x6b, 0x86, 0xc7, 0x3e, 0xf9, 0x0f, 0x8a, 0x74, 0x43,
-	0x38, 0xaa, 0x2d, 0x9d, 0x9d, 0x76, 0xb3, 0xda, 0x91, 0xb1, 0x7b, 0xfa, 0xec, 0x4a, 0xd0, 0x0d,
-	0x58, 0xd5, 0x7e, 0x59, 0xcf, 0x82, 0x1a, 0x21, 0xb2, 0x7b, 0xfa, 0x6b, 0x66, 0xca, 0x7b, 0xf5,
-	0xe3, 0x64, 0x2e, 0xf3, 0x45, 0x11, 0x3a, 0x91, 0xba, 0x73, 0xe9, 0x43, 0x8b, 0x16, 0x81, 0x4c,
-	0xdc, 0x5f, 0xf4, 0xb1, 0xe5, 0xeb, 0x54, 0xe8, 0xd0, 0xc2, 0x6f, 0xed, 0xed, 0x9f, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0xa1, 0x36, 0x60, 0xfa, 0xf5, 0x04, 0x00, 0x00,
+var fileDescriptor_5e5eb4b24af71e64 = []byte{
+	// 840 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x56, 0x41, 0x8f, 0xdb, 0x44,
+	0x14, 0x5e, 0xef, 0x26, 0xd9, 0xf6, 0x15, 0xd1, 0x65, 0x9a, 0x76, 0x13, 0x03, 0x49, 0xd6, 0xd9,
+	0x88, 0xec, 0x16, 0xd9, 0xbb, 0x41, 0x95, 0x80, 0x0b, 0x22, 0x2c, 0x52, 0x2b, 0x55, 0x08, 0x8c,
+	0xb8, 0x70, 0xb1, 0x9c, 0x78, 0xe4, 0x58, 0x75, 0x3c, 0x69, 0xc6, 0x8e, 0x36, 0x5a, 0x55, 0x48,
+	0x70, 0xe2, 0x86, 0xc4, 0x89, 0x23, 0xff, 0xa6, 0xc7, 0x4a, 0x5c, 0x38, 0x21, 0xb4, 0x8b, 0xc4,
+	0xdf, 0x40, 0x7e, 0xf3, 0x5c, 0x9c, 0xb5, 0x9b, 0xcd, 0xcd, 0x33, 0xdf, 0xf7, 0xde, 0xf7, 0xcd,
+	0x9b, 0xcc, 0xa7, 0xc0, 0xbb, 0xc2, 0x95, 0xcb, 0x31, 0xb7, 0x64, 0xe0, 0x07, 0xa1, 0xb5, 0x38,
+	0xb5, 0x9e, 0x27, 0x7c, 0xbe, 0x34, 0x67, 0x73, 0x11, 0x0b, 0x76, 0x57, 0x81, 0x26, 0x82, 0xe6,
+	0xe2, 0x54, 0xaf, 0xfb, 0xc2, 0x17, 0x88, 0x59, 0xe9, 0x97, 0xa2, 0xe9, 0xef, 0xf9, 0x42, 0xf8,
+	0x21, 0xb7, 0xdc, 0x59, 0x60, 0xb9, 0x51, 0x24, 0x62, 0x37, 0x0e, 0x44, 0x24, 0x09, 0x2d, 0x28,
+	0xc4, 0xcb, 0x19, 0x27, 0xd0, 0x30, 0xe1, 0x9d, 0x6f, 0x52, 0xc1, 0x6f, 0x53, 0xd0, 0xe6, 0xcf,
+	0x13, 0x2e, 0x63, 0xd6, 0x84, 0x5b, 0x48, 0x76, 0x02, 0xaf, 0xa1, 0x75, 0xb4, 0xfe, 0x6d, 0x7b,
+	0x17, 0xd7, 0x4f, 0x3c, 0xe3, 0x31, 0xb0, 0x3c, 0x5f, 0xce, 0x44, 0x24, 0x39, 0x1b, 0x40, 0x15,
+	0x09, 0xc8, 0xbe, 0x33, 0x78, 0x60, 0x5e, 0xf3, 0x6d, 0x22, 0x7d, 0x58, 0x79, 0xf9, 0x57, 0x7b,
+	0xcb, 0x56, 0x54, 0xe3, 0x21, 0xec, 0x61, 0xa7, 0xa1, 0x88, 0xbc, 0x4c, 0x78, 0x1f, 0x76, 0x47,
+	0x22, 0xf2, 0xfe, 0xd7, 0xad, 0xa5, 0xcb, 0x27, 0x9e, 0x71, 0x46, 0x36, 0x15, 0x99, 0x54, 0x2d,
+	0xa8, 0xa4, 0x30, 0x89, 0xde, 0x2f, 0x88, 0xa6, 0x64, 0xd2, 0x44, 0xa2, 0xf1, 0x08, 0x1a, 0xaf,
+	0xbb, 0xc8, 0xe1, 0xc6, 0x67, 0xfe, 0x0a, 0x9a, 0x25, 0x65, 0x64, 0xe2, 0x14, 0xaa, 0x69, 0x6f,
+	0xd9, 0xd0, 0x3a, 0x3b, 0x37, 0xb9, 0x50, 0x4c, 0xe3, 0x04, 0xee, 0x61, 0xbf, 0xa7, 0x41, 0xc4,
+	0x5d, 0x9f, 0x6f, 0xe0, 0x60, 0x00, 0xf5, 0xd5, 0x0a, 0x12, 0xd7, 0xe1, 0xd6, 0x78, 0x12, 0x84,
+	0xde, 0x9c, 0x47, 0xa8, 0x7f, 0xdb, 0x7e, 0xbd, 0x36, 0x9a, 0xb0, 0x8f, 0x35, 0x9f, 0x8f, 0xe3,
+	0x60, 0xc1, 0xbf, 0x10, 0x49, 0x14, 0x93, 0x92, 0x71, 0x42, 0x73, 0x58, 0x81, 0xa8, 0x65, 0x1d,
+	0xaa, 0xe3, 0x74, 0x03, 0x2d, 0x54, 0x6c, 0xb5, 0x30, 0xea, 0x74, 0xed, 0x5f, 0xbb, 0x73, 0x77,
+	0x2a, 0xb3, 0x3e, 0x4f, 0xe9, 0x20, 0xd9, 0x2e, 0xb5, 0x78, 0x04, 0xb5, 0x19, 0xee, 0xd0, 0xcd,
+	0xec, 0x17, 0x66, 0xa2, 0x0a, 0x68, 0x2a, 0x44, 0x36, 0xac, 0x4c, 0x23, 0x09, 0x25, 0x97, 0x1b,
+	0x4c, 0xe5, 0xdf, 0xed, 0x4c, 0x9f, 0x2a, 0x48, 0xdf, 0x83, 0x3d, 0x2f, 0x98, 0xf2, 0x48, 0x06,
+	0x22, 0x72, 0x66, 0x88, 0xd1, 0xed, 0x7c, 0x52, 0x70, 0x52, 0x52, 0x6f, 0x9e, 0x65, 0xc5, 0x6a,
+	0xff, 0xcb, 0x28, 0x9e, 0x2f, 0xed, 0xbb, 0xde, 0xea, 0x2e, 0xeb, 0xc3, 0xde, 0xd4, 0x3d, 0x57,
+	0xfd, 0x9d, 0x09, 0x0f, 0xfc, 0x49, 0xdc, 0xd8, 0xee, 0x68, 0xfd, 0x1d, 0xfb, 0xed, 0xa9, 0x7b,
+	0x8e, 0xa4, 0xc7, 0xb8, 0xcb, 0x4e, 0xa0, 0x3e, 0x0a, 0xc5, 0xf8, 0x99, 0x74, 0x92, 0x28, 0x0e,
+	0x42, 0xc7, 0x13, 0xf3, 0xa9, 0x1b, 0xc5, 0x8d, 0x1d, 0x64, 0x33, 0x85, 0x7d, 0x97, 0x42, 0x67,
+	0x0a, 0x61, 0x03, 0xb8, 0xbf, 0x5a, 0x11, 0x48, 0x29, 0xc2, 0x05, 0x6f, 0x54, 0xb0, 0xe4, 0x5e,
+	0xbe, 0x84, 0x20, 0xf6, 0x00, 0x6a, 0x32, 0x76, 0xe3, 0x44, 0x36, 0xaa, 0x1d, 0xad, 0x5f, 0xb5,
+	0x69, 0xa5, 0x0f, 0xa1, 0x5e, 0x76, 0x20, 0xb6, 0x07, 0x3b, 0xcf, 0xf8, 0x92, 0x66, 0x9a, 0x7e,
+	0xa6, 0x57, 0xbf, 0x70, 0xc3, 0x84, 0xd3, 0x31, 0xd4, 0xe2, 0xd3, 0xed, 0x8f, 0xb5, 0xc1, 0xef,
+	0xbb, 0x50, 0xc5, 0x49, 0xb1, 0x0b, 0xa8, 0xe2, 0xef, 0x9f, 0x19, 0xe5, 0xa3, 0xcc, 0xbf, 0x29,
+	0xbd, 0xbb, 0x96, 0xa3, 0xa6, 0x6d, 0x1c, 0xfd, 0xf8, 0xc7, 0x3f, 0xbf, 0x6e, 0x77, 0xd9, 0x81,
+	0x75, 0x3d, 0xa7, 0xd4, 0xc7, 0x45, 0x76, 0xfd, 0x2f, 0xd8, 0x02, 0x2a, 0xe9, 0x6b, 0x62, 0x07,
+	0xe5, 0x7d, 0x73, 0x49, 0xa2, 0x1b, 0xeb, 0x28, 0xa4, 0xfc, 0x01, 0x2a, 0x1f, 0xb0, 0x76, 0x41,
+	0x39, 0x7d, 0xa7, 0xd6, 0x05, 0x45, 0xd1, 0x0b, 0xf6, 0x9b, 0x06, 0x6f, 0xe5, 0x1f, 0x3f, 0x3b,
+	0x7a, 0x73, 0xf7, 0x6b, 0xb9, 0xa2, 0x1f, 0x6f, 0x42, 0x25, 0x43, 0x03, 0x34, 0xf4, 0x21, 0x3b,
+	0x2e, 0x35, 0x24, 0x9d, 0xd1, 0xd2, 0x29, 0xcc, 0xe4, 0x27, 0x0d, 0x76, 0x29, 0x16, 0xd8, 0x61,
+	0xb9, 0xd6, 0x6a, 0xce, 0xe8, 0xbd, 0x1b, 0x58, 0x64, 0xe6, 0x21, 0x9a, 0xe9, 0xb1, 0x6e, 0xc1,
+	0x4c, 0xa8, 0x98, 0x79, 0x17, 0x3f, 0x6b, 0x70, 0x27, 0x97, 0x26, 0xac, 0x5f, 0xae, 0x51, 0xcc,
+	0x22, 0xfd, 0x68, 0x03, 0x26, 0x39, 0xea, 0xa1, 0xa3, 0x36, 0x7b, 0xbf, 0xe0, 0xc8, 0x45, 0xb6,
+	0x83, 0x59, 0xc5, 0x62, 0xa8, 0xa9, 0x7c, 0x61, 0x6f, 0xf8, 0xfd, 0xad, 0x84, 0x98, 0x7e, 0xb8,
+	0x9e, 0x44, 0xda, 0x6d, 0xd4, 0x6e, 0xb2, 0xfd, 0x82, 0xb6, 0x4a, 0x2f, 0xf6, 0x03, 0xd4, 0x28,
+	0x18, 0xba, 0xeb, 0x43, 0x66, 0xbd, 0xea, 0x4a, 0x12, 0x19, 0xc7, 0xa8, 0x7a, 0xc8, 0x8c, 0xa2,
+	0x2a, 0x12, 0x73, 0x57, 0x30, 0xfc, 0xec, 0xe5, 0x65, 0x4b, 0x7b, 0x75, 0xd9, 0xd2, 0xfe, 0xbe,
+	0x6c, 0x69, 0xbf, 0x5c, 0xb5, 0xb6, 0x5e, 0x5d, 0xb5, 0xb6, 0xfe, 0xbc, 0x6a, 0x6d, 0x7d, 0xdf,
+	0xf3, 0x83, 0x78, 0x92, 0x8c, 0xcc, 0xb1, 0x98, 0x66, 0x7d, 0xc6, 0x13, 0x37, 0x88, 0xac, 0x73,
+	0xea, 0x87, 0x7f, 0x08, 0x46, 0x35, 0xfc, 0x47, 0xf0, 0xd1, 0x7f, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0xd8, 0x52, 0xbf, 0x0c, 0x92, 0x08, 0x00, 0x00,
 }
-
-// ---------------------------------------------------------------------------
-// gRPC Query Service
-// ---------------------------------------------------------------------------
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
 var _ grpc.ClientConn
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
 // QueryClient is the client API for Query service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
 	Sigil(ctx context.Context, in *QuerySigilRequest, opts ...grpc.CallOption) (*QuerySigilResponse, error)
 	Bond(ctx context.Context, in *QueryBondRequest, opts ...grpc.CallOption) (*QueryBondResponse, error)
@@ -655,6 +756,7 @@ type QueryClient interface {
 	Lineage(ctx context.Context, in *QueryLineageRequest, opts ...grpc.CallOption) (*QueryLineageResponse, error)
 	ActiveCount(ctx context.Context, in *QueryActiveCountRequest, opts ...grpc.CallOption) (*QueryActiveCountResponse, error)
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	Pulses(ctx context.Context, in *QueryPulsesRequest, opts ...grpc.CallOption) (*QueryPulsesResponse, error)
 }
 
 type queryClient struct {
@@ -719,6 +821,15 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
+func (c *queryClient) Pulses(ctx context.Context, in *QueryPulsesRequest, opts ...grpc.CallOption) (*QueryPulsesResponse, error) {
+	out := new(QueryPulsesResponse)
+	err := c.cc.Invoke(ctx, "/oasyce.sigil.v1.Query/Pulses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	Sigil(context.Context, *QuerySigilRequest) (*QuerySigilResponse, error)
@@ -727,10 +838,12 @@ type QueryServer interface {
 	Lineage(context.Context, *QueryLineageRequest) (*QueryLineageResponse, error)
 	ActiveCount(context.Context, *QueryActiveCountRequest) (*QueryActiveCountResponse, error)
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	Pulses(context.Context, *QueryPulsesRequest) (*QueryPulsesResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
-type UnimplementedQueryServer struct{}
+type UnimplementedQueryServer struct {
+}
 
 func (*UnimplementedQueryServer) Sigil(ctx context.Context, req *QuerySigilRequest) (*QuerySigilResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sigil not implemented")
@@ -749,6 +862,9 @@ func (*UnimplementedQueryServer) ActiveCount(ctx context.Context, req *QueryActi
 }
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
+}
+func (*UnimplementedQueryServer) Pulses(ctx context.Context, req *QueryPulsesRequest) (*QueryPulsesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Pulses not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -863,6 +979,24 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_Pulses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPulsesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Pulses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/oasyce.sigil.v1.Query/Pulses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Pulses(ctx, req.(*QueryPulsesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "oasyce.sigil.v1.Query",
@@ -892,14 +1026,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Params",
 			Handler:    _Query_Params_Handler,
 		},
+		{
+			MethodName: "Pulses",
+			Handler:    _Query_Pulses_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "oasyce/sigil/v1/query.proto",
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QuerySigilRequest
-// ---------------------------------------------------------------------------
 
 func (m *QuerySigilRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
@@ -919,16 +1053,451 @@ func (m *QuerySigilRequest) MarshalTo(dAtA []byte) (int, error) {
 func (m *QuerySigilRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
+	var l int
+	_ = l
 	if len(m.SigilId) > 0 {
 		i -= len(m.SigilId)
 		copy(dAtA[i:], m.SigilId)
 		i = encodeVarintQuery(dAtA, i, uint64(len(m.SigilId)))
 		i--
-		dAtA[i] = 0x0a // field 1, type 2
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
+func (m *QuerySigilResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QuerySigilResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QuerySigilResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Sigil.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryBondRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBondRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBondRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.BondId) > 0 {
+		i -= len(m.BondId)
+		copy(dAtA[i:], m.BondId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.BondId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryBondResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBondResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBondResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Bond.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryBondsBySigilRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBondsBySigilRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBondsBySigilRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.SigilId) > 0 {
+		i -= len(m.SigilId)
+		copy(dAtA[i:], m.SigilId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.SigilId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryBondsBySigilResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBondsBySigilResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBondsBySigilResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Bonds) > 0 {
+		for iNdEx := len(m.Bonds) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Bonds[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryLineageRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLineageRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLineageRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.SigilId) > 0 {
+		i -= len(m.SigilId)
+		copy(dAtA[i:], m.SigilId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.SigilId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryLineageResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLineageResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLineageResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Children) > 0 {
+		for iNdEx := len(m.Children) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Children[iNdEx])
+			copy(dAtA[i:], m.Children[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.Children[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActiveCountRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActiveCountRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActiveCountRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActiveCountResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActiveCountResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActiveCountResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Count != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Count))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryParamsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryParamsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryParamsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryParamsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryParamsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryPulsesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryPulsesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryPulsesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.SigilId) > 0 {
+		i -= len(m.SigilId)
+		copy(dAtA[i:], m.SigilId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.SigilId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryPulsesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryPulsesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryPulsesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Status != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.BlocksUntilDissolve != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.BlocksUntilDissolve))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.BlocksUntilDormant != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.BlocksUntilDormant))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.MaxPulseHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.MaxPulseHeight))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.DimensionPulses) > 0 {
+		for k := range m.DimensionPulses {
+			v := m.DimensionPulses[k]
+			baseI := i
+			i = encodeVarintQuery(dAtA, i, uint64(v))
+			i--
+			dAtA[i] = 0x10
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintQuery(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintQuery(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
+	offset -= sovQuery(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
 func (m *QuerySigilRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -942,6 +1511,186 @@ func (m *QuerySigilRequest) Size() (n int) {
 	return n
 }
 
+func (m *QuerySigilResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Sigil.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryBondRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BondId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryBondResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Bond.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryBondsBySigilRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.SigilId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryBondsBySigilResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Bonds) > 0 {
+		for _, e := range m.Bonds {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryLineageRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.SigilId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryLineageResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Children) > 0 {
+		for _, s := range m.Children {
+			l = len(s)
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryActiveCountRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryActiveCountResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Count != 0 {
+		n += 1 + sovQuery(uint64(m.Count))
+	}
+	return n
+}
+
+func (m *QueryParamsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryParamsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Params.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryPulsesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.SigilId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryPulsesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.DimensionPulses) > 0 {
+		for k, v := range m.DimensionPulses {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovQuery(uint64(len(k))) + 1 + sovQuery(uint64(v))
+			n += mapEntrySize + 1 + sovQuery(uint64(mapEntrySize))
+		}
+	}
+	if m.MaxPulseHeight != 0 {
+		n += 1 + sovQuery(uint64(m.MaxPulseHeight))
+	}
+	if m.BlocksUntilDormant != 0 {
+		n += 1 + sovQuery(uint64(m.BlocksUntilDormant))
+	}
+	if m.BlocksUntilDissolve != 0 {
+		n += 1 + sovQuery(uint64(m.BlocksUntilDissolve))
+	}
+	if m.Status != 0 {
+		n += 1 + sovQuery(uint64(m.Status))
+	}
+	return n
+}
+
+func sovQuery(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozQuery(x uint64) (n int) {
+	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
 func (m *QuerySigilRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -964,7 +1713,17 @@ func (m *QuerySigilRequest) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QuerySigilRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QuerySigilRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SigilId", wireType)
+			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -993,7 +1752,7 @@ func (m *QuerySigilRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.SigilId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1002,64 +1761,18 @@ func (m *QuerySigilRequest) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QuerySigilResponse
-// ---------------------------------------------------------------------------
-
-func (m *QuerySigilResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QuerySigilResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QuerySigilResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	{
-		size, err := m.Sigil.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x0a // field 1, type 2
-	return len(dAtA) - i, nil
-}
-
-func (m *QuerySigilResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Sigil.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
 func (m *QuerySigilResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1082,7 +1795,17 @@ func (m *QuerySigilResponse) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QuerySigilResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QuerySigilResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sigil", wireType)
+			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -1112,7 +1835,7 @@ func (m *QuerySigilResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1121,63 +1844,18 @@ func (m *QuerySigilResponse) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryBondRequest
-// ---------------------------------------------------------------------------
-
-func (m *QueryBondRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBondRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBondRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	if len(m.BondId) > 0 {
-		i -= len(m.BondId)
-		copy(dAtA[i:], m.BondId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.BondId)))
-		i--
-		dAtA[i] = 0x0a // field 1, type 2
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryBondRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.BondId)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
 func (m *QueryBondRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1200,7 +1878,17 @@ func (m *QueryBondRequest) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBondRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBondRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BondId", wireType)
+			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -1229,7 +1917,7 @@ func (m *QueryBondRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.BondId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1238,64 +1926,18 @@ func (m *QueryBondRequest) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryBondResponse
-// ---------------------------------------------------------------------------
-
-func (m *QueryBondResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBondResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBondResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	{
-		size, err := m.Bond.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x0a // field 1, type 2
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryBondResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Bond.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
 func (m *QueryBondResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1318,7 +1960,17 @@ func (m *QueryBondResponse) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBondResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBondResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Bond", wireType)
+			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -1348,7 +2000,7 @@ func (m *QueryBondResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1357,63 +2009,18 @@ func (m *QueryBondResponse) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryBondsBySigilRequest
-// ---------------------------------------------------------------------------
-
-func (m *QueryBondsBySigilRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBondsBySigilRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBondsBySigilRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	if len(m.SigilId) > 0 {
-		i -= len(m.SigilId)
-		copy(dAtA[i:], m.SigilId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.SigilId)))
-		i--
-		dAtA[i] = 0x0a // field 1, type 2
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryBondsBySigilRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.SigilId)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
 func (m *QueryBondsBySigilRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1436,7 +2043,17 @@ func (m *QueryBondsBySigilRequest) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBondsBySigilRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBondsBySigilRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SigilId", wireType)
+			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -1465,7 +2082,7 @@ func (m *QueryBondsBySigilRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.SigilId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1474,72 +2091,18 @@ func (m *QueryBondsBySigilRequest) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryBondsBySigilResponse
-// ---------------------------------------------------------------------------
-
-func (m *QueryBondsBySigilResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBondsBySigilResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBondsBySigilResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	if len(m.Bonds) > 0 {
-		for iNdEx := len(m.Bonds) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Bonds[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintQuery(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x0a // field 1, type 2
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryBondsBySigilResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Bonds) > 0 {
-		for _, e := range m.Bonds {
-			l = e.Size()
-			n += 1 + l + sovQuery(uint64(l))
-		}
-	}
-	return n
-}
-
 func (m *QueryBondsBySigilResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1562,7 +2125,17 @@ func (m *QueryBondsBySigilResponse) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBondsBySigilResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBondsBySigilResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Bonds", wireType)
+			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -1593,7 +2166,7 @@ func (m *QueryBondsBySigilResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1602,63 +2175,18 @@ func (m *QueryBondsBySigilResponse) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryLineageRequest
-// ---------------------------------------------------------------------------
-
-func (m *QueryLineageRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryLineageRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryLineageRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	if len(m.SigilId) > 0 {
-		i -= len(m.SigilId)
-		copy(dAtA[i:], m.SigilId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.SigilId)))
-		i--
-		dAtA[i] = 0x0a // field 1, type 2
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryLineageRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.SigilId)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
 func (m *QueryLineageRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1681,7 +2209,17 @@ func (m *QueryLineageRequest) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLineageRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLineageRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SigilId", wireType)
+			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -1710,7 +2248,7 @@ func (m *QueryLineageRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.SigilId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1719,67 +2257,18 @@ func (m *QueryLineageRequest) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryLineageResponse
-// ---------------------------------------------------------------------------
-
-func (m *QueryLineageResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryLineageResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryLineageResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	if len(m.Children) > 0 {
-		for iNdEx := len(m.Children) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Children[iNdEx])
-			copy(dAtA[i:], m.Children[iNdEx])
-			i = encodeVarintQuery(dAtA, i, uint64(len(m.Children[iNdEx])))
-			i--
-			dAtA[i] = 0x0a // field 1, type 2
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryLineageResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Children) > 0 {
-		for _, s := range m.Children {
-			l = len(s)
-			n += 1 + l + sovQuery(uint64(l))
-		}
-	}
-	return n
-}
-
 func (m *QueryLineageResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1802,7 +2291,17 @@ func (m *QueryLineageResponse) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLineageResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLineageResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Children", wireType)
+			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -1831,7 +2330,7 @@ func (m *QueryLineageResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.Children = append(m.Children, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -1840,50 +2339,18 @@ func (m *QueryLineageResponse) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryActiveCountRequest (empty)
-// ---------------------------------------------------------------------------
-
-func (m *QueryActiveCountRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryActiveCountRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryActiveCountRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryActiveCountRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	return n
-}
-
 func (m *QueryActiveCountRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1904,67 +2371,36 @@ func (m *QueryActiveCountRequest) Unmarshal(dAtA []byte) error {
 				break
 			}
 		}
-		iNdEx = preIndex
-		skippy, err := skipQuery(dAtA[iNdEx:])
-		if err != nil {
-			return err
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActiveCountRequest: wiretype end group for non-group")
 		}
-		if (skippy < 0) || (iNdEx+skippy) < 0 {
-			return ErrInvalidLengthQuery
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActiveCountRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
-		if iNdEx+skippy > l {
-			return io.ErrUnexpectedEOF
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
 		}
-		iNdEx += skippy
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryActiveCountResponse
-// ---------------------------------------------------------------------------
-
-func (m *QueryActiveCountResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryActiveCountResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryActiveCountResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	if m.Count != 0 {
-		i = encodeVarintQuery(dAtA, i, uint64(m.Count))
-		i--
-		dAtA[i] = 0x08 // field 1, type 0 (varint)
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryActiveCountResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Count != 0 {
-		n += 1 + sovQuery(uint64(m.Count))
-	}
-	return n
-}
-
 func (m *QueryActiveCountResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1987,7 +2423,17 @@ func (m *QueryActiveCountResponse) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 0 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActiveCountResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActiveCountResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Count", wireType)
+			}
 			m.Count = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -2003,7 +2449,7 @@ func (m *QueryActiveCountResponse) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -2012,50 +2458,18 @@ func (m *QueryActiveCountResponse) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryParamsRequest (empty)
-// ---------------------------------------------------------------------------
-
-func (m *QueryParamsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryParamsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryParamsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryParamsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	return n
-}
-
 func (m *QueryParamsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2076,71 +2490,36 @@ func (m *QueryParamsRequest) Unmarshal(dAtA []byte) error {
 				break
 			}
 		}
-		iNdEx = preIndex
-		skippy, err := skipQuery(dAtA[iNdEx:])
-		if err != nil {
-			return err
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryParamsRequest: wiretype end group for non-group")
 		}
-		if (skippy < 0) || (iNdEx+skippy) < 0 {
-			return ErrInvalidLengthQuery
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryParamsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
-		if iNdEx+skippy > l {
-			return io.ErrUnexpectedEOF
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
 		}
-		iNdEx += skippy
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Marshal / Unmarshal / Size — QueryParamsResponse
-// ---------------------------------------------------------------------------
-
-func (m *QueryParamsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryParamsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	{
-		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x0a // field 1, type 2
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryParamsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Params.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
 func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2163,7 +2542,17 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
-		if wireType == 2 && fieldNum == 1 {
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryParamsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -2193,7 +2582,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		} else {
+		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
 			if err != nil {
@@ -2202,39 +2591,340 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if iNdEx+skippy > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += skippy
 		}
 	}
+
 	if iNdEx > l {
 		return io.ErrUnexpectedEOF
 	}
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// Helpers — encodeVarintQuery, sovQuery, skipQuery, error sentinels
-// ---------------------------------------------------------------------------
-
-func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
-	offset -= sovQuery(v)
-	base := offset
-	for v >= 1<<7 {
-		dAtA[offset] = uint8(v&0x7f | 0x80)
-		v >>= 7
-		offset++
+func (m *QueryPulsesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryPulsesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryPulsesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SigilId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SigilId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
 	}
-	dAtA[offset] = uint8(v)
-	return base
-}
 
-func sovQuery(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
+func (m *QueryPulsesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryPulsesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryPulsesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DimensionPulses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DimensionPulses == nil {
+				m.DimensionPulses = make(map[string]int64)
+			}
+			var mapkey string
+			var mapvalue int64
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowQuery
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapvalue |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipQuery(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.DimensionPulses[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxPulseHeight", wireType)
+			}
+			m.MaxPulseHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxPulseHeight |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlocksUntilDormant", wireType)
+			}
+			m.BlocksUntilDormant = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlocksUntilDormant |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlocksUntilDissolve", wireType)
+			}
+			m.BlocksUntilDissolve = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlocksUntilDissolve |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
 
-func skipQuery(dAtA []byte) (int, error) {
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipQuery(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
 	depth := 0
@@ -2249,7 +2939,7 @@ func skipQuery(dAtA []byte) (int, error) {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -2282,7 +2972,7 @@ func skipQuery(dAtA []byte) (int, error) {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				length |= int(b&0x7F) << shift
+				length |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}

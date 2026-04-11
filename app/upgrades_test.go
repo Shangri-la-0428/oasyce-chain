@@ -10,6 +10,7 @@ import (
 
 	"cosmossdk.io/log"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 
 	sigilkeeper "github.com/oasyce/chain/x/sigil/keeper"
 	sigiltypes "github.com/oasyce/chain/x/sigil/types"
@@ -53,82 +54,117 @@ func TestStoreUpgradesForPlan(t *testing.T) {
 }
 
 func TestUpgradeV080DryRunMigratesSigilLivenessIndex(t *testing.T) {
-	app := newTestApp(t)
-	ctx := app.NewUncachedContext(false, cmtproto.Header{
-		ChainID: "oasyce-upgrade-test-1",
-		Height:  7,
-		Time:    time.Now(),
-	})
+	type testCase struct {
+		name        string
+		buildVM     func(module.VersionMap) module.VersionMap
+		preSigilVer uint64
+	}
 
-	active := sigiltypes.Sigil{
-		SigilId:          "SIG_active_upgrade_test",
-		Creator:          "oasyce1creator",
-		PublicKey:        []byte("active-upgrade-test-pubkey"),
-		Status:           sigiltypes.SigilStatusActive,
-		CreationHeight:   1,
-		LastActiveHeight: 10,
-		DimensionPulses: map[string]int64{
-			"thronglets": 200,
+	cases := []testCase{
+		{
+			name: "pre_version_1",
+			buildVM: func(vm module.VersionMap) module.VersionMap {
+				vm[sigiltypes.ModuleName] = 1
+				return vm
+			},
+			preSigilVer: 1,
+		},
+		{
+			name: "pre_version_0",
+			buildVM: func(vm module.VersionMap) module.VersionMap {
+				vm[sigiltypes.ModuleName] = 0
+				return vm
+			},
+			preSigilVer: 0,
+		},
+		{
+			name: "legacy_missing_version_map_entry",
+			buildVM: func(_ module.VersionMap) module.VersionMap {
+				return module.VersionMap{}
+			},
+			preSigilVer: 0,
 		},
 	}
-	dormant := sigiltypes.Sigil{
-		SigilId:          "SIG_dormant_upgrade_test",
-		Creator:          "oasyce1creator",
-		PublicKey:        []byte("dormant-upgrade-test-pubkey"),
-		Status:           sigiltypes.SigilStatusDormant,
-		CreationHeight:   1,
-		LastActiveHeight: 15,
-		DimensionPulses: map[string]int64{
-			"thronglets": 250,
-		},
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := newTestApp(t)
+			ctx := app.NewUncachedContext(false, cmtproto.Header{
+				ChainID: "oasyce-upgrade-test-1",
+				Height:  7,
+				Time:    time.Now(),
+			})
+
+			active := sigiltypes.Sigil{
+				SigilId:          "SIG_active_upgrade_test",
+				Creator:          "oasyce1creator",
+				PublicKey:        []byte("active-upgrade-test-pubkey"),
+				Status:           sigiltypes.SigilStatusActive,
+				CreationHeight:   1,
+				LastActiveHeight: 10,
+				DimensionPulses: map[string]int64{
+					"thronglets": 200,
+				},
+			}
+			dormant := sigiltypes.Sigil{
+				SigilId:          "SIG_dormant_upgrade_test",
+				Creator:          "oasyce1creator",
+				PublicKey:        []byte("dormant-upgrade-test-pubkey"),
+				Status:           sigiltypes.SigilStatusDormant,
+				CreationHeight:   1,
+				LastActiveHeight: 15,
+				DimensionPulses: map[string]int64{
+					"thronglets": 250,
+				},
+			}
+
+			require.NoError(t, app.SigilKeeper.SetSigil(ctx, active))
+			require.NoError(t, app.SigilKeeper.SetSigil(ctx, dormant))
+			app.SigilKeeper.SetActiveCount(ctx, 1)
+
+			// Simulate pre-v2 state: both active and dormant sigils indexed in the
+			// single (legacy) liveness bucket by LastActiveHeight. ClearLivenessIndex
+			// inside Migrate1to2 wipes both buckets before rebuilding, so it's safe
+			// to leave SetSigil's new-format entries in place.
+			store := ctx.KVStore(app.keys[sigiltypes.StoreKey])
+			app.SigilKeeper.DeleteSigilFromLivenessIndex(ctx, sigilkeeper.MaxPulseHeight(active), active.SigilId)
+			store.Set(sigiltypes.LivenessIndexKey(active.LastActiveHeight, active.SigilId), []byte(active.SigilId))
+			store.Set(sigiltypes.LivenessIndexKey(dormant.LastActiveHeight, dormant.SigilId), []byte(dormant.SigilId))
+
+			vm := tc.buildVM(app.ModuleManager.GetVersionMap())
+			require.NoError(t, app.UpgradeKeeper.SetModuleVersionMap(ctx, vm))
+
+			plan := upgradetypes.Plan{
+				Name:   UpgradeV080,
+				Height: 10,
+				Info:   "sigil v1 -> v2 effective activity height migration",
+			}
+			require.NoError(t, app.UpgradeKeeper.ScheduleUpgrade(ctx, plan))
+			require.NoError(t, app.UpgradeKeeper.ApplyUpgrade(ctx, plan))
+
+			updatedVM, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+			require.NoError(t, err)
+			require.Equal(t, uint64(2), updatedVM[sigiltypes.ModuleName])
+
+			// Active sigil: only present in active bucket at MaxPulseHeight.
+			require.Nil(t, store.Get(sigiltypes.LivenessIndexKey(active.LastActiveHeight, active.SigilId)))
+			require.Equal(t, []byte(active.SigilId), store.Get(sigiltypes.LivenessIndexKey(200, active.SigilId)))
+			require.Nil(t, store.Get(sigiltypes.DormantLivenessIndexKey(200, active.SigilId)))
+
+			// Dormant sigil: only present in dormant bucket at MaxPulseHeight.
+			require.Nil(t, store.Get(sigiltypes.LivenessIndexKey(dormant.LastActiveHeight, dormant.SigilId)))
+			require.Nil(t, store.Get(sigiltypes.LivenessIndexKey(250, dormant.SigilId)))
+			require.Equal(t, []byte(dormant.SigilId), store.Get(sigiltypes.DormantLivenessIndexKey(250, dormant.SigilId)))
+
+			gotActive, found := app.SigilKeeper.GetSigil(ctx, active.SigilId)
+			require.True(t, found)
+			require.Equal(t, sigiltypes.SigilStatusActive, sigiltypes.SigilStatus(gotActive.Status))
+
+			gotDormant, found := app.SigilKeeper.GetSigil(ctx, dormant.SigilId)
+			require.True(t, found)
+			require.Equal(t, sigiltypes.SigilStatusDormant, sigiltypes.SigilStatus(gotDormant.Status))
+		})
 	}
-
-	require.NoError(t, app.SigilKeeper.SetSigil(ctx, active))
-	require.NoError(t, app.SigilKeeper.SetSigil(ctx, dormant))
-	app.SigilKeeper.SetActiveCount(ctx, 1)
-
-	// Simulate pre-v2 state: both active and dormant sigils indexed in the
-	// single (legacy) liveness bucket by LastActiveHeight. ClearLivenessIndex
-	// inside Migrate1to2 wipes both buckets before rebuilding, so it's safe
-	// to leave SetSigil's new-format entries in place.
-	store := ctx.KVStore(app.keys[sigiltypes.StoreKey])
-	app.SigilKeeper.DeleteSigilFromLivenessIndex(ctx, sigilkeeper.MaxPulseHeight(active), active.SigilId)
-	store.Set(sigiltypes.LivenessIndexKey(active.LastActiveHeight, active.SigilId), []byte(active.SigilId))
-	store.Set(sigiltypes.LivenessIndexKey(dormant.LastActiveHeight, dormant.SigilId), []byte(dormant.SigilId))
-
-	vm := app.ModuleManager.GetVersionMap()
-	vm[sigiltypes.ModuleName] = 1
-	require.NoError(t, app.UpgradeKeeper.SetModuleVersionMap(ctx, vm))
-
-	plan := upgradetypes.Plan{
-		Name:   UpgradeV080,
-		Height: 10,
-		Info:   "sigil v1 -> v2 effective activity height migration",
-	}
-	require.NoError(t, app.UpgradeKeeper.ScheduleUpgrade(ctx, plan))
-	require.NoError(t, app.UpgradeKeeper.ApplyUpgrade(ctx, plan))
-
-	updatedVM, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
-	require.NoError(t, err)
-	require.Equal(t, uint64(2), updatedVM[sigiltypes.ModuleName])
-
-	// Active sigil: only present in active bucket at MaxPulseHeight.
-	require.Nil(t, store.Get(sigiltypes.LivenessIndexKey(active.LastActiveHeight, active.SigilId)))
-	require.Equal(t, []byte(active.SigilId), store.Get(sigiltypes.LivenessIndexKey(200, active.SigilId)))
-	require.Nil(t, store.Get(sigiltypes.DormantLivenessIndexKey(200, active.SigilId)))
-
-	// Dormant sigil: only present in dormant bucket at MaxPulseHeight.
-	require.Nil(t, store.Get(sigiltypes.LivenessIndexKey(dormant.LastActiveHeight, dormant.SigilId)))
-	require.Nil(t, store.Get(sigiltypes.LivenessIndexKey(250, dormant.SigilId)))
-	require.Equal(t, []byte(dormant.SigilId), store.Get(sigiltypes.DormantLivenessIndexKey(250, dormant.SigilId)))
-
-	gotActive, found := app.SigilKeeper.GetSigil(ctx, active.SigilId)
-	require.True(t, found)
-	require.Equal(t, sigiltypes.SigilStatusActive, sigiltypes.SigilStatus(gotActive.Status))
-
-	gotDormant, found := app.SigilKeeper.GetSigil(ctx, dormant.SigilId)
-	require.True(t, found)
-	require.Equal(t, sigiltypes.SigilStatusDormant, sigiltypes.SigilStatus(gotDormant.Status))
 }
 
 func TestModuleManagerVersionMapIncludesSigilV2(t *testing.T) {

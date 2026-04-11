@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "oasyce10d07y265gmmuvt4z0w9aw880jnsr700jjuangx",
+      "plan": {
+        "name": "v0.8.0",
+        "height": 192884,
+        "info": "sigil v1 -> v2 effective activity height migration; state migration only; no new stores"
+      }
+    }
+  ],
+  "metadata": "v0.8.0-sigil-migration-2026-04-12",
+  "deposit": "500000000uoas",
+  "title": "Upgrade x/sigil to v2 effective activity height migration (v0.8.0)",
+  "summary": "Apply the x/sigil v1 -> v2 state migration to rebuild active liveness indexes from MaxPulseHeight() semantics. State migration only, no new stores.",
+  "expedited": true
+}

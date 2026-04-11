@@ -1,0 +1,7 @@
+*
+!.gitignore
+!reports/
+!reports/*.json
+!reports/*.txt
+!v080-proposal.json
+!v080-metadata.json

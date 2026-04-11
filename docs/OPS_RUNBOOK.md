@@ -187,7 +187,7 @@ python3 scripts/live_gate_local.py --keep-temp-dir
 
 - state migration only
 - no new store key
-- no new tx/query surface
+- chain query surface can evolve independently, but the upgrade itself adds no new store
 - 目标是把旧的 active liveness index 从 `LastActiveHeight` 语义重建到 `MaxPulseHeight()` 语义
 
 仓库内默认的升级计划名是：
@@ -208,91 +208,54 @@ docs/upgrades/v0.8.0/
 - `metadata.template.json`
 - `CHECKLIST.md`
 
-### 升级前最小检查
+### 本地 rehearsal：真实 fixture replay
 
-- 当前链 `/health` 可访问
-- 当前 `/health` 里的 `module_versions` 可正常返回
-- 当前二进制仍有 `oasyced tx sigil pulse`
-- Pulse live path 正常
-- `python3 scripts/live_gate_local.py` 在当前源码上可通过
+本地 rehearsal 不再追求完整的 `proposal -> vote -> apply`。它只做一件事：
+
+- 用 **复制的 VPS pre-upgrade node home** 作为 fixture
+- 在 repo-local temp dir 里重放 `UpgradeV080`
+- 审计 `0x05` / `0x09` bucket、active_count、orphan index、双桶冲突
+
+```bash
+go run ./tools/v080_fixture_audit audit-home \
+  --home /path/to/copied-vps-home \
+  --output ./tmp/reports/v080-audit-before.json
+
+go run ./tools/v080_fixture_audit replay-v080 \
+  --source-home /path/to/copied-vps-home \
+  --working-home ./tmp/v080-replay \
+  --output ./tmp/reports/v080-replay-report.json
+```
+
+通过标准：
+
+- `active_count` 前后一致
+- active sigils 只在 `0x05`
+- dormant sigils 只在 `0x09`
+- dissolved sigils 不在任何 liveness bucket
+- 没有 orphan index entry
+- `sigil` 模块版本迁移到 `2`
+
+### VPS 真实升级执行
+
+真实 proposal / vote / upgrade 只在 VPS 那次执行。必要时可以使用现有 `--expedited`，但不要为了 rehearsal 改参数。
 
 推荐命令：
 
 ```bash
-curl -s http://<node>:1317/health | jq
-oasyced tx sigil --help
-python3 scripts/check_pulse_compat.py --sdk-mode source
-python3 scripts/live_gate_local.py
+GOOS=linux GOARCH=amd64 go build -o ./tmp/oasyced-v0.8.0 ./cmd/oasyced
+shasum -a 256 ./tmp/oasyced-v0.8.0
+scp -P 29222 ./tmp/oasyced-v0.8.0 root@47.93.32.88:/tmp/oasyced-v0.8.0
 ```
 
-### Proposal-Ready Upgrade Flow
+升级前后核验以 [`docs/upgrades/v0.8.0/CHECKLIST.md`](./upgrades/v0.8.0/CHECKLIST.md) 为准，尤其要填完：
 
-生成 proposal 和 metadata：
-
-```bash
-python3 scripts/upgrade_proposal_v080.py render \
-  --height <candidate-height> \
-  --proposal-output /tmp/v080-proposal.json \
-  --metadata-output /tmp/v080-metadata.json
-```
-
-校验渲染后的 proposal：
-
-```bash
-python3 scripts/upgrade_proposal_v080.py validate /tmp/v080-proposal.json
-```
-
-在本地 tempnet 上做治理 dry-run：
-
-```bash
-python3 scripts/upgrade_proposal_v080.py dry-run \
-  --height <candidate-height> \
-  --network tempnet
-```
-
-如果只是想复用已有本地链，而不是脚本自举 tempnet：
-
-```bash
-python3 scripts/upgrade_proposal_v080.py dry-run \
-  --height <candidate-height> \
-  --network current \
-  --home ~/.oasyced \
-  --rpc http://127.0.0.1:26657
-```
-
-默认约束：
-
-- `plan.name = v0.8.0`
-- `plan.height` 只用模板占位，不在仓库里写死真实高度
-- `MsgSoftwareUpgrade.authority` 固定为 gov module authority
-- `deposit` 默认 `100000000uoas`
-- proposal JSON 里的 `metadata` 只放短 reference；完整 metadata body 落在 sidecar `metadata.json`
-- `plan.info` 固定承载 `sigil v1 -> v2`, `effective activity height migration`, `state migration only`, `no new stores`
-
-### 升级后最小检查
-
-- `/health` 返回 `module_versions.sigil == 2`
-- `/health` 继续返回 `anchor` / `delegate` / `sigil` 的模块版本
-- `oasyced tx sigil pulse` 仍然存在
-- Pulse live tx 正常
-- `python3 scripts/live_gate_local.py` 继续通过
-
-推荐命令：
-
-```bash
-curl -s http://<node>:1317/health | jq '.module_versions'
-oasyced tx sigil --help
-python3 scripts/check_pulse_compat.py --sdk-mode source
-python3 scripts/live_gate_local.py
-```
-
-### 这一阶段还不锁什么
-
-- 不在仓库里固定真实 software-upgrade height
-- 不在仓库里固定 proposal 文案、投票窗口、checksums
-- 不在这一阶段处理发布协调或回滚演练
-
-这些都留到 Proposal-Ready / Release-Ready 阶段再锁。
+- binary SHA
+- proposal id
+- 是否 expedited
+- 升级高度
+- 前后 `/health`
+- 至少一个 replay-selected canary 的 `active -> dormant` 观察结果
 
 ## 发布后必须确认
 
@@ -426,14 +389,16 @@ ssh -p 29222 root@47.93.32.88 'bash /tmp/reset_testnet.sh'
 ## 备份
 
 ```bash
-# 导出链状态（可用于迁移或恢复）
-ssh -p 29222 root@47.93.32.88 'su - oasyce -c "oasyced export 2>/dev/null" > /tmp/state-export.json'
-scp -P 29222 root@47.93.32.88:/tmp/state-export.json ./backups/
+# 最小可重放状态副本（用于 v0.8.0 fixture replay / 升级审计）
+ssh -p 29222 root@47.93.32.88 'systemctl stop oasyced && mkdir -p /tmp/oasyce-fixture/data && cp -R /home/oasyce/.oasyced/data/application.db /tmp/oasyce-fixture/data/ && systemctl start oasyced'
+scp -P 29222 -r root@47.93.32.88:/tmp/oasyce-fixture ./backups/
 
 # 关键文件备份
 ssh -p 29222 root@47.93.32.88 'tar czf /tmp/oasyce-secrets.tar.gz /home/oasyce/secrets/'
 scp -P 29222 root@47.93.32.88:/tmp/oasyce-secrets.tar.gz ./backups/
 ```
+
+`oasyced export` 目前不是这条升级/审计路径的真相源；`v0.8.0` 相关 rehearsal 和 post-upgrade audit 一律使用复制的 node home / `data/application.db`。
 
 ---
 

@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/oasyce/chain/x/sigil/types"
@@ -15,8 +16,12 @@ import (
 // Dormant sigils with effective activity height <= (currentHeight - DissolveThreshold)
 // become Dissolved.
 func (k Keeper) BeginBlocker(ctx sdk.Context) error {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, telemetry.Now(), telemetry.MetricKeyBeginBlocker)
+
 	params := k.GetParams(ctx)
 	currentHeight := ctx.BlockHeight()
+	var dissolvedCount int
+	var transitionedToDormant int
 
 	// Phase 1: Dissolve — range-scan the dormant liveness index for sigils
 	// whose frozen effective activity height has passed the dissolve
@@ -40,6 +45,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) error {
 
 			s.Status = types.SigilStatusDissolved
 			_ = k.SetSigil(ctx, s)
+			dissolvedCount++
 
 			ctx.EventManager().EmitEvent(sdk.NewEvent(
 				"sigil_auto_dissolve",
@@ -66,6 +72,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) error {
 				s.Status = types.SigilStatusDormant
 				k.DecrementActiveCount(ctx)
 				_ = k.SetSigil(ctx, s)
+				transitionedToDormant++
 
 				ctx.EventManager().EmitEvent(sdk.NewEvent(
 					"sigil_dormant",
@@ -74,6 +81,15 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) error {
 				))
 			}
 		}
+	}
+
+	telemetry.SetGauge(float32(k.GetActiveCount(ctx)), "oasyce", "sigil", "active_count")
+	telemetry.SetGauge(float32(k.countSigilsByStatus(ctx, types.SigilStatusDormant)), "oasyce", "sigil", "dormant_count")
+	if dissolvedCount > 0 {
+		telemetry.IncrCounter(float32(dissolvedCount), "oasyce", "sigil", "dissolved_total")
+	}
+	if transitionedToDormant > 0 {
+		telemetry.IncrCounter(float32(transitionedToDormant), "oasyce", "sigil", "transitioned_to_dormant_total")
 	}
 
 	return nil

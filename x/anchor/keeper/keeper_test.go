@@ -18,9 +18,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
 
 	"github.com/oasyce/chain/x/anchor/keeper"
 	"github.com/oasyce/chain/x/anchor/types"
+	sigilkeeper "github.com/oasyce/chain/x/sigil/keeper"
+	sigiltypes "github.com/oasyce/chain/x/sigil/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -49,6 +52,30 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context) {
 	k := keeper.NewKeeper(cdc, storeKey, "authority")
 
 	return k, ctx
+}
+
+func setupKeepersWithSigil(t *testing.T) (keeper.Keeper, sigilkeeper.Keeper, sdk.Context) {
+	t.Helper()
+
+	anchorKey := storetypes.NewKVStoreKey(types.StoreKey)
+	sigilKey := storetypes.NewKVStoreKey(sigiltypes.StoreKey)
+	db := dbm.NewMemDB()
+	logger := log.NewNopLogger()
+
+	cms := store.NewCommitMultiStore(db, logger, metrics.NoOpMetrics{})
+	cms.MountStoreWithDB(anchorKey, storetypes.StoreTypeIAVL, db)
+	cms.MountStoreWithDB(sigilKey, storetypes.StoreTypeIAVL, db)
+	require.NoError(t, cms.LoadLatestVersion())
+
+	ctx := sdk.NewContext(cms, cmtproto.Header{Height: 100, Time: time.Now()}, false, logger)
+
+	ir := codectypes.NewInterfaceRegistry()
+	cdc := codec.NewProtoCodec(ir)
+
+	sigils := sigilkeeper.NewKeeper(cdc, sigilKey, "authority")
+	require.NoError(t, sigils.SetParams(ctx, sigiltypes.DefaultParams()))
+	anchors := keeper.NewKeeper(cdc, anchorKey, "authority", sigils)
+	return anchors, sigils, ctx
 }
 
 // makePubkeyAndSigner creates a 32-byte test pubkey and a derived bech32
@@ -200,6 +227,75 @@ func TestAnchorTrace_AnySigner(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected success with different signer, got: %v", err)
 	}
+}
+
+func TestAnchorTrace_ImplicitPulseForOwnSigil(t *testing.T) {
+	k, sigils, ctx := setupKeepersWithSigil(t)
+	ms := keeper.NewMsgServer(k)
+
+	pubkey, signer := makePubkeyAndSigner("owner-node")
+	sigilID, err := sigils.RegisterSigil(ctx, signer, pubkey, "owner sigil")
+	require.NoError(t, err)
+
+	traceID := makeTraceID("trace-owner-pulse")
+	msg := validMsg(traceID, pubkey, signer, "text-generation")
+	msg.SigilId = sigilID
+
+	_, err = ms.AnchorTrace(ctx, msg)
+	require.NoError(t, err)
+
+	sigil, found := sigils.GetSigil(ctx, sigilID)
+	require.True(t, found)
+	require.Equal(t, int64(100), sigil.LastActiveHeight)
+	require.Equal(t, int64(100), sigil.DimensionPulses["anchor"])
+}
+
+func TestAnchorTrace_NoPulseWhenNotOwner(t *testing.T) {
+	k, sigils, ctx := setupKeepersWithSigil(t)
+	ms := keeper.NewMsgServer(k)
+
+	pubkey, signer := makePubkeyAndSigner("owner-node")
+	sigilID, err := sigils.RegisterSigil(ctx, signer, pubkey, "owner sigil")
+	require.NoError(t, err)
+
+	_, otherSigner := makePubkeyAndSigner("fee-payer")
+	traceID := makeTraceID("trace-non-owner")
+	msg := validMsg(traceID, pubkey, otherSigner, "text-generation")
+	msg.SigilId = sigilID
+
+	_, err = ms.AnchorTrace(ctx, msg)
+	require.NoError(t, err)
+
+	sigil, found := sigils.GetSigil(ctx, sigilID)
+	require.True(t, found)
+	require.Nil(t, sigil.DimensionPulses)
+}
+
+func TestAnchorTrace_NoPulseWhenSigilNotActive(t *testing.T) {
+	k, sigils, ctx := setupKeepersWithSigil(t)
+	ms := keeper.NewMsgServer(k)
+
+	pubkey, signer := makePubkeyAndSigner("dormant-node")
+	sigilID, err := sigils.RegisterSigil(ctx, signer, pubkey, "dormant sigil")
+	require.NoError(t, err)
+
+	sigil, found := sigils.GetSigil(ctx, sigilID)
+	require.True(t, found)
+	sigil.Status = sigiltypes.SigilStatusDormant
+	require.NoError(t, sigils.SetSigil(ctx, sigil))
+	sigils.SetActiveCount(ctx, 0)
+
+	traceID := makeTraceID("trace-dormant")
+	msg := validMsg(traceID, pubkey, signer, "text-generation")
+	msg.SigilId = sigilID
+
+	_, err = ms.AnchorTrace(ctx, msg)
+	require.NoError(t, err)
+
+	updated, found := sigils.GetSigil(ctx, sigilID)
+	require.True(t, found)
+	require.Nil(t, updated.DimensionPulses)
+	require.Equal(t, sigiltypes.SigilStatusDormant, sigiltypes.SigilStatus(updated.Status))
 }
 
 // ---------------------------------------------------------------------------

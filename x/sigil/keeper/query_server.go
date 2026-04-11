@@ -81,3 +81,62 @@ func (q queryServer) Params(goCtx context.Context, _ *types.QueryParamsRequest) 
 	p := q.Keeper.GetParams(ctx)
 	return &types.QueryParamsResponse{Params: p}, nil
 }
+
+func (q queryServer) Pulses(goCtx context.Context, req *types.QueryPulsesRequest) (*types.QueryPulsesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if req.SigilId == "" {
+		return nil, types.ErrInvalidSigilID.Wrap("sigil_id cannot be empty")
+	}
+
+	s, found := q.Keeper.GetSigil(ctx, req.SigilId)
+	if !found {
+		return nil, types.ErrSigilNotFound.Wrapf("sigil %s not found", req.SigilId)
+	}
+
+	params := q.Keeper.GetParams(ctx)
+	maxPulseHeight := MaxPulseHeight(s)
+	status := types.SigilStatus(s.Status)
+
+	resp := &types.QueryPulsesResponse{
+		DimensionPulses:     copyDimensionPulses(s.DimensionPulses),
+		MaxPulseHeight:      maxPulseHeight,
+		Status:              int32(status),
+		BlocksUntilDormant:  0,
+		BlocksUntilDissolve: 0,
+	}
+
+	switch status {
+	case types.SigilStatusActive:
+		resp.BlocksUntilDormant = blocksUntilThreshold(ctx.BlockHeight(), maxPulseHeight, params.DormantThreshold)
+	case types.SigilStatusDormant:
+		resp.BlocksUntilDissolve = blocksUntilThreshold(ctx.BlockHeight(), maxPulseHeight, params.DissolveThreshold)
+	}
+
+	return resp, nil
+}
+
+func blocksUntilThreshold(currentHeight, lastHeight, threshold int64) int64 {
+	if threshold <= 0 {
+		return 0
+	}
+	elapsed := currentHeight - lastHeight
+	if elapsed < 0 {
+		elapsed = 0
+	}
+	if elapsed >= threshold {
+		return 0
+	}
+	return threshold - elapsed
+}
+
+func copyDimensionPulses(in map[string]int64) map[string]int64 {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]int64, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
+}

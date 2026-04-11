@@ -25,6 +25,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryLineage(),
 		CmdQueryActiveCount(),
 		CmdQueryParams(),
+		CmdQueryPulses(),
 	)
 
 	return queryCmd
@@ -168,6 +169,31 @@ func CmdQueryParams() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			resp, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryPulses() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pulses [sigil-id]",
+		Short: "Query Sigil pulse heights and remaining liveness windows",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.Pulses(cmd.Context(), &types.QueryPulsesRequest{SigilId: args[0]})
 			if err != nil {
 				return err
 			}

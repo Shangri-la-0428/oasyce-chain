@@ -23,6 +23,25 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, authority st
 
 func (k Keeper) Authority() string { return k.authority }
 
+func (k Keeper) StoreKey() storetypes.StoreKey { return k.storeKey }
+
+func (k Keeper) TouchPulse(ctx sdk.Context, sigilID, dim string) error {
+	s, found := k.GetSigil(ctx, sigilID)
+	if !found {
+		return types.ErrSigilNotFound.Wrapf("sigil %s", sigilID)
+	}
+	if types.SigilStatus(s.Status) != types.SigilStatusActive {
+		return types.ErrSigilDissolved.Wrapf("sigil %s is not active", sigilID)
+	}
+	if s.DimensionPulses == nil {
+		s.DimensionPulses = make(map[string]int64)
+	}
+	height := ctx.BlockHeight()
+	s.DimensionPulses[dim] = height
+	s.LastActiveHeight = height
+	return k.SetSigil(ctx, s)
+}
+
 // ---------------------------------------------------------------------------
 // Sigil CRUD
 // ---------------------------------------------------------------------------

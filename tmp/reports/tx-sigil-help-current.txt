@@ -1,0 +1,27 @@
+Sigil lifecycle transactions
+
+Usage:
+  oasyced tx sigil [flags]
+  oasyced tx sigil [command]
+
+Available Commands:
+  bond        Create a bond between two Sigils
+  dissolve    Dissolve a Sigil permanently
+  fork        Fork a new Sigil from an existing parent
+  genesis     Create a new Sigil
+  merge       Merge two Sigils
+  pulse       Send multi-dimensional heartbeat pulse for a Sigil
+  unbond      Remove a bond
+
+Flags:
+  -h, --help   help for sigil
+
+Global Flags:
+      --chain-id string     The network chain ID
+      --home string         directory for config and data (default "/root/.oasyced")
+      --log_format string   The logging format (json|plain) (default "plain")
+      --log_level string    The logging level (trace|debug|info|warn|error|fatal|panic|disabled or '*:<level>,<key>:<level>') (default "info")
+      --log_no_color        Disable colored logs
+      --trace               print out full stack trace on errors
+
+Use "oasyced tx sigil [command] --help" for more information about a command.
