@@ -15,6 +15,45 @@ This package is proposal-ready, not release-ready:
 - keep the migration state-only
 - add no new module stores
 
+## Architecture Note — Rehearsal Scope
+
+Because this upgrade is state-only (see above), the interesting rehearsal
+question is whether `Migrate1to2` behaves correctly on **real state shape**,
+not whether cosmos-sdk's governance path still works.
+
+**In scope for local rehearsal**:
+
+- `Migrate1to2` correctness on a testnet-derived v0.7.0 state export, not
+  the synthetic two-sigil fixture in `x/sigil/keeper/migration_test.go`
+- Post-migration invariants: `active_count` preserved, every sigil lives in
+  exactly one bucket at the correct `MaxPulseHeight`, no orphan index
+  entries, no dropped records
+
+**Out of scope for local rehearsal**:
+
+- Governance proposal voting — no new signal over cosmos-sdk's own tests
+- Binary swap / cosmovisor auto-restart — no new store keys, standard path
+- Any patch to `voting_period`, `quorum`, `threshold`, or `min_deposit` in
+  genesis.json. Do not reshape gov params to make local pass faster; that
+  would test a system that does not exist in production, and the rehearsal
+  loses its meaning.
+
+**Elegant migration rehearsal flow**:
+
+1. `oasyced export` on the testnet seed node → `v070-state.json`
+2. Drop the export into a fresh local `~/.oasyced/config/genesis.json`
+3. Add `TestUpgradeV080_WithRealSeedFixture` in `app/upgrades_test.go` that
+   loads the real fixture, calls `app.UpgradeKeeper.ApplyUpgrade`, and
+   asserts the invariants above
+4. No chain start, no gov proposal, no binary swap
+
+**Governance exercise runs once, in its natural environment**: the real
+v0.8.0 upgrade on the testnet seed node, using production gov parameters.
+If you want an expedited path, use `--expedited` with an
+`expedited_voting_period` that matches what would land in mainnet genesis.
+That is a configuration decision belonging in the mainnet genesis file, not
+a rehearsal hack.
+
 ## Preflight Before Filling Height
 
 ```bash
