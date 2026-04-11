@@ -84,6 +84,216 @@ curl -s http://47.93.32.88:1317/cosmos/bank/v1beta1/balances/oasyce1msmqqjw64k8m
 - healthcheck 有执行锁，同一时间只允许一份实例运行
 - 每个告警 key 都有冷却窗口，避免重复邮件风暴
 
+## 本地自治验收
+
+链仓库现在有三条不同的验收面，职责固定如下：
+
+- `./scripts/e2e_test.sh`：CLI / module E2E，验证链模块和传统 `oasyced` 交易面
+- `python3 scripts/e2e_autonomy.py --sdk-mode source`：AI autonomy acceptance，只验证 wrapper 经济闭环
+- `python3 scripts/live_gate_local.py`：推荐默认入口，自举 tempnet，串起 fresh build、Pulse hard-pass、wrapper 自治闭环
+
+### 推荐默认入口
+
+主 gate 现在固定为：
+
+```bash
+python3 scripts/live_gate_local.py
+```
+
+它会自己完成这些步骤：
+
+- fresh build 当前源码到 `build/oasyced`
+- 在临时 home 中 init 一个 tempnet，不复用 `~/.oasyced`
+- 启动本地节点并等待 REST / RPC ready
+- 跑 `check_sdk_surface.py --mode source`
+- 跑 `check_pulse_compat.py --sdk-mode source`
+- 跑 `e2e_autonomy.py --sdk-mode source`
+
+通过标准固定为：
+
+- 当前 fresh build 的 `oasyced` 包含 `tx sigil pulse`
+- tempnet 可以正常出块
+- Pulse 兼容检查返回 `chain-ready` + `thronglets-ready` + `sdk-ready`
+- `cli_live_tx` 和 `sdk_live_tx` 都成功
+- wrapper 闭环完成 provider register、consumer invoke / feedback、data asset register、buy-shares
+
+### Source Truth 与 preflight
+
+链侧验收现在默认只认相邻 `oasyce-sdk` 源码 checkout：
+
+```bash
+python3 scripts/check_sdk_surface.py --mode source
+```
+
+规则：
+
+- `source` 模式下，`oasyce_sdk.__version__` 必须和相邻 checkout 的 `pyproject.toml` 一致
+- `resolve_identity` / `Identity`、scanner、`pulse_sigil`、`MsgPulse.dimensions` schema support 都是 hard requirement
+- `pip` 安装出来的 distribution metadata 漂移只算 preflight warning，不计入 live gate 失败
+
+如果你只是想清理本机 editable / dist 元数据，再单独执行：
+
+```bash
+pip install -e /Users/wutongcheng/Desktop/oasyce-sdk
+```
+
+这不是 live gate 的阻断步骤，只是环境同步动作。
+
+### 什么时候单独跑 probe
+
+以下场景先单独跑 probe，能更快定位问题：
+
+- 修改了 `scripts/_sdk_compat.py`
+- 修改了 `scripts/check_sdk_surface.py`
+- 修改了 `scripts/check_pulse_compat.py`
+- 想区分是 SDK surface 漂移、Pulse live path 回归，还是 wrapper 闭环问题
+
+常用命令：
+
+```bash
+python3 scripts/check_sdk_surface.py --mode source
+python3 scripts/check_pulse_compat.py --sdk-mode source
+python3 scripts/e2e_autonomy.py --sdk-mode source
+```
+
+### `e2e_autonomy.py` 的定位
+
+`e2e_autonomy.py` 现在继续保持单一职责，不承担 Pulse broadcaster：
+
+- provider wrapper 可以 `--register` 并作为本地 HTTP provider 启动
+- consumer wrapper 能发现 capability、invoke、拿到 provider 响应并提交 feedback
+- data wrapper 能扫描本地目录并注册一个 safe asset
+- consumer wrapper 能完成一次 data shares 购买
+- 整条写链路径来自 `oasyce-sdk` native signer，不允许依赖 `oasyced tx` subprocess
+
+### 失败时先看哪里
+
+- `build step failed`：优先看 fresh build 输出，确认当前源码能产出带 `tx sigil pulse` 的二进制
+- `sdk surface check failed`：优先跑 `python3 scripts/check_sdk_surface.py --mode source`
+- `pulse compatibility check failed`：优先跑 `python3 scripts/check_pulse_compat.py --sdk-mode source`
+- `cli_live_tx` 失败：先看 binary 是否是 fresh build，再看 tempnet 是否 ready
+- `sdk_live_tx` 失败：先看 SDK source seam、`pulse_sigil`、`MsgPulse.dimensions` schema support
+- `autonomy acceptance failed`：优先看 `provider-register.log`、`provider.log`、`consumer.log`、`data-agent.log`
+
+`live_gate_local.py` 默认会清理临时目录。调试时可以加：
+
+```bash
+python3 scripts/live_gate_local.py --keep-temp-dir
+```
+
+## Sigil v2 Testnet Upgrade Prep
+
+`x/sigil` 现在已经有 `ConsensusVersion = 2` 和 `Migrate1to2`。这一轮升级的定位是：
+
+- state migration only
+- no new store key
+- no new tx/query surface
+- 目标是把旧的 active liveness index 从 `LastActiveHeight` 语义重建到 `MaxPulseHeight()` 语义
+
+仓库内默认的升级计划名是：
+
+```bash
+v0.8.0
+```
+
+Proposal-ready artifacts live in:
+
+```bash
+docs/upgrades/v0.8.0/
+```
+
+其中固定包含：
+
+- `proposal.template.json`
+- `metadata.template.json`
+- `CHECKLIST.md`
+
+### 升级前最小检查
+
+- 当前链 `/health` 可访问
+- 当前 `/health` 里的 `module_versions` 可正常返回
+- 当前二进制仍有 `oasyced tx sigil pulse`
+- Pulse live path 正常
+- `python3 scripts/live_gate_local.py` 在当前源码上可通过
+
+推荐命令：
+
+```bash
+curl -s http://<node>:1317/health | jq
+oasyced tx sigil --help
+python3 scripts/check_pulse_compat.py --sdk-mode source
+python3 scripts/live_gate_local.py
+```
+
+### Proposal-Ready Upgrade Flow
+
+生成 proposal 和 metadata：
+
+```bash
+python3 scripts/upgrade_proposal_v080.py render \
+  --height <candidate-height> \
+  --proposal-output /tmp/v080-proposal.json \
+  --metadata-output /tmp/v080-metadata.json
+```
+
+校验渲染后的 proposal：
+
+```bash
+python3 scripts/upgrade_proposal_v080.py validate /tmp/v080-proposal.json
+```
+
+在本地 tempnet 上做治理 dry-run：
+
+```bash
+python3 scripts/upgrade_proposal_v080.py dry-run \
+  --height <candidate-height> \
+  --network tempnet
+```
+
+如果只是想复用已有本地链，而不是脚本自举 tempnet：
+
+```bash
+python3 scripts/upgrade_proposal_v080.py dry-run \
+  --height <candidate-height> \
+  --network current \
+  --home ~/.oasyced \
+  --rpc http://127.0.0.1:26657
+```
+
+默认约束：
+
+- `plan.name = v0.8.0`
+- `plan.height` 只用模板占位，不在仓库里写死真实高度
+- `MsgSoftwareUpgrade.authority` 固定为 gov module authority
+- `deposit` 默认 `100000000uoas`
+- proposal JSON 里的 `metadata` 只放短 reference；完整 metadata body 落在 sidecar `metadata.json`
+- `plan.info` 固定承载 `sigil v1 -> v2`, `effective activity height migration`, `state migration only`, `no new stores`
+
+### 升级后最小检查
+
+- `/health` 返回 `module_versions.sigil == 2`
+- `/health` 继续返回 `anchor` / `delegate` / `sigil` 的模块版本
+- `oasyced tx sigil pulse` 仍然存在
+- Pulse live tx 正常
+- `python3 scripts/live_gate_local.py` 继续通过
+
+推荐命令：
+
+```bash
+curl -s http://<node>:1317/health | jq '.module_versions'
+oasyced tx sigil --help
+python3 scripts/check_pulse_compat.py --sdk-mode source
+python3 scripts/live_gate_local.py
+```
+
+### 这一阶段还不锁什么
+
+- 不在仓库里固定真实 software-upgrade height
+- 不在仓库里固定 proposal 文案、投票窗口、checksums
+- 不在这一阶段处理发布协调或回滚演练
+
+这些都留到 Proposal-Ready / Release-Ready 阶段再锁。
+
 ## 发布后必须确认
 
 每次 `main` 推送后，先确认 GitHub Actions，不要只看 VPS 还活着：

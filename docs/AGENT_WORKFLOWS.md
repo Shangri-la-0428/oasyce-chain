@@ -5,6 +5,26 @@ Each workflow below shows the exact commands and expected responses for autonomo
 All CLI commands use `--output json`. All REST examples use `curl`.
 Base URL: `http://<node>:1317`
 
+Chain-repo note:
+
+- `scripts/provider_agent.py`
+- `scripts/consumer_agent.py`
+- `scripts/data_agent.py`
+
+are compatibility wrappers, not the canonical AI runtime.
+
+Their normal write path is already SDK-native:
+
+- local identity comes from `oasyce start`, `oasyce join`, or `OASYCE_MNEMONIC`
+- chain writes go through `oasyce-sdk`
+- chain-side acceptance should prefer the adjacent `oasyce-sdk` main checkout in `source` mode
+- recommended chain-side live gate is `python3 scripts/live_gate_local.py`
+- wrapper-only autonomy acceptance remains `python3 scripts/e2e_autonomy.py --sdk-mode source`
+- Pulse compatibility is still debuggable separately with `python3 scripts/check_pulse_compat.py --sdk-mode source`
+- `MsgPulse` compatibility is now hard-pass for chain-side live gating; `sdk-gap` is no longer an accepted outcome
+
+Use the CLI examples below for protocol understanding, operator debugging, and module-level verification. Use the wrapper scripts when the question is whether AI can autonomously use the chain.
+
 ---
 
 ## 1. Self-Onboarding (Join the Economy)

@@ -2,6 +2,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -23,6 +24,7 @@ class ProviderAgentTests(unittest.TestCase):
         provider_agent.CAPABILITY_ID = "CAP_TEST"
         provider_agent.ALERT_LOG = str(Path(self.tempdir.name) / "alert.log")
         provider_agent.ALERT_STATE_DIR = str(Path(self.tempdir.name) / "alerts")
+        provider_agent._RUNTIME = None
         provider_agent._upstream_ok = True
         provider_agent._upstream_known = False
         provider_agent._upstream_error = ""
@@ -51,18 +53,21 @@ class ProviderAgentTests(unittest.TestCase):
         with mock.patch.object(provider_agent, "_check_capability_cached", return_value=(True, "")), \
              mock.patch.object(provider_agent, "probe_upstream", return_value=(False, "No available accounts")), \
              mock.patch.object(provider_agent, "activate_alert_once") as mock_alert, \
-             mock.patch.object(provider_agent, "oasyced_tx", return_value=(True, "txhash")) as mock_tx:
+             mock.patch.object(provider_agent, "submit_single") as mock_submit:
             code, payload = provider_agent.build_health_status(probe=True)
 
         self.assertEqual(code, 503)
         self.assertEqual(payload["status"], "degraded")
         self.assertFalse(provider_agent._deactivated)
         mock_alert.assert_not_called()
-        mock_tx.assert_not_called()
+        mock_submit.assert_not_called()
 
     def test_buyer_path_failure_fails_invocation_and_deactivates(self):
+        runtime = SimpleNamespace(actor_address="oasyce1provider")
         with mock.patch.object(provider_agent, "activate_alert_once") as mock_alert, \
-             mock.patch.object(provider_agent, "oasyced_tx", side_effect=[(True, "failed"), (True, "deactivated")]) as mock_tx:
+             mock.patch.object(provider_agent, "get_runtime", return_value=runtime), \
+             mock.patch.object(provider_agent, "submit_single", side_effect=["fail-tx", "deactivate-tx"]) as mock_submit, \
+             mock.patch.object(provider_agent, "tx_status", side_effect=[(True, "failed"), (True, "deactivated")]):
             provider_agent.AUTO_DEACTIVATE_FAILURE_THRESHOLD = 1
             provider_agent.handle_buyer_path_failure("INV_TEST", "upstream HTTP 503")
 
@@ -70,32 +75,40 @@ class ProviderAgentTests(unittest.TestCase):
         self.assertTrue(provider_agent._upstream_known)
         self.assertEqual(provider_agent._upstream_error, "upstream HTTP 503")
         self.assertTrue(provider_agent._deactivated)
+        self.assertEqual(mock_submit.call_count, 2)
+        self.assertEqual(mock_submit.call_args_list[0].args[1], "/oasyce.capability.v1.MsgFailInvocation")
         self.assertEqual(
-            mock_tx.call_args_list,
-            [
-                mock.call(["oasyce_capability", "fail-invocation", "INV_TEST"]),
-                mock.call(["oasyce_capability", "deactivate", "CAP_TEST"]),
-            ],
+            mock_submit.call_args_list[0].args[2],
+            {"creator": "oasyce1provider", "invocation_id": "INV_TEST"},
+        )
+        self.assertEqual(mock_submit.call_args_list[1].args[1], "/oasyce.capability.v1.MsgDeactivateCapability")
+        self.assertEqual(
+            mock_submit.call_args_list[1].args[2],
+            {"creator": "oasyce1provider", "capability_id": "CAP_TEST"},
         )
         mock_alert.assert_called_once()
 
     def test_buyer_path_failure_below_threshold_only_fails_invocation(self):
+        runtime = SimpleNamespace(actor_address="oasyce1provider")
         with mock.patch.object(provider_agent, "activate_alert_once") as mock_alert, \
-             mock.patch.object(provider_agent, "oasyced_tx", return_value=(True, "failed")) as mock_tx:
+             mock.patch.object(provider_agent, "get_runtime", return_value=runtime), \
+             mock.patch.object(provider_agent, "submit_single", return_value="fail-tx") as mock_submit, \
+             mock.patch.object(provider_agent, "tx_status", return_value=(True, "failed")):
             provider_agent.handle_buyer_path_failure("INV_TEST", "upstream HTTP 503")
 
         self.assertEqual(provider_agent._buyer_failure_streak, 1)
         self.assertFalse(provider_agent._deactivated)
-        mock_tx.assert_called_once_with(["oasyce_capability", "fail-invocation", "INV_TEST"])
+        mock_submit.assert_called_once()
+        self.assertEqual(mock_submit.call_args.args[1], "/oasyce.capability.v1.MsgFailInvocation")
         mock_alert.assert_not_called()
 
     def test_register_refuses_unreachable_upstream(self):
         with mock.patch.object(provider_agent, "probe_upstream", return_value=(False, "upstream down")), \
-             mock.patch.object(provider_agent, "oasyced_tx") as mock_tx:
+             mock.patch.object(provider_agent, "get_runtime") as mock_runtime:
             with self.assertRaises(SystemExit):
                 provider_agent.register_capability("Test Capability", 1000)
 
-        mock_tx.assert_not_called()
+        mock_runtime.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Oasyce Consumer Agent — autonomous capability consumer for testnet.
+Oasyce Consumer Agent — SDK-backed compatibility wrapper for autonomous testnet use.
 
 Runs on cron (every 30 min). Each cycle:
   1. Check balance, request faucet if low
@@ -19,39 +19,40 @@ USAGE
 
 ENVIRONMENT
 ===========
-    CONSUMER_KEY        — keyring key name (default: "consumer")
     OASYCE_CHAIN_REST   — chain REST (default: "http://127.0.0.1:11317")
     OASYCE_CHAIN_RPC    — chain RPC  (default: "http://127.0.0.1:26667")
-    OASYCED_CHAIN_ID    — chain ID (default: "oasyce-testnet-1")
-    OASYCED_KEYRING     — keyring backend (default: "test")
-    OASYCE_HOME         — oasyced home (default: "/home/oasyce/.oasyced")
+    OASYCE_CHAIN_ID     — chain ID (default: "oasyce-testnet-1")
+    OASYCE_MNEMONIC     — optional headless signer override
+    OASYCE_DIR          — local SDK binding dir (default: "~/.oasyce")
     PROVIDER_ENDPOINT   — provider agent URL (default: "http://127.0.0.1:8430")
     FAUCET_URL          — faucet URL (default: "http://127.0.0.1:18080")
     MIN_BALANCE_UOAS    — min balance before faucet (default: 5000000 = 5 OAS)
+
+This script is a thin chain-repo wrapper. The canonical AI runtime lives in
+`oasyce-sdk`, and chain writes here follow the SDK-native signer path.
 """
 
-import hashlib
 import json
 import logging
 import os
-import re
-import subprocess
 import sys
 import time
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+
+from _sdk_compat import parse_uoas, resolve_runtime, tx_status
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-CONSUMER_KEY = os.environ.get("CONSUMER_KEY", "consumer")
 CHAIN_REST = os.environ.get("OASYCE_CHAIN_REST", "http://127.0.0.1:11317").rstrip("/")
 CHAIN_RPC = os.environ.get("OASYCE_CHAIN_RPC", "http://127.0.0.1:26667").rstrip("/")
-CHAIN_ID = os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
-KEYRING = os.environ.get("OASYCED_KEYRING", "test")
-HOME = os.environ.get("OASYCE_HOME", "/home/oasyce/.oasyced")
-OASYCED = os.environ.get("OASYCED_BIN", "oasyced")
+CHAIN_ID = os.environ.get("OASYCE_CHAIN_ID") or os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
 PROVIDER_ENDPOINT = os.environ.get("PROVIDER_ENDPOINT", "http://127.0.0.1:8430").rstrip("/")
 FAUCET_URL = os.environ.get("FAUCET_URL", "http://127.0.0.1:18080").rstrip("/")
 MIN_BALANCE_UOAS = int(os.environ.get("MIN_BALANCE_UOAS", "5000000"))
@@ -81,6 +82,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 log = logging.getLogger()
+
+_RUNTIME = None
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -118,60 +121,15 @@ def http_post(url, data):
         return None, str(e)
 
 
+def get_runtime():
+    global _RUNTIME
+    if _RUNTIME is None:
+        _RUNTIME = resolve_runtime(CHAIN_REST, CHAIN_ID)
+    return _RUNTIME
+
+
 def get_address():
-    try:
-        r = subprocess.run(
-            [OASYCED, "keys", "show", CONSUMER_KEY, "-a",
-             "--keyring-backend", KEYRING, "--home", HOME],
-            capture_output=True, text=True, timeout=10,
-        )
-        if r.returncode == 0:
-            return r.stdout.strip()
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
-    return None
-
-
-def oasyced_tx(args, retries=2):
-    cmd = [OASYCED, "tx"] + args + [
-        "--from", CONSUMER_KEY,
-        "--keyring-backend", KEYRING,
-        "--chain-id", CHAIN_ID,
-        "--home", HOME,
-        "--fees", "10000uoas",
-        "--gas", "200000",
-        "--yes",
-        "--output", "json",
-    ]
-    log.info("TX: %s", " ".join(cmd[2:6]))
-    for attempt in range(1, retries + 1):
-        try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            out = r.stdout.strip()
-            err = r.stderr.strip()
-            if r.returncode != 0:
-                log.error("TX failed (rc=%d): stdout=%s stderr=%s", r.returncode, out[:200], err[:200])
-                return False, out or err
-            if not out:
-                out = err
-            try:
-                d = json.loads(out)
-                code = d.get("code", 0)
-                if code == 0:
-                    log.info("TX hash: %s", d.get("txhash", "?"))
-                    return True, d.get("txhash", "")
-                # code 19 = account sequence mismatch — retry after a block
-                if code == 19 and attempt < retries:
-                    log.warning("Sequence mismatch (attempt %d/%d), waiting for next block...", attempt, retries)
-                    time.sleep(6)
-                    continue
-                log.error("TX CheckTx error (code=%s): %s", code, d.get("raw_log", ""))
-                return False, d.get("raw_log", out)
-            except json.JSONDecodeError:
-                return True, out
-        except subprocess.TimeoutExpired:
-            return False, "timeout"
-    return False, "max retries exceeded"
+    return get_runtime().actor_address
 
 
 def load_state():
@@ -224,22 +182,6 @@ def finish_cycle(state, status, exit_code=0, error="", success=False):
     return exit_code
 
 
-def parse_uoas(value):
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str):
-        text = value.strip().lower()
-        if text.isdigit():
-            return int(text)
-        if text.endswith("uoas"):
-            amount = text[:-4].strip()
-            return int(amount) if amount.isdigit() else 0
-        match = re.match(r"^([0-9]+(?:\.[0-9]+)?)\s*oas$", text)
-        if match:
-            return int(float(match.group(1)) * 1_000_000)
-    return 0
-
-
 def wait_for_balance_increase(addr, before_balance, timeout_seconds=20, poll_seconds=4):
     deadline = time.time() + timeout_seconds
     while time.time() < deadline:
@@ -253,24 +195,6 @@ def wait_for_balance_increase(addr, before_balance, timeout_seconds=20, poll_sec
 # ---------------------------------------------------------------------------
 # Steps
 # ---------------------------------------------------------------------------
-
-def ensure_consumer_key(addr):
-    """Create consumer key if it doesn't exist."""
-    if addr:
-        return addr
-    log.info("Consumer key not found, creating...")
-    r = subprocess.run(
-        [OASYCED, "keys", "add", CONSUMER_KEY,
-         "--keyring-backend", KEYRING, "--home", HOME, "--output", "json"],
-        capture_output=True, text=True, timeout=10,
-    )
-    if r.returncode == 0:
-        addr = get_address()
-        log.info("Created consumer key: %s", addr)
-        return addr
-    log.error("Failed to create key: %s", r.stderr[:200])
-    return None
-
 
 def check_balance(addr):
     data = rest_get(f"/cosmos/bank/v1beta1/balances/{addr}")
@@ -359,12 +283,13 @@ def discover_capability(preferred_capability_id=""):
 
 
 def invoke_on_chain(cap_id, input_data):
-    input_json = json.dumps(input_data)
-    ok, txhash = oasyced_tx([
-        "oasyce_capability", "invoke", cap_id,
-        "--input", input_json,
-    ])
+    result = get_runtime().signer.invoke_capability(
+        cap_id,
+        json.dumps(input_data).encode("utf-8"),
+    )
+    ok, txhash = tx_status(result)
     if not ok:
+        log.error("Invoke failed: %s", txhash)
         return None
     # Wait for TX inclusion
     time.sleep(7)
@@ -411,10 +336,8 @@ def post_to_provider(invocation_id, input_data):
 
 def submit_feedback(invocation_id, score):
     """Submit reputation feedback (0-500 scale)."""
-    ok, _ = oasyced_tx([
-        "reputation", "submit-feedback",
-        invocation_id, str(score),
-    ])
+    result = get_runtime().signer.submit_feedback(invocation_id, score)
+    ok, _ = tx_status(result)
     return ok
 
 
@@ -439,10 +362,10 @@ def discover_data_asset():
 
 def buy_data_shares(asset_id, amount_uoas="100000"):
     """Buy shares of a data asset on the bonding curve."""
-    ok, txhash = oasyced_tx([
-        "datarights", "buy-shares", asset_id, f"{amount_uoas}uoas",
-    ])
+    result = get_runtime().signer.buy_shares(asset_id, parse_uoas(amount_uoas))
+    ok, txhash = tx_status(result)
     if not ok:
+        log.error("Buy shares failed: %s", txhash)
         return None
     time.sleep(7)
     return txhash
@@ -490,12 +413,12 @@ def main():
     state = load_state()
     log.info("=== Consumer Agent Cycle %d ===", state["total_invocations"] + 1)
 
-    # 1. Ensure consumer key exists
-    addr = get_address()
-    addr = ensure_consumer_key(addr)
-    if not addr:
-        log.error("Cannot get consumer address, aborting")
-        return finish_cycle(state, "consumer_key_error", exit_code=1, error="cannot get consumer address")
+    # 1. Resolve SDK-native identity
+    try:
+        addr = get_address()
+    except RuntimeError as exc:
+        log.error("Cannot resolve consumer identity: %s", exc)
+        return finish_cycle(state, "consumer_identity_error", exit_code=1, error=str(exc))
 
     log.info("Consumer: %s", addr)
 

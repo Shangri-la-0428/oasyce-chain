@@ -90,11 +90,7 @@ func (m msgServer) Dissolve(goCtx context.Context, msg *types.MsgDissolve) (*typ
 	}
 
 	oldStatus := types.SigilStatus(sigil.Status)
-
-	// Remove from old indexes.
-	m.Keeper.DeleteSigilFromStatusIndex(ctx, oldStatus, sigil.SigilId)
 	if oldStatus == types.SigilStatusActive {
-		m.Keeper.DeleteSigilFromLivenessIndex(ctx, sigil.LastActiveHeight, sigil.SigilId)
 		m.Keeper.DecrementActiveCount(ctx)
 	}
 
@@ -310,6 +306,29 @@ func (m msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 }
 
 // Pulse records multi-dimensional heartbeat on a Sigil.
+//
+// Design notes (V1):
+//
+//  1. Non-active sigils are rejected outright. The lifecycle is
+//     single-direction (active → dormant → dissolved), matching the "DISSOLVE
+//     as committed synaptic pruning" framing: once the field has started
+//     pruning a node, a pulse cannot walk it back. If revival is needed later
+//     it should be a dedicated, cost-gated MsgRevive, not an implicit side
+//     effect of any pulse.
+//
+//  2. The signer must equal the sigil creator. This is a V1 simplification:
+//     the long-term vision is that the *field* keeps a sigil alive (any
+//     bonded sigil, any external anchor trace citing the sigil, any shared
+//     environment signal should implicitly contribute a pulse), but that
+//     requires a worked-out economic model for preventing spam pulses and
+//     for attributing who-paid-what. Until that lands, pulses are strictly
+//     owner-signed. See docs/STACK_BOUNDARIES.md for the V1 → V2 trajectory.
+//
+//  3. Dimension keys are opaque strings. The chain never interprets them —
+//     Phase 1/2 only read MaxPulseHeight across all dimensions. Future
+//     consumers (Psyche, Thronglets, economic activity) are free to pick
+//     their own dimension names; chain-side validation must stay
+//     semantic-free.
 func (m msgServer) Pulse(goCtx context.Context, msg *types.MsgPulse) (*types.MsgPulseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -333,8 +352,8 @@ func (m msgServer) Pulse(goCtx context.Context, msg *types.MsgPulse) (*types.Msg
 		sigil.DimensionPulses[dim] = height
 	}
 
-	// Also update LastActiveHeight for backward compatibility.
-	m.Keeper.DeleteSigilFromLivenessIndex(ctx, sigil.LastActiveHeight, sigil.SigilId)
+	// LastActiveHeight remains as a compatibility/inspection field, but the
+	// liveness index now tracks MaxPulseHeight via SetSigil().
 	sigil.LastActiveHeight = height
 	_ = m.Keeper.SetSigil(ctx, sigil)
 
@@ -353,7 +372,7 @@ func (m msgServer) Pulse(goCtx context.Context, msg *types.MsgPulse) (*types.Msg
 // Helpers
 // ---------------------------------------------------------------------------
 
-// touchSigil updates a sigil's LastActiveHeight.
+// touchSigil updates a sigil's LastActiveHeight compatibility field.
 func (m msgServer) touchSigil(ctx sdk.Context, sigilID string) {
 	s, found := m.Keeper.GetSigil(ctx, sigilID)
 	if !found {
@@ -363,19 +382,14 @@ func (m msgServer) touchSigil(ctx sdk.Context, sigilID string) {
 		return
 	}
 
-	// Remove old liveness index entry.
-	m.Keeper.DeleteSigilFromLivenessIndex(ctx, s.LastActiveHeight, s.SigilId)
-
 	s.LastActiveHeight = ctx.BlockHeight()
-	_ = m.Keeper.SetSigil(ctx, s) // re-inserts at new height
+	_ = m.Keeper.SetSigil(ctx, s)
 }
 
 // dissolveSigil marks a sigil as dissolved and updates indexes.
 func (m msgServer) dissolveSigil(ctx sdk.Context, s *types.Sigil) {
 	oldStatus := types.SigilStatus(s.Status)
-	m.Keeper.DeleteSigilFromStatusIndex(ctx, oldStatus, s.SigilId)
 	if oldStatus == types.SigilStatusActive {
-		m.Keeper.DeleteSigilFromLivenessIndex(ctx, s.LastActiveHeight, s.SigilId)
 		m.Keeper.DecrementActiveCount(ctx)
 	}
 	s.Status = types.SigilStatusDissolved

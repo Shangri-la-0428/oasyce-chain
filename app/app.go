@@ -21,21 +21,22 @@ import (
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	txsigning "cosmossdk.io/x/tx/signing"
+	upgrade "cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
+	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/std"
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
-	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -84,48 +85,48 @@ import (
 	// IBC
 	ibccapabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	ibccapabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibcporttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 	transfer "github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	transferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v8/modules/core"
+	ibcporttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 
 	// Oasyce custom modules
-	"github.com/oasyce/chain/docs"
 	oasyceparams "github.com/oasyce/chain/app/params"
+	"github.com/oasyce/chain/docs"
+	anchor "github.com/oasyce/chain/x/anchor"
+	anchorkeeper "github.com/oasyce/chain/x/anchor/keeper"
+	anchortypes "github.com/oasyce/chain/x/anchor/types"
 	capability "github.com/oasyce/chain/x/capability"
 	capabilitykeeper "github.com/oasyce/chain/x/capability/keeper"
 	capabilitytypes "github.com/oasyce/chain/x/capability/types"
 	datarights "github.com/oasyce/chain/x/datarights"
 	datarightskeeper "github.com/oasyce/chain/x/datarights/keeper"
 	datarightstypes "github.com/oasyce/chain/x/datarights/types"
+	delegate "github.com/oasyce/chain/x/delegate"
+	delegatekeeper "github.com/oasyce/chain/x/delegate/keeper"
+	delegatetypes "github.com/oasyce/chain/x/delegate/types"
+	halving "github.com/oasyce/chain/x/halving"
+	halvingkeeper "github.com/oasyce/chain/x/halving/keeper"
+	halvingtypes "github.com/oasyce/chain/x/halving/types"
+	onboarding "github.com/oasyce/chain/x/onboarding"
+	onboardingkeeper "github.com/oasyce/chain/x/onboarding/keeper"
+	onboardingtypes "github.com/oasyce/chain/x/onboarding/types"
 	reputation "github.com/oasyce/chain/x/reputation"
 	reputationkeeper "github.com/oasyce/chain/x/reputation/keeper"
 	reputationtypes "github.com/oasyce/chain/x/reputation/types"
 	settlement "github.com/oasyce/chain/x/settlement"
 	settlementkeeper "github.com/oasyce/chain/x/settlement/keeper"
 	settlementtypes "github.com/oasyce/chain/x/settlement/types"
-	work "github.com/oasyce/chain/x/work"
-	workkeeper "github.com/oasyce/chain/x/work/keeper"
-	worktypes "github.com/oasyce/chain/x/work/types"
-	onboarding "github.com/oasyce/chain/x/onboarding"
-	onboardingkeeper "github.com/oasyce/chain/x/onboarding/keeper"
-	onboardingtypes "github.com/oasyce/chain/x/onboarding/types"
-	halving "github.com/oasyce/chain/x/halving"
-	halvingkeeper "github.com/oasyce/chain/x/halving/keeper"
-	halvingtypes "github.com/oasyce/chain/x/halving/types"
-	anchor "github.com/oasyce/chain/x/anchor"
-	anchorkeeper "github.com/oasyce/chain/x/anchor/keeper"
-	anchortypes "github.com/oasyce/chain/x/anchor/types"
-	delegate "github.com/oasyce/chain/x/delegate"
-	delegatekeeper "github.com/oasyce/chain/x/delegate/keeper"
-	delegatetypes "github.com/oasyce/chain/x/delegate/types"
 	sigil "github.com/oasyce/chain/x/sigil"
 	sigilkeeper "github.com/oasyce/chain/x/sigil/keeper"
 	sigiltypes "github.com/oasyce/chain/x/sigil/types"
+	work "github.com/oasyce/chain/x/work"
+	workkeeper "github.com/oasyce/chain/x/work/keeper"
+	worktypes "github.com/oasyce/chain/x/work/types"
 )
 
 const Name = "oasyce"
@@ -146,6 +147,7 @@ var (
 		gov.NewAppModuleBasic(
 			[]govclient.ProposalHandler{},
 		),
+		upgrade.AppModuleBasic{},
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
@@ -236,10 +238,10 @@ type OasyceApp struct {
 	ConsensusKeeper consensuskeeper.Keeper
 
 	// IBC keepers
-	IBCCapabilityKeeper *ibccapabilitykeeper.Keeper
-	IBCKeeper           *ibckeeper.Keeper
-	TransferKeeper      transferkeeper.Keeper
-	ScopedIBCKeeper     ibccapabilitykeeper.ScopedKeeper
+	IBCCapabilityKeeper  *ibccapabilitykeeper.Keeper
+	IBCKeeper            *ibckeeper.Keeper
+	TransferKeeper       transferkeeper.Keeper
+	ScopedIBCKeeper      ibccapabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper ibccapabilitykeeper.ScopedKeeper
 
 	// Oasyce custom module keepers
@@ -613,6 +615,7 @@ func NewOasyceApp(
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		crisis.NewAppModule(app.CrisisKeeper, false, app.GetSubspace(crisistypes.ModuleName)),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
+		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, app.GetSubspace(minttypes.ModuleName)),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName), app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
@@ -766,17 +769,7 @@ func NewOasyceApp(
 	// which new keys to expect at the upgrade height.
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err == nil && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		var storeUpgrades *storetypes.StoreUpgrades
-		switch upgradeInfo.Name {
-		case UpgradeV053:
-			storeUpgrades = &storetypes.StoreUpgrades{
-				Added: []string{anchortypes.StoreKey},
-			}
-		case UpgradeV070:
-			storeUpgrades = &storetypes.StoreUpgrades{
-				Added: []string{sigiltypes.StoreKey},
-			}
-		}
+		storeUpgrades := storeUpgradesForPlan(upgradeInfo.Name)
 		if storeUpgrades != nil {
 			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
 		}

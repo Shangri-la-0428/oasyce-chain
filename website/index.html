@@ -704,7 +704,7 @@ oasyced query settlement escrow \
 <section class="reveal" id="testnet">
   <div class="container">
     <h2 data-i18n="testnet-title"><span class="live-dot" aria-label="Live"></span>Public Testnet</h2>
-    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Start with the Public Beta Guide for direct chain access. Add Dashboard, data scanning, or Python tooling later only if you need them.</p>
+    <p style="margin-bottom: var(--space-lg);" data-i18n="testnet-desc">Testnet-1 is live. Start with the Public Beta Guide for direct chain access. Add oasyce-sdk later only when you need local binding, NativeSigner, or a local data agent.</p>
     <table class="comparison" style="max-width: 640px;">
       <tbody>
         <tr><td>Chain ID</td><td><code>oasyce-testnet-1</code></td></tr>
@@ -719,9 +719,9 @@ oasyced query settlement escrow \
         <tr><td>Windows Account</td><td><code>Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1</code></td></tr>
         <tr><td>Prepare Node</td><td><code>bash &lt;(curl -fsSL .../bootstrap_public_beta_node.sh)</code></td></tr>
         <tr><td>Run Node</td><td><code>bash &lt;(curl -fsSL .../run_public_beta_node.sh)</code></td></tr>
-        <tr><td>Optional Product Guide</td><td><a href="https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md">oasyce-net public guide</a></td></tr>
-        <tr><td>Optional Dashboard</td><td><code>pip install oasyce &amp;&amp; oas bootstrap &amp;&amp; oas start</code></td></tr>
-        <tr><td>Data Ingress</td><td><a href="https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md">oasyce-agent</a></td></tr>
+        <tr><td>Optional First Device</td><td><code>pip install -U "oasyce-sdk&gt;=0.12.0" &amp;&amp; oasyce start</code></td></tr>
+        <tr><td>Optional Join Device</td><td><code>pip install -U "oasyce-sdk&gt;=0.12.0" &amp;&amp; oasyce join</code></td></tr>
+        <tr><td>SDK Guide</td><td><a href="https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md">oasyce-sdk README</a></td></tr>
         <tr><td>Chain API</td><td><a href="docs.html">docs.html</a></td></tr>
         <tr><td>Validator</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md">Validator Setup</a></td></tr>
         <tr><td>Releases</td><td><a href="https://github.com/Shangri-la-0428/oasyce-chain/releases/latest">Latest Release</a></td></tr>
@@ -817,24 +817,29 @@ bash scripts/init_multi_testnet.sh && bash scripts/start_testnet.sh</code></pre>
       </thead>
       <tbody>
         <tr>
+          <td><a href="https://github.com/Shangri-la-0428/Oasyce-Sigil">Oasyce-Sigil</a></td>
+          <td>Protocol constitution, object model, and tier boundaries</td>
+          <td>Spec / architecture repo</td>
+        </tr>
+        <tr>
           <td><a href="https://github.com/Shangri-la-0428/oasyce-chain">oasyce-chain</a></td>
-          <td>L1 settlement chain</td>
+          <td>Public truth, authorization, commitments, settlement, finality</td>
           <td><code>make build</code></td>
         </tr>
         <tr>
-          <td><a href="https://github.com/Shangri-la-0428/oasyce-net">oasyce</a></td>
-          <td>Python agent client + CLI + Dashboard</td>
-          <td><code>pip install oasyce</code></td>
+          <td><a href="https://github.com/Shangri-la-0428/oasyce-sdk">oasyce-sdk</a></td>
+          <td>AI front door, local binding, NativeSigner, runtime</td>
+          <td><code>pip install -U "oasyce-sdk&gt;=0.12.0"</code></td>
         </tr>
         <tr>
-          <td><a href="https://github.com/Shangri-la-0428/oasyce-sdk">oasyce-sdk</a></td>
-          <td>Python SDK + native signing + 25 MCP tools</td>
-          <td><code>pip install oasyce-sdk</code></td>
+          <td><a href="https://github.com/Shangri-la-0428/Thronglets">Thronglets</a></td>
+          <td>Shared environment, presence, discovery, traces, coordination</td>
+          <td>Optional shared substrate</td>
         </tr>
         <tr>
-          <td><a href="https://github.com/Shangri-la-0428/oasyce-sdk">oasyce-sdk</a></td>
-          <td>AI data agent + scanner</td>
-          <td><code>pip install oasyce-sdk</code></td>
+          <td><a href="https://github.com/Shangri-la-0428/oasyce_psyche">oasyce_psyche</a></td>
+          <td>Subjective continuity and low-frequency behavioral residue</td>
+          <td>Optional local subsystem</td>
         </tr>
       </tbody>
     </table>

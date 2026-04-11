@@ -8,8 +8,8 @@ import (
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-	dbm "github.com/cosmos/cosmos-db"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,6 +20,11 @@ import (
 )
 
 func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context) {
+	k, ctx, _ := setupKeeperWithStoreKey(t)
+	return k, ctx
+}
+
+func setupKeeperWithStoreKey(t *testing.T) (keeper.Keeper, sdk.Context, *storetypes.KVStoreKey) {
 	t.Helper()
 
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
@@ -38,7 +43,7 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context) {
 	// Set default params.
 	require.NoError(t, k.SetParams(ctx, types.DefaultParams()))
 
-	return k, ctx
+	return k, ctx, storeKey
 }
 
 func TestSigilCRUD(t *testing.T) {
@@ -314,9 +319,9 @@ func TestMsgForkFlow(t *testing.T) {
 	forkResp, err := srv.Fork(ctx, &types.MsgFork{
 		Signer:        creator,
 		ParentSigilId: parentResp.SigilId,
-		PublicKey:      []byte("pubkey-fork-child-xxxxxxxxxxxxxx"),
+		PublicKey:     []byte("pubkey-fork-child-xxxxxxxxxxxxxx"),
 		ForkMode:      0,
-		Metadata:       "forked child",
+		Metadata:      "forked child",
 	})
 	require.NoError(t, err)
 	require.Contains(t, forkResp.ChildSigilId, "SIG_")
@@ -550,6 +555,46 @@ func TestMsgPulse_NotOwner(t *testing.T) {
 	require.Contains(t, err.Error(), "not sigil owner")
 }
 
+func TestMsgPulse_RejectsDormantAndDissolved(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	ctx = ctx.WithBlockHeight(100)
+	ms := keeper.NewMsgServer(k)
+
+	_, err := ms.Genesis(sdk.WrapSDKContext(ctx), &types.MsgGenesis{
+		Signer:    "oasyce1creator",
+		PublicKey: []byte("pubkey1234567890123456"),
+	})
+	require.NoError(t, err)
+
+	var sigilID string
+	var sigil types.Sigil
+	k.IterateAllSigils(ctx, func(s types.Sigil) bool {
+		sigilID = s.SigilId
+		sigil = s
+		return true
+	})
+
+	sigil.Status = types.SigilStatusDormant
+	require.NoError(t, k.SetSigil(ctx, sigil))
+	_, err = ms.Pulse(sdk.WrapSDKContext(ctx), &types.MsgPulse{
+		Signer:     "oasyce1creator",
+		SigilId:    sigilID,
+		Dimensions: map[string]int64{"chain": 1},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not active")
+
+	sigil.Status = types.SigilStatusDissolved
+	require.NoError(t, k.SetSigil(ctx, sigil))
+	_, err = ms.Pulse(sdk.WrapSDKContext(ctx), &types.MsgPulse{
+		Signer:     "oasyce1creator",
+		SigilId:    sigilID,
+		Dimensions: map[string]int64{"chain": 1},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not active")
+}
+
 func TestBeginBlocker_PulseKeepsSigilAlive(t *testing.T) {
 	k, ctx := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
@@ -585,6 +630,195 @@ func TestBeginBlocker_PulseKeepsSigilAlive(t *testing.T) {
 	sigil, found := k.GetSigil(ctx, sigilID)
 	require.True(t, found)
 	require.Equal(t, types.SigilStatusActive, types.SigilStatus(sigil.Status), "sigil should still be active after pulse")
+}
+
+func TestBeginBlocker_UsesEffectiveActivityHeight(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	require.NoError(t, k.SetParams(ctx, types.Params{
+		DormantThreshold:  100,
+		DissolveThreshold: 200,
+		SubmitWindow:      10,
+	}))
+
+	sigil := types.Sigil{
+		SigilId:          "SIG_effective_height",
+		Creator:          "oasyce1creator",
+		PublicKey:        []byte("effective-height-pubkey"),
+		Status:           types.SigilStatusActive,
+		CreationHeight:   1,
+		LastActiveHeight: 10,
+		DimensionPulses: map[string]int64{
+			"thronglets": 200,
+		},
+	}
+	require.NoError(t, k.SetSigil(ctx, sigil))
+	k.SetActiveCount(ctx, 1)
+
+	ctx = ctx.WithBlockHeight(250)
+	require.NoError(t, k.BeginBlocker(ctx))
+
+	got, found := k.GetSigil(ctx, sigil.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusActive, types.SigilStatus(got.Status))
+
+	ctx = ctx.WithBlockHeight(320)
+	require.NoError(t, k.BeginBlocker(ctx))
+
+	got, found = k.GetSigil(ctx, sigil.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusDormant, types.SigilStatus(got.Status))
+}
+
+func TestBeginBlocker_UsesMaxOfLastActiveAndPulse(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	require.NoError(t, k.SetParams(ctx, types.Params{
+		DormantThreshold:  100,
+		DissolveThreshold: 200,
+		SubmitWindow:      10,
+	}))
+
+	sigil := types.Sigil{
+		SigilId:          "SIG_last_active_wins",
+		Creator:          "oasyce1creator",
+		PublicKey:        []byte("last-active-wins-pubkey"),
+		Status:           types.SigilStatusActive,
+		CreationHeight:   1,
+		LastActiveHeight: 300,
+		DimensionPulses: map[string]int64{
+			"thronglets": 50,
+		},
+	}
+	require.NoError(t, k.SetSigil(ctx, sigil))
+	k.SetActiveCount(ctx, 1)
+
+	ctx = ctx.WithBlockHeight(350)
+	require.NoError(t, k.BeginBlocker(ctx))
+
+	got, found := k.GetSigil(ctx, sigil.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusActive, types.SigilStatus(got.Status))
+}
+
+func TestBeginBlocker_DormantDissolveUsesEffectiveActivityHeight(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	require.NoError(t, k.SetParams(ctx, types.Params{
+		DormantThreshold:  100,
+		DissolveThreshold: 200,
+		SubmitWindow:      10,
+	}))
+
+	sigil := types.Sigil{
+		SigilId:          "SIG_dormant_effective_height",
+		Creator:          "oasyce1creator",
+		PublicKey:        []byte("dormant-effective-height-pubkey"),
+		Status:           types.SigilStatusDormant,
+		CreationHeight:   1,
+		LastActiveHeight: 10,
+		DimensionPulses: map[string]int64{
+			"thronglets": 200,
+		},
+	}
+	require.NoError(t, k.SetSigil(ctx, sigil))
+
+	ctx = ctx.WithBlockHeight(350)
+	require.NoError(t, k.BeginBlocker(ctx))
+
+	got, found := k.GetSigil(ctx, sigil.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusDormant, types.SigilStatus(got.Status))
+
+	ctx = ctx.WithBlockHeight(450)
+	require.NoError(t, k.BeginBlocker(ctx))
+
+	got, found = k.GetSigil(ctx, sigil.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusDissolved, types.SigilStatus(got.Status))
+}
+
+func TestBeginBlocker_DormantTransitionPopulatesDormantIndex(t *testing.T) {
+	// Phase 2 (active → dormant) must write the sigil into the dormant
+	// liveness bucket at its frozen MaxPulseHeight, so Phase 1 can
+	// range-scan rather than iterate every dormant sigil.
+	k, ctx, storeKey := setupKeeperWithStoreKey(t)
+	require.NoError(t, k.SetParams(ctx, types.Params{
+		DormantThreshold:  100,
+		DissolveThreshold: 200,
+		SubmitWindow:      10,
+	}))
+
+	sigil := types.Sigil{
+		SigilId:          "SIG_phase2_bucket",
+		Creator:          "oasyce1creator",
+		PublicKey:        []byte("phase2-bucket-pubkey"),
+		Status:           types.SigilStatusActive,
+		CreationHeight:   1,
+		LastActiveHeight: 10,
+		DimensionPulses: map[string]int64{
+			"thronglets": 50,
+		},
+	}
+	require.NoError(t, k.SetSigil(ctx, sigil))
+	k.SetActiveCount(ctx, 1)
+
+	kvStore := ctx.KVStore(storeKey)
+	require.NotNil(t, kvStore.Get(types.LivenessIndexKey(50, sigil.SigilId)))
+	require.Nil(t, kvStore.Get(types.DormantLivenessIndexKey(50, sigil.SigilId)))
+
+	ctx = ctx.WithBlockHeight(250)
+	require.NoError(t, k.BeginBlocker(ctx))
+
+	got, found := k.GetSigil(ctx, sigil.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusDormant, types.SigilStatus(got.Status))
+
+	// Active bucket cleared, dormant bucket populated at the frozen height.
+	require.Nil(t, kvStore.Get(types.LivenessIndexKey(50, sigil.SigilId)))
+	require.Equal(t, []byte(sigil.SigilId), kvStore.Get(types.DormantLivenessIndexKey(50, sigil.SigilId)))
+}
+
+func TestBeginBlocker_DormantPhase1IgnoresUnexpiredEntries(t *testing.T) {
+	// Range-scan must only touch dormant sigils whose frozen effective
+	// height <= dissolveThreshold. Fresher dormant entries stay put.
+	k, ctx, storeKey := setupKeeperWithStoreKey(t)
+	require.NoError(t, k.SetParams(ctx, types.Params{
+		DormantThreshold:  100,
+		DissolveThreshold: 200,
+		SubmitWindow:      10,
+	}))
+
+	stale := types.Sigil{
+		SigilId:          "SIG_stale_dormant",
+		Creator:          "oasyce1creator",
+		PublicKey:        []byte("stale-dormant-pubkey"),
+		Status:           types.SigilStatusDormant,
+		CreationHeight:   1,
+		LastActiveHeight: 30,
+	}
+	fresh := types.Sigil{
+		SigilId:          "SIG_fresh_dormant",
+		Creator:          "oasyce1creator",
+		PublicKey:        []byte("fresh-dormant-pubkey"),
+		Status:           types.SigilStatusDormant,
+		CreationHeight:   1,
+		LastActiveHeight: 220,
+	}
+	require.NoError(t, k.SetSigil(ctx, stale))
+	require.NoError(t, k.SetSigil(ctx, fresh))
+
+	ctx = ctx.WithBlockHeight(300)
+	require.NoError(t, k.BeginBlocker(ctx))
+
+	gotStale, found := k.GetSigil(ctx, stale.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusDissolved, types.SigilStatus(gotStale.Status))
+
+	gotFresh, found := k.GetSigil(ctx, fresh.SigilId)
+	require.True(t, found)
+	require.Equal(t, types.SigilStatusDormant, types.SigilStatus(gotFresh.Status))
+
+	kvStore := ctx.KVStore(storeKey)
+	require.Nil(t, kvStore.Get(types.DormantLivenessIndexKey(30, stale.SigilId)))
+	require.Equal(t, []byte(fresh.SigilId), kvStore.Get(types.DormantLivenessIndexKey(220, fresh.SigilId)))
 }
 
 func TestDimensionPulses_MarshalRoundtrip(t *testing.T) {

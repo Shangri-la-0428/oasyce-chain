@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "oasyce10d07y265gmmuvt4z0w9aw880jnsr700jjuangx",
+      "plan": {
+        "name": "v0.8.0",
+        "height": "__UPGRADE_HEIGHT__",
+        "info": "sigil v1 -> v2 effective activity height migration; state migration only; no new stores"
+      }
+    }
+  ],
+  "metadata": "__METADATA_REF__",
+  "deposit": "100000000uoas",
+  "title": "__TITLE__",
+  "summary": "__SUMMARY__",
+  "expedited": false
+}

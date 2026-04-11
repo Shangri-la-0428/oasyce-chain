@@ -159,13 +159,12 @@ Base URL: <code>http://&lt;node&gt;:1317</code></p>
 <h2>Start Here</h2>
 <div class="notice">
 <p>This page is the chain API reference. Public beta onboarding lives in the Public Beta Guide. Start there first if you want direct chain access, then come back here once your account or local signer is ready.</p>
-<p>Chain onboarding is enough on its own. If you want richer local workflows later, add the optional bridges: <code>oas bootstrap</code> prepares local binding/runtime, <code>oas start</code> opens the Dashboard, and oasyce-agent is the default data ingress for directory-scale assets.</p>
+<p>Chain onboarding is enough on its own. If you want local AI runtime workflows later, add <code>oasyce-sdk</code>: use <code>oasyce start</code> on the first device, <code>oasyce join</code> on a receiving device, and keep <code>oasyce-agent</code> as the lower-level data-agent surface.</p>
 <p>If you need the native chain CLI, install it first with <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)</code>. Windows PowerShell users should use the companion <code>install_oasyced.ps1</code> script instead.</p>
 <p>If you only need an account and test tokens, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)</code>. Windows PowerShell users should use <code>bootstrap_public_beta_account.ps1</code>.</p>
 <p>If you want a local node, the shortest native setup is <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)</code>.</p>
 <p>If you want to run the node immediately in the current shell, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)</code>.</p>
-<p>If you want NativeSigner from Python, install <code>oasyce-sdk&gt;=0.5.0</code> before following the SDK examples. Reuse an existing local signer when possible; create a new one only on first setup.</p>
-<p>Before using the public beta from `oas` or `oasyce-agent`, run <code>oas doctor --public-beta --json</code> and proceed only when it returns <code>status: ok</code>.</p>
+<p>If you want NativeSigner from Python, install <code>oasyce-sdk&gt;=0.12.0</code> before following the SDK examples. For chain-side acceptance, prefer the adjacent <code>oasyce-sdk</code> main checkout in source mode. Prefer <code>oasyce start</code> for first-device setup and <code>oasyce join</code> for a receiving device. Reuse an existing local signer when possible; create a new one only on first setup.</p>
 <div class="notice-links">
   <a class="notice-link" href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md">Public Beta Guide (EN)</a>
   <a class="notice-link" href="https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA_CN.md">公测指南 (中文)</a>
@@ -175,7 +174,7 @@ Base URL: <code>http://&lt;node&gt;:1317</code></p>
   <a class="notice-link" href="https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1">Create Account Script (PowerShell)</a>
   <a class="notice-link" href="https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh">Prepare Node Script</a>
   <a class="notice-link" href="https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh">Run Node Script</a>
-  <a class="notice-link" href="https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md">Product-side guide (Dashboard / oasyce-agent)</a>
+  <a class="notice-link" href="https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md">oasyce-sdk Guide</a>
   <a class="notice-link" href="index.html#testnet">Network Overview</a>
 </div>
 </div>

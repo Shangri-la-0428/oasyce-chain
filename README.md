@@ -27,6 +27,8 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 
 因此，Chain 不是高频 runtime，也不是全部产品的前门。它只负责那些必须公开、持久、可审计、可最终裁决的事实。
 
+角色边界与反目标见 [docs/STACK_BOUNDARIES.md](docs/STACK_BOUNDARIES.md)。
+
 ## 独立采用 / Independent Adoption
 
 `Oasyce Chain` 必须能被独立使用。
@@ -92,7 +94,7 @@ Stripe / x402 / Tempo 解决了"怎么付钱"。Oasyce 解决的是"为什么付
 
 Oasyce Testnet-1 现已上线。
 
-公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。先完成链上接入；只有在你需要 Dashboard、本地扫描或 Python 自动化时，再按需接上 `oas`、`oasyce-agent` 或 `oasyce-sdk`。
+公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](docs/PUBLIC_BETA_CN.md)。先完成链上接入；只有在你需要 AI 本地 binding、NativeSigner 或 data-agent 时，再按需接上 `oasyce-sdk`。Chain 不是默认前门。
 
 | 项目 | 值 |
 |------|-----|
@@ -108,25 +110,25 @@ Oasyce Testnet-1 现已上线。
 | Windows 账户 | `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` |
 | 准备节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)` |
 | 启动节点 | `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)` |
-| 产品侧指南 | [oasyce-net 公测指南](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md) |
-| Dashboard | `pip install oasyce && oas bootstrap && oas start` |
-| oasyce-agent | [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md) |
+| 可选首设备前门 | `pip install -U "oasyce-sdk>=0.12.0" && oasyce start` |
+| 可选接收设备接入 | `pip install -U "oasyce-sdk>=0.12.0" && oasyce join` |
+| SDK 说明 | [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md) |
 | API Reference | [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html) |
 | Validator Guide | [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md) |
 | Releases | [latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest) |
-| Python SDK | `pip install -U "oasyce-sdk>=0.5.0"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
+| Python SDK | `pip install -U "oasyce-sdk>=0.12.0"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk)) |
 <!-- END GENERATED:PUBLIC_BETA_ZH -->
 
-**最快路径（使用经济系统）：**
+**最快路径（把 AI runtime 接到链上）：**
 ```bash
 pip install oasyce-sdk
-oasyce-agent start
+oasyce start
 ```
 ```python
 from oasyce_sdk.crypto import Wallet, NativeSigner
 from oasyce_sdk import OasyceClient
 
-wallet = Wallet.auto()  # 复用本机 binding；首次设备可先运行 oasyce-agent start
+wallet = Wallet.auto()  # 复用本机 binding；首设备优先先运行 oasyce start
 client = OasyceClient("http://47.93.32.88:1317")
 signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
 # 注册、调用、买卖、评价 — 纯 Python，零 Go 依赖
@@ -298,19 +300,25 @@ oasyced query reputation leaderboard --output json
 ## 架构
 
 ```
-                    +---------------------------+
-                    |      oasyce-chain (Go)    |
-                    |    Cosmos SDK v0.50.10    |
-                    |   CometBFT Consensus     |
-                    |   8 custom modules        |
-                    |   gRPC :9090 / REST :1317 |
-                    +-------------+-------------+
+                   +----------------------------+
+                   |    Oasyce-Sigil / Sigil    |
+                   | constitution + object model|
+                   +-------------+--------------+
+                                 |
+        +------------------------+------------------------+
+        |                         |                        |
+  +-----v------+          +-------v-------+         +------v------+
+  |   Chain    |          |  Thronglets   |         |   Psyche    |
+  | public     |          | shared env    |         | subjectivity|
+  | truth/final|          | coord/discover|         | continuity  |
+  +-----+------+          +-------+-------+         +------+------+
+        |                         |                        |
+        +-------------------------+------------------------+
                                   |
                     +-------------v-------------+
-                    |   oasyce-sdk (Agent SDK)  |
-                    |   binding / signer / 数据入口 |
-                    |   MCP Server + LangChain  |
-                    |   pip install oasyce-sdk  |
+                    |   oasyce-sdk (runtime)    |
+                    | binding / signer / MCP    |
+                    | data agent / AI front door|
                     +---------------------------+
 ```
 
@@ -318,8 +326,11 @@ oasyced query reputation leaderboard --output json
 
 | 组件 | 定位 | 安装 |
 |------|------|------|
-| [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (本仓库) | L1 结算链 | `make build` |
-| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Agent Runtime + binding/signer/MCP/LangChain | `pip install oasyce-sdk` |
+| [Oasyce-Sigil](https://github.com/Shangri-la-0428/Oasyce-Sigil) | 协议宪法与对象语法 | spec repo |
+| [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (本仓库) | 公共真相、授权终局、结算终局 | `make build` |
+| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | AI 默认前门、binding、native signer、runtime | `pip install oasyce-sdk` |
+| [Thronglets](https://github.com/Shangri-la-0428/Thronglets) | 共享环境、发现、协作连续性 | standalone |
+| [oasyce_psyche](https://github.com/Shangri-la-0428/oasyce_psyche) | 主观连续性与 reply contract | standalone |
 
 ---
 

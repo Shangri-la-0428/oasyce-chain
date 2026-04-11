@@ -47,8 +47,8 @@ type agentProfileResponse struct {
 }
 
 type reputationInfo struct {
-	TotalScore      uint64 `json:"total_score"`
-	TotalFeedbacks  uint64 `json:"total_feedbacks"`
+	TotalScore     uint64 `json:"total_score"`
+	TotalFeedbacks uint64 `json:"total_feedbacks"`
 }
 
 type capabilitySummary struct {
@@ -322,6 +322,27 @@ type healthResponse struct {
 	ModuleVersions map[string]uint64 `json:"module_versions"`
 }
 
+func visibleModuleVersions(vmap map[string]uint64) map[string]uint64 {
+	visible := make(map[string]uint64)
+	for _, mod := range []string{
+		"settlement",
+		"capability",
+		"datarights",
+		"reputation",
+		"work",
+		"onboarding",
+		"halving",
+		"anchor",
+		"delegate",
+		"sigil",
+	} {
+		if ver, ok := vmap[mod]; ok {
+			visible[mod] = ver
+		}
+	}
+	return visible
+}
+
 func (app *OasyceApp) handleHealth(w http.ResponseWriter, r *http.Request) {
 	resp := healthResponse{
 		Status:  "ok",
@@ -342,11 +363,7 @@ func (app *OasyceApp) handleHealth(w http.ResponseWriter, r *http.Request) {
 	resp.ModuleVersions = make(map[string]uint64)
 	vmap, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
 	if err == nil {
-		for _, mod := range []string{"settlement", "capability", "datarights", "reputation", "work", "onboarding", "halving"} {
-			if ver, ok := vmap[mod]; ok {
-				resp.ModuleVersions[mod] = ver
-			}
-		}
+		resp.ModuleVersions = visibleModuleVersions(vmap)
 	}
 
 	w.Header().Set("Cache-Control", "no-cache")

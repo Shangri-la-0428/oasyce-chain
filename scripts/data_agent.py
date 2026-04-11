@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Oasyce Data Agent -- Autonomous data asset registration.
+Oasyce Data Agent -- SDK-backed compatibility wrapper for autonomous data registration.
 
 Scans directories for files, runs oasyce-sdk privacy detection, and
 auto-registers safe assets (risk=safe/low) on-chain. Zero human intervention.
@@ -23,11 +23,10 @@ USAGE
 
 ENVIRONMENT VARIABLES
 =====================
-    DATA_AGENT_KEY        -- keyring key name (default: "data-agent")
     OASYCE_CHAIN_REST     -- chain REST endpoint (default: "http://localhost:1317")
-    OASYCED_BIN           -- path to oasyced binary (default: "oasyced")
-    OASYCED_CHAIN_ID      -- chain ID (default: "oasyce-testnet-1")
-    OASYCED_KEYRING       -- keyring backend (default: "test")
+    OASYCE_CHAIN_ID       -- chain ID (default: "oasyce-testnet-1")
+    OASYCE_MNEMONIC       -- optional headless signer override
+    OASYCE_DIR            -- local SDK binding dir (default: "~/.oasyce")
     DATA_AGENT_PORT       -- health endpoint port (default: 8431)
     WATCH_DIRS            -- comma-separated directories to scan (REQUIRED)
     SCAN_INTERVAL         -- seconds between scans (default: 1800 = 30 min)
@@ -37,12 +36,14 @@ ENVIRONMENT VARIABLES
     MAX_RISK_LEVEL        -- max acceptable risk: "safe" or "low" (default: "low")
     SERVICE_URL_TEMPLATE  -- service_url template with {hash} placeholder
     STATE_FILE            -- persistent state file path
+
+This script remains in the chain repo only as a thin wrapper. The canonical AI
+runtime and signer path live in `oasyce-sdk`.
 """
 
 import json
 import logging
 import os
-import subprocess
 import sys
 import threading
 import time
@@ -51,15 +52,18 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+
+from _sdk_compat import _ensure_sdk_importable, resolve_runtime, split_csv, tx_status
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-AGENT_KEY = os.environ.get("DATA_AGENT_KEY", "data-agent")
 CHAIN_REST = os.environ.get("OASYCE_CHAIN_REST", "http://localhost:1317").rstrip("/")
-OASYCED = os.environ.get("OASYCED_BIN", "oasyced")
-CHAIN_ID = os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
-KEYRING = os.environ.get("OASYCED_KEYRING", "test")
+CHAIN_ID = os.environ.get("OASYCE_CHAIN_ID") or os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
 AGENT_PORT = int(os.environ.get("DATA_AGENT_PORT", "8431"))
 WATCH_DIRS = [d.strip() for d in os.environ.get("WATCH_DIRS", "").split(",") if d.strip()]
 SCAN_INTERVAL = int(os.environ.get("SCAN_INTERVAL", "1800"))
@@ -85,6 +89,8 @@ logging.basicConfig(
 )
 log = logging.getLogger("data-agent")
 
+_RUNTIME = None
+
 # ---------------------------------------------------------------------------
 # Runtime state
 # ---------------------------------------------------------------------------
@@ -94,6 +100,7 @@ _last_cycle_time = ""
 _total_registered = 0
 _total_scanned = 0
 _total_cycles = 0
+_registered_assets = {}
 _lock = threading.Lock()
 
 # ---------------------------------------------------------------------------
@@ -113,57 +120,24 @@ def chain_rest_get(path):
         return None
 
 
+def get_runtime():
+    global _RUNTIME
+    if _RUNTIME is None:
+        _RUNTIME = resolve_runtime(CHAIN_REST, CHAIN_ID)
+    return _RUNTIME
+
+
 def get_agent_address():
-    """Get the data agent's bech32 address from keyring."""
-    try:
-        result = subprocess.run(
-            [OASYCED, "keys", "show", AGENT_KEY, "-a",
-             "--keyring-backend", KEYRING],
-            capture_output=True, text=True, timeout=10,
-        )
-        addr = result.stdout.strip()
-        return addr if addr.startswith("oasyce") else None
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return None
+    """Get the data agent's chain actor address."""
+    return get_runtime().actor_address
 
 
-def oasyced_tx(args):
-    """Run an oasyced tx command. Returns (success, txhash_or_error)."""
-    cmd = [OASYCED, "tx"] + args + [
-        "--from", AGENT_KEY,
-        "--keyring-backend", KEYRING,
-        "--chain-id", CHAIN_ID,
-        "--gas", "auto",
-        "--gas-adjustment", "1.5",
-        "--fees", "10000uoas",
-        "--yes",
-        "--output", "json",
-    ]
-    log.info("TX: %s", " ".join(cmd))
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        output = result.stdout.strip() or result.stderr.strip()
-        if result.returncode != 0:
-            log.error("TX failed (rc=%d): %s", result.returncode, output)
-            return False, output
-        try:
-            tx_data = json.loads(output)
-            code = tx_data.get("code", 0)
-            if code != 0:
-                log.error("TX CheckTx failed (code=%d): %s", code, tx_data.get("raw_log", ""))
-                return False, tx_data.get("raw_log", output)
-            txhash = tx_data.get("txhash", "")
-            log.info("TX submitted: %s", txhash)
-            return True, txhash
-        except json.JSONDecodeError:
-            log.info("TX output: %s", output[:200])
-            return True, output
-    except subprocess.TimeoutExpired:
-        log.error("TX timed out")
-        return False, "timeout"
-    except FileNotFoundError:
-        log.error("oasyced binary not found at: %s", OASYCED)
-        return False, "binary not found"
+def get_sdk_agent_scanner():
+    """Load the current scanner implementation from oasyce-sdk."""
+    _ensure_sdk_importable()
+    from oasyce_sdk.agent import scanner as agent_scanner
+
+    return agent_scanner
 
 
 # ---------------------------------------------------------------------------
@@ -173,20 +147,18 @@ def oasyced_tx(args):
 
 def scan_and_filter(watch_dir):
     """Run oasyce-sdk agent scan with privacy detection. Returns filtered file list."""
-    from oasyce_sdk.scanner import scan_directory
-    from oasyce_sdk.inventory import Inventory
-
-    inventory = Inventory()
-    result = scan_directory(
-        watch_dir, recursive=True, skip_privacy=False,
-        save=True, inventory=inventory,
+    scanner = get_sdk_agent_scanner()
+    results = scanner.scan(
+        paths=[watch_dir],
+        known_hashes=set(_registered_assets.keys()),
+        check_privacy=True,
     )
 
     filtered = []
-    for info in result.get("files", []):
-        path = info["path"]
-        ext = info.get("ext", "")
-        risk = info.get("privacy_risk", "safe")
+    for info in results:
+        path = info.path
+        ext = Path(path).suffix.lower()
+        risk = info.privacy_risk
 
         # Extension filter
         if ALLOWED_EXTENSIONS and ext not in ALLOWED_EXTENSIONS:
@@ -204,17 +176,34 @@ def scan_and_filter(watch_dir):
                 log.info("Skipped %s (risk=%s, above max=%s)", path, risk, MAX_RISK_LEVEL)
             continue
 
-        filtered.append(info)
+        filtered.append({
+            "path": path,
+            "hash": info.sha256,
+            "category": info.category,
+            "ext": ext,
+            "privacy_risk": risk,
+        })
 
-    return filtered, inventory
+    return filtered
 
 
-def is_already_registered(inventory, path, content_hash):
-    """Check if file is already registered with the same content."""
-    rows = inventory.search(query=path)
-    for row in rows:
-        if row.get("path") == path and row.get("oasyce_registered") and row.get("hash") == content_hash:
-            return True
+def mark_registered_asset(path, content_hash, asset_id):
+    """Record one locally registered asset for future dedupe."""
+    _registered_assets[content_hash] = {
+        "path": path,
+        "asset_id": asset_id,
+    }
+
+
+def is_already_registered(path, content_hash):
+    """Check if the content hash is already known locally or on-chain."""
+    known = _registered_assets.get(content_hash)
+    if known and known.get("path") == path:
+        return True
+    asset_id = find_asset_by_hash(content_hash)
+    if asset_id:
+        mark_registered_asset(path, content_hash, asset_id)
+        return True
     return False
 
 
@@ -239,17 +228,16 @@ def generate_tags(category, ext):
 
 def register_on_chain(name, content_hash, tags, service_url, description=""):
     """Register a data asset on-chain. Returns (success, asset_id_or_error)."""
-    args = ["datarights", "register", name, content_hash]
-    if tags:
-        args.extend(["--tags", tags])
-    if description:
-        args.extend(["--description", description])
-    if service_url:
-        args.extend(["--service-url", service_url])
-
-    ok, result = oasyced_tx(args)
+    result = get_runtime().signer.register_asset(
+        name=name,
+        content_hash=content_hash,
+        tags=split_csv(tags),
+        description=description,
+        service_url=service_url,
+    )
+    ok, detail = tx_status(result)
     if not ok:
-        return False, result
+        return False, detail
 
     # Wait for block inclusion
     time.sleep(7)
@@ -292,7 +280,7 @@ def scan_and_register_cycle(dry_run=False):
 
         log.info("Scanning %s ...", watch_dir)
         try:
-            filtered, inventory = scan_and_filter(watch_dir)
+            filtered = scan_and_filter(watch_dir)
         except Exception as e:
             log.error("Scan failed for %s: %s", watch_dir, e)
             stats["errors"] += 1
@@ -308,7 +296,7 @@ def scan_and_register_cycle(dry_run=False):
             ext = info.get("ext", "")
 
             # Deduplication
-            if is_already_registered(inventory, path, content_hash):
+            if is_already_registered(path, content_hash):
                 stats["skipped"] += 1
                 continue
 
@@ -327,7 +315,7 @@ def scan_and_register_cycle(dry_run=False):
 
             ok, asset_id = register_on_chain(name, content_hash, tags, service_url)
             if ok:
-                inventory.mark_registered(path, asset_id)
+                mark_registered_asset(path, content_hash, asset_id)
                 log.info("REGISTERED %s -> %s", path, asset_id)
                 stats["registered"] += 1
                 dir_stats["registered"] += 1
@@ -335,7 +323,6 @@ def scan_and_register_cycle(dry_run=False):
                 log.error("Failed to register %s: %s", path, asset_id)
                 stats["errors"] += 1
 
-        inventory.close()
         stats["dirs"].append(dir_stats)
 
     with _lock:
@@ -359,13 +346,14 @@ def scan_and_register_cycle(dry_run=False):
 
 def load_state():
     """Load cumulative state from disk."""
-    global _total_registered, _total_scanned, _total_cycles
+    global _total_registered, _total_scanned, _total_cycles, _registered_assets
     try:
         with open(STATE_FILE) as f:
             state = json.load(f)
             _total_registered = state.get("total_registered", 0)
             _total_scanned = state.get("total_scanned", 0)
             _total_cycles = state.get("total_cycles", 0)
+            _registered_assets = state.get("registered_assets", {})
     except (FileNotFoundError, json.JSONDecodeError):
         pass
 
@@ -379,6 +367,7 @@ def save_state():
             "total_cycles": _total_cycles,
             "last_cycle_time": _last_cycle_time,
             "last_cycle_stats": _last_cycle_stats,
+            "registered_assets": _registered_assets,
         }
     try:
         with open(STATE_FILE, "w") as f:
@@ -499,20 +488,22 @@ def main():
 
     # Verify oasyce-sdk is importable
     try:
-        from oasyce_sdk.scanner import scan_directory  # noqa: F401
-        from oasyce_sdk.inventory import Inventory  # noqa: F401
+        get_sdk_agent_scanner()
     except ImportError:
-        log.error("oasyce-sdk package not found. Install: pip install oasyce-sdk")
+        log.error("oasyce-sdk package not found. Install: pip install -U 'oasyce-sdk>=0.12.0'")
+        sys.exit(1)
+    except RuntimeError as exc:
+        log.error("%s", exc)
         sys.exit(1)
 
     # Load persistent state
     load_state()
 
     if not args.dry_run:
-        # Verify agent key exists
-        addr = get_agent_address()
-        if not addr:
-            log.error("Agent key '%s' not found in keyring (backend=%s)", AGENT_KEY, KEYRING)
+        try:
+            addr = get_agent_address()
+        except RuntimeError as exc:
+            log.error("Cannot resolve data-agent identity: %s", exc)
             sys.exit(1)
         log.info("Agent address: %s", addr)
 

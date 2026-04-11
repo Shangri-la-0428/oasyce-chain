@@ -591,11 +591,66 @@ Response:
   "chain_id": "oasyce-testnet-1",
   "version": "0.5.0",
   "block_height": 12345,
-  "module_versions": {"settlement": 2, "capability": 2, "datarights": 2, "reputation": 1, "work": 1, "onboarding": 3, "halving": 1}
+  "module_versions": {
+    "settlement": 2,
+    "capability": 2,
+    "datarights": 2,
+    "reputation": 1,
+    "work": 1,
+    "onboarding": 3,
+    "halving": 1,
+    "anchor": 1,
+    "delegate": 1,
+    "sigil": 2
+  }
 }
 ```
 
 Use this to verify the node is healthy before sending transactions.
+
+### 8d. Template-Height Software Upgrade Proposal
+
+For the `v0.8.0` Sigil migration, render proposal artifacts from the in-repo templates:
+
+```bash
+python3 scripts/upgrade_proposal_v080.py render \
+  --height <candidate-height> \
+  --proposal-output /tmp/v080-proposal.json \
+  --metadata-output /tmp/v080-metadata.json
+```
+
+Validate the rendered proposal:
+
+```bash
+python3 scripts/upgrade_proposal_v080.py validate /tmp/v080-proposal.json
+```
+
+Dry-run the governance submission on a local tempnet:
+
+```bash
+python3 scripts/upgrade_proposal_v080.py dry-run \
+  --height <candidate-height> \
+  --network tempnet
+```
+
+Once a real upgrade height is chosen, the submit shape is:
+
+```bash
+oasyced tx gov submit-proposal /tmp/v080-proposal.json \
+  --from <signer> \
+  --chain-id <chain-id> \
+  --fees 20000uoas \
+  --yes \
+  --output json
+```
+
+The rendered proposal is constrained to:
+
+- `@type = /cosmos.upgrade.v1beta1.MsgSoftwareUpgrade`
+- `plan.name = v0.8.0`
+- template height only — do not hardcode the real height in repo docs
+- `deposit = 100000000uoas` unless governance policy changes later
+- `metadata` on-chain is a short reference string; the full body stays in the sidecar `metadata.json`
 
 ---
 

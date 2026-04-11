@@ -2,11 +2,11 @@
 """Cross-project consistency checker.
 
 Parses proto files (source of truth) and verifies that downstream Python
-projects (oasyce-sdk, oasyce-net) have matching field definitions.
+SDK surfaces have matching field definitions.
 
 Why this exists:
   When a new proto field is added to the chain (e.g. DataAsset.service_url),
-  downstream SDK/CLI dataclasses must be updated too. Without automated
+  downstream SDK dataclasses must be updated too. Without automated
   checking, these fall out of sync silently — buyers see empty fields,
   CLI commands miss flags, and nobody notices until a user reports it.
 
@@ -29,7 +29,6 @@ from typing import Dict, List, Set, Tuple
 
 # Base directories (relative to this script's parent's parent)
 CHAIN_DIR = Path(__file__).resolve().parent.parent
-NET_DIR = CHAIN_DIR.parent / "oasyce-net"
 SDK_DIR = CHAIN_DIR.parent / "oasyce-sdk"
 
 # Proto files → message → downstream Python files + class names
@@ -40,14 +39,6 @@ SYNC_MAP: List[Tuple[str, str, List[Tuple[Path, str]]]] = [
         "DataAsset",
         [
             (SDK_DIR / "oasyce_sdk" / "types.py", "DataAsset"),
-            (NET_DIR / "oasyce" / "proto" / "oasyce" / "datarights" / "v1" / "__init__.py", "DataAsset"),
-        ],
-    ),
-    (
-        "proto/oasyce/datarights/v1/tx.proto",
-        "MsgRegisterDataAsset",
-        [
-            (NET_DIR / "oasyce" / "proto" / "oasyce" / "datarights" / "v1" / "__init__.py", "MsgRegisterDataAsset"),
         ],
     ),
 ]
@@ -60,10 +51,6 @@ ALLOWED_MISSING: Dict[str, Set[str]] = {
         "created_at",       # timestamp, not surfaced in simple dataclass
         "shutdown_initiated_at",  # timestamp
         "migration_enabled",      # internal lifecycle flag
-    },
-    "MsgRegisterDataAsset": {
-        "co_creators",  # complex nested type
-        "parent_asset_id",  # versioning, handled separately
     },
 }
 
@@ -180,7 +167,7 @@ def main():
     print("Cross-project proto↔Python sync check")
     print(f"Chain: {CHAIN_DIR}")
     print(f"SDK:   {SDK_DIR}")
-    print(f"Net:   {NET_DIR}")
+    print("Runtime ownership note: chain-side automation should route through oasyce-sdk.")
 
     issues = check_sync()
 

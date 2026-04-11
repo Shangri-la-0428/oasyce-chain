@@ -25,6 +25,8 @@ Stripe / x402 / Tempo solve "how to pay." Oasyce solves "why the payment is just
 
 So the chain is not the high-frequency runtime, and not the whole product's front door. It only handles facts that must be public, durable, auditable, and final.
 
+See [docs/STACK_BOUNDARIES.md](docs/STACK_BOUNDARIES.md) for the frozen chain-side boundary and anti-goals.
+
 ## Independent Adoption
 
 `Oasyce Chain` must remain independently usable.
@@ -88,9 +90,9 @@ Full workflows and interfaces live in [docs/llms.txt](docs/llms.txt).
 <!-- BEGIN GENERATED:PUBLIC_BETA_EN -->
 ## Public Beta
 
-The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA.md).
+The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](docs/PUBLIC_BETA.md).
 
-Complete the chain-side onboarding first. Add `oas`, `oasyce-agent`, or `oasyce-sdk` later only when you want richer local workflows, scanning, or Python automation.
+Complete the chain-side onboarding first. Add `oasyce-sdk` later only when you want local binding, NativeSigner, or the data agent. Chain is not the default front door.
 
 - Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)
 - Install CLI: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)`
@@ -99,10 +101,10 @@ Complete the chain-side onboarding first. Add `oas`, `oasyce-agent`, or `oasyce-
 - Windows PowerShell account setup: `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` then `powershell -ExecutionPolicy Bypass -File ./bootstrap_public_beta_account.ps1`
 - Prepare local node: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`
 - Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`
-- Product-side guide: [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
-- Dashboard: `pip install oasyce && oas bootstrap && oas start`
-- Data ingress: [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)
-- Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.5.0"`
+- Optional first-device front door: `pip install -U "oasyce-sdk>=0.12.0" && oasyce start`
+- Optional receiving-device join: `pip install -U "oasyce-sdk>=0.12.0" && oasyce join`
+- SDK guide: [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)
+- Python SDK (NativeSigner): `pip install -U "oasyce-sdk>=0.12.0"`
 - API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)
 - Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)
 - Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)
@@ -112,18 +114,18 @@ Complete the chain-side onboarding first. Add `oas`, `oasyce-agent`, or `oasyce-
 
 ## Quick Start
 
-**Fastest path for the economic path:**
+**Fastest path to bridge an AI runtime onto the chain:**
 
 ```bash
 pip install oasyce-sdk
-oasyce-agent start
+oasyce start
 ```
 
 ```python
 from oasyce_sdk.crypto import Wallet, NativeSigner
 from oasyce_sdk import OasyceClient
 
-wallet = Wallet.auto()  # reuse local binding; first device can run oasyce-agent start first
+wallet = Wallet.auto()  # reuse local binding; first device should prefer oasyce start
 client = OasyceClient("http://47.93.32.88:1317")
 signer = NativeSigner(wallet, client, chain_id="oasyce-testnet-1")
 ```
@@ -277,25 +279,25 @@ oasyced query reputation leaderboard
 ## Architecture
 
 ```
-                    +---------------------------+
-                    |      oasyce-chain (Go)    |
-                    |    Cosmos SDK v0.50.10    |
-                    |   CometBFT Consensus     |
-                    |   7 custom modules        |
-                    |   gRPC :9090 / REST :1317 |
-                    +-------------+-------------+
+                   +----------------------------+
+                   |    Oasyce-Sigil / Sigil    |
+                   | constitution + object model|
+                   +-------------+--------------+
+                                 |
+        +------------------------+------------------------+
+        |                         |                        |
+  +-----v------+          +-------v-------+         +------v------+
+  |   Chain    |          |  Thronglets   |         |   Psyche    |
+  | public     |          | shared env    |         | subjectivity|
+  | truth/final|          | coord/discover|         | continuity  |
+  +-----+------+          +-------+-------+         +------+------+
+        |                         |                        |
+        +-------------------------+------------------------+
                                   |
                     +-------------v-------------+
-                    |   oasyce (Python CLI)     |
-                    |   Agent client + Dashboard|
-                    |   pip install oasyce      |
-                    +-------------+-------------+
-                                  |
-                    +-------------v-------------+
-                    |   oasyce-sdk (Agent SDK)  |
-                    | binding/signer/data ingress|
-                    |   MCP Server + LangChain  |
-                    |   pip install oasyce-sdk  |
+                    |   oasyce-sdk (runtime)    |
+                    | binding / signer / MCP    |
+                    | data agent / AI front door|
                     +---------------------------+
 ```
 
@@ -303,9 +305,11 @@ oasyced query reputation leaderboard
 
 | Component | Role | Install |
 |-----------|------|---------|
-| [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | L1 settlement chain | `make build` |
-| [oasyce](https://github.com/Shangri-la-0428/oasyce-net) | Python agent client + CLI + Dashboard | `pip install oasyce && oas bootstrap` |
-| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | Python Agent SDK (binding/signer/MCP/LangChain) | `pip install oasyce-sdk` |
+| [Oasyce-Sigil](https://github.com/Shangri-la-0428/Oasyce-Sigil) | protocol constitution and object model | spec repo |
+| [oasyce-chain](https://github.com/Shangri-la-0428/oasyce-chain) (this repo) | public truth, authorization finality, settlement finality | `make build` |
+| [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk) | AI front door, binding, native signer, runtime | `pip install oasyce-sdk` |
+| [Thronglets](https://github.com/Shangri-la-0428/Thronglets) | shared environment, discovery, collaboration continuity | standalone |
+| [oasyce_psyche](https://github.com/Shangri-la-0428/oasyce_psyche) | subjective continuity and reply contract | standalone |
 
 ---
 

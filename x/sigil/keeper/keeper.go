@@ -46,17 +46,18 @@ func (k Keeper) SetSigil(ctx sdk.Context, s types.Sigil) error {
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
+	var old *types.Sigil
+	if existing, found := k.GetSigil(ctx, s.SigilId); found {
+		old = &existing
+	}
 
 	// Primary key.
 	store.Set(types.SigilKey(s.SigilId), bz)
 
-	// Status index.
-	store.Set(types.SigilByStatusKey(types.SigilStatus(s.Status), s.SigilId), []byte(s.SigilId))
-
-	// Liveness index (only for active sigils).
-	if types.SigilStatus(s.Status) == types.SigilStatusActive {
-		store.Set(types.LivenessIndexKey(s.LastActiveHeight, s.SigilId), []byte(s.SigilId))
+	if old != nil {
+		k.clearSigilIndexes(ctx, *old)
 	}
+	k.writeSigilIndexes(ctx, s)
 
 	return nil
 }
@@ -228,7 +229,7 @@ func (k Keeper) RegisterSigil(ctx sdk.Context, creator string, pubkey []byte, me
 	sigil := types.Sigil{
 		SigilId:          sigilID,
 		Creator:          creator,
-		PublicKey:         pubkey,
+		PublicKey:        pubkey,
 		Status:           types.SigilStatusActive,
 		CreationHeight:   ctx.BlockHeight(),
 		LastActiveHeight: ctx.BlockHeight(),
@@ -285,8 +286,8 @@ func (k Keeper) IterateAllBonds(ctx sdk.Context, cb func(b types.Bond) bool) {
 	}
 }
 
-// IterateStaleSigils iterates sigils whose LastActiveHeight <= maxHeight.
-// Used by BeginBlocker for liveness decay.
+// IterateStaleSigils iterates active sigils whose effective activity height
+// (MaxPulseHeight) <= maxHeight via the liveness index.
 func (k Keeper) IterateStaleSigils(ctx sdk.Context, maxHeight int64, cb func(sigilID string) bool) {
 	store := ctx.KVStore(k.storeKey)
 	endKey := types.LivenessIndexIteratorPrefix(maxHeight)

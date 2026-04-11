@@ -89,7 +89,7 @@ The constitutional core of the chain. In the field evolution paradigm, Chain is 
 - **Continuity history**: ordered, public, immutable event stream for continuing digital actors
 - **Liveness decay**: active → dormant → dissolved via chain time
 - **Lineage**: fork inheritance and merge absorption recorded as first-class history
-- **Design direction**: Pulse — multi-dimensional heartbeat from Psyche (drives), Thronglets (presence), and chain activity. All pulses stale → dissolution. Extends `LastActiveHeight` from single int64 to `map<dimension, int64>`. Not yet implemented.
+- **Pulse surface**: `MsgPulse` is now live as the chain's sparse heartbeat ingress. Thronglets can emit dimension pulses; chain records the public fact. Pruning now uses the Sigil's effective activity height, derived from `dimension_pulses` via `MaxPulseHeight()`. `LastActiveHeight` remains as a compatibility and inspection field, not the final pruning truth source.
 
 Key files:
 - `x/sigil/keeper/keeper.go` — lifecycle state transitions and indexes

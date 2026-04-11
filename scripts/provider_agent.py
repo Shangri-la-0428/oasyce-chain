@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Oasyce Provider Agent — Sell API access through the capability marketplace.
+Oasyce Provider Agent — SDK-backed compatibility wrapper for selling capabilities.
 
 Bridges off-chain API services (OpenAI, custom models, etc.) to the Oasyce
 on-chain capability system. Handles verification, forwarding, settlement.
@@ -11,7 +11,7 @@ USAGE
 1. Register a capability on-chain:
 
     python3 provider_agent.py --register --name "Codex API" --price 50000
-    # Registers with the provider key, prints the capability ID.
+    # Registers with the local SDK signer, prints the capability ID.
     # Set OASYCE_CAPABILITY_ID to the printed ID, or pass --capability-id.
 
 2. Start the provider agent:
@@ -23,11 +23,7 @@ USAGE
 
 3. Consumer flow:
 
-    a) Consumer invokes on-chain:
-       oasyced tx oasyce_capability invoke $CAP_ID \\
-           --input '{"model":"gpt-4","messages":[{"role":"user","content":"Hello"}]}' \\
-           --from consumer --chain-id oasyce-local-1 --keyring-backend test \\
-           --fees 10000uoas -y
+    a) Consumer invokes on-chain through the SDK-native signer path.
 
     b) Consumer POSTs to this agent:
        curl -X POST http://provider-host:8430/api/v1/process \\
@@ -39,16 +35,18 @@ USAGE
 
 ENVIRONMENT VARIABLES
 =====================
-    OASYCE_PROVIDER_KEY   — keyring key name (default: "provider")
     OASYCE_CHAIN_REST     — chain REST (default: "http://localhost:1317")
     OASYCE_CHAIN_RPC      — chain RPC  (default: "http://localhost:26657")
+    OASYCE_CHAIN_ID       — chain ID (default: "oasyce-testnet-1")
+    OASYCE_MNEMONIC       — optional headless signer override
+    OASYCE_DIR            — local SDK binding dir (default: "~/.oasyce")
     UPSTREAM_API_URL      — upstream API endpoint
     UPSTREAM_API_KEY      — upstream API key
     OASYCE_CAPABILITY_ID  — the capability ID this agent serves
     PROVIDER_PORT         — HTTP listen port (default: 8430)
-    OASYCED_BIN           — path to oasyced binary (default: "oasyced")
-    OASYCED_CHAIN_ID      — chain ID (default: "oasyce-local-1")
-    OASYCED_KEYRING       — keyring backend (default: "test")
+
+This script remains in the chain repo only as a thin wrapper. The canonical AI
+runtime and signer path live in `oasyce-sdk`.
 """
 
 import hashlib
@@ -65,20 +63,23 @@ from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+
+from _sdk_compat import resolve_runtime, split_csv, submit_single, tx_status
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-PROVIDER_KEY = os.environ.get("OASYCE_PROVIDER_KEY", "provider")
 CHAIN_REST = os.environ.get("OASYCE_CHAIN_REST", "http://localhost:1317").rstrip("/")
 CHAIN_RPC = os.environ.get("OASYCE_CHAIN_RPC", "http://localhost:26657").rstrip("/")
 UPSTREAM_API_URL = os.environ.get("UPSTREAM_API_URL", "")
 UPSTREAM_API_KEY = os.environ.get("UPSTREAM_API_KEY", "")
 CAPABILITY_ID = os.environ.get("OASYCE_CAPABILITY_ID", "")
 PROVIDER_PORT = int(os.environ.get("PROVIDER_PORT", "8430"))
-OASYCED = os.environ.get("OASYCED_BIN", "oasyced")
-CHAIN_ID = os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
-KEYRING = os.environ.get("OASYCED_KEYRING", "test")
+CHAIN_ID = os.environ.get("OASYCE_CHAIN_ID") or os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
 ALERT_EMAIL = os.environ.get("OASYCE_ALERT_EMAIL", "ptc0428@qq.com")
 ALERT_LOG = os.environ.get("OASYCE_ALERT_LOG", "/tmp/oasyce-provider-alert.log")
 ALERT_STATE_DIR = os.environ.get("OASYCE_ALERT_STATE_DIR", "/tmp/oasyce_provider_alerts")
@@ -101,6 +102,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 log = logging.getLogger("provider-agent")
+
+_RUNTIME = None
 
 # Exit codes: EX_CONFIG for preflight/config errors (systemd will not restart),
 # 1 for runtime errors (systemd will restart).
@@ -151,52 +154,11 @@ def get_capability(cap_id):
 
 
 
-def oasyced_tx(args):
-    """
-    Run an oasyced tx command. Returns (success: bool, output: str).
-    Uses --output json for machine-readable output.
-    """
-    cmd = [
-        OASYCED, "tx",
-    ] + args + [
-        "--from", PROVIDER_KEY,
-        "--keyring-backend", KEYRING,
-        "--chain-id", CHAIN_ID,
-        "--gas", "auto",
-        "--gas-adjustment", "1.5",
-        "--fees", "10000uoas",
-        "--yes",
-        "--output", "json",
-    ]
-    log.info("TX: %s", " ".join(cmd))
-    try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30,
-        )
-        output = result.stdout.strip() or result.stderr.strip()
-        if result.returncode != 0:
-            log.error("TX failed (rc=%d): %s", result.returncode, output)
-            return False, output
-        # Parse txhash from JSON output
-        try:
-            tx_data = json.loads(output)
-            txhash = tx_data.get("txhash", "")
-            code = tx_data.get("code", 0)
-            if code != 0:
-                log.error("TX CheckTx failed (code=%d): %s", code, tx_data.get("raw_log", ""))
-                return False, tx_data.get("raw_log", output)
-            log.info("TX submitted: %s", txhash)
-            return True, txhash
-        except json.JSONDecodeError:
-            # Non-JSON output, still might be OK
-            log.info("TX output: %s", output[:200])
-            return True, output
-    except subprocess.TimeoutExpired:
-        log.error("TX timed out")
-        return False, "timeout"
-    except FileNotFoundError:
-        log.error("oasyced binary not found at: %s", OASYCED)
-        return False, "binary not found"
+def get_runtime():
+    global _RUNTIME
+    if _RUNTIME is None:
+        _RUNTIME = resolve_runtime(CHAIN_REST, CHAIN_ID)
+    return _RUNTIME
 
 
 def get_invocation(inv_id):
@@ -243,18 +205,8 @@ def verify_invocation_on_chain(inv_id, capability_id):
 
 
 def get_provider_address():
-    """Get the provider's bech32 address from the keyring."""
-    try:
-        result = subprocess.run(
-            [OASYCED, "keys", "show", PROVIDER_KEY, "-a",
-             "--keyring-backend", KEYRING],
-            capture_output=True, text=True, timeout=10,
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
-    return None
+    """Get the provider's chain actor address."""
+    return get_runtime().actor_address
 
 
 def log_alert_event(level, msg):
@@ -444,7 +396,12 @@ def disable_capability(reason, invocation_id=""):
     _capability_error = f"capability locally disabled after buyer-path failure: {reason}"
 
     if AUTO_DEACTIVATE_ON_BUY_FAILURE and CAPABILITY_ID:
-        ok, out = oasyced_tx(["oasyce_capability", "deactivate", CAPABILITY_ID])
+        result = submit_single(
+            get_runtime(),
+            "/oasyce.capability.v1.MsgDeactivateCapability",
+            {"creator": get_provider_address(), "capability_id": CAPABILITY_ID},
+        )
+        ok, out = tx_status(result)
         if ok:
             log.error("Capability %s deactivated on-chain after buyer-path failure", CAPABILITY_ID)
             return True
@@ -461,7 +418,14 @@ def handle_buyer_path_failure(invocation_id, reason):
     global _buyer_failure_streak
     record_upstream_status(False, reason)
     if invocation_id:
-        oasyced_tx(["oasyce_capability", "fail-invocation", invocation_id])
+        result = submit_single(
+            get_runtime(),
+            "/oasyce.capability.v1.MsgFailInvocation",
+            {"creator": get_provider_address(), "invocation_id": invocation_id},
+        )
+        ok, out = tx_status(result)
+        if not ok:
+            log.warning("Failed to mark invocation %s as failed on-chain: %s", invocation_id, out)
     _buyer_failure_streak += 1
     log.warning(
         "Buyer-path failure streak for %s is now %d/%d: %s",
@@ -565,7 +529,8 @@ def claim_worker():
         for inv_id in claimable:
             log.info("Challenge window passed for %s at height %d, claiming...",
                      inv_id, current_height)
-            ok, out = oasyced_tx(["oasyce_capability", "claim-invocation", inv_id])
+            result = get_runtime().signer.claim_invocation(inv_id)
+            ok, out = tx_status(result)
             if ok:
                 log.info("Claimed %s successfully", inv_id)
                 with _pending_lock:
@@ -685,13 +650,12 @@ class ProviderHandler(BaseHTTPRequestHandler):
         record_upstream_status(True, "")
 
         log.info("[%s] Submitting complete-invocation on-chain...", invocation_id)
-        complete_args = [
-            "oasyce_capability", "complete-invocation",
-            invocation_id, output_hash,
-        ]
-        if usage_report:
-            complete_args += ["--usage-report", usage_report]
-        ok, tx_out = oasyced_tx(complete_args)
+        result = get_runtime().signer.complete_invocation(
+            invocation_id,
+            output_hash,
+            usage_report=usage_report,
+        )
+        ok, tx_out = tx_status(result)
         if not ok:
             log.error("[%s] complete-invocation TX failed: %s", invocation_id, tx_out)
             # Still return the result to the consumer -- they paid for it.
@@ -734,18 +698,14 @@ def register_capability(name, price, description="", tags=""):
         log.error("Upstream validation failed; refusing to register capability: %s", upstream_error)
         sys.exit(1)
 
-    args = [
-        "oasyce_capability", "register",
-        name,
-        f"http://localhost:{PROVIDER_PORT}/api/v1/process",
-        f"{price}uoas",
-    ]
-    if description:
-        args += ["--description", description]
-    if tags:
-        args += ["--tags", tags]
-
-    ok, out = oasyced_tx(args)
+    result = get_runtime().signer.register_capability(
+        name=name,
+        endpoint=f"http://localhost:{PROVIDER_PORT}/api/v1/process",
+        price_uoas=price,
+        description=description,
+        tags=split_csv(tags),
+    )
+    ok, out = tx_status(result)
     if not ok:
         log.error("Registration failed: %s", out)
         sys.exit(1)
@@ -772,7 +732,7 @@ def register_capability(name, price, description="", tags=""):
                 return cap_id
 
     log.warning("TX submitted (hash=%s) but could not confirm capability ID.", out)
-    log.warning("Query manually: oasyced query oasyce_capability list --output json")
+    log.warning("Query the capability list through REST or the SDK to confirm the new capability.")
     print(f"\nTX submitted: {out}")
     print("Could not confirm capability ID -- query the chain manually.")
     return None
@@ -828,10 +788,11 @@ def main():
             log.error("Config error: %s", e)
         sys.exit(EX_CONFIG)
 
-    # Verify provider key exists
-    addr = get_provider_address()
-    if not addr:
-        log.error("Provider key '%s' not found in keyring (backend=%s)", PROVIDER_KEY, KEYRING)
+    # Resolve SDK-native identity
+    try:
+        addr = get_provider_address()
+    except RuntimeError as exc:
+        log.error("Cannot resolve provider identity: %s", exc)
         sys.exit(EX_CONFIG)
     log.info("Provider address: %s", addr)
 

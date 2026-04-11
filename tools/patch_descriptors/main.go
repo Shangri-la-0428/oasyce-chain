@@ -35,6 +35,7 @@ var modules = []moduleInfo{
 	{dir: "x/work/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_6b9943cdc07cfdd8"},
 	{dir: "x/onboarding/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_c794ac0b330f1318"},
 	{dir: "x/anchor/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_anchor_tx"},
+	{dir: "x/sigil/types", pbFile: "tx.pb.go", fdVarName: "fileDescriptor_sigil_tx"},
 	// Query descriptors
 	{dir: "x/capability/types", pbFile: "query.pb.go", fdVarName: "fileDescriptor_76eec79927870477"},
 	{dir: "x/anchor/types", pbFile: "query.pb.go", fdVarName: "fileDescriptor_anchor_query"},
@@ -80,7 +81,7 @@ var challengeMessages = map[string]*descriptorpb.DescriptorProto{
 			stringField("invocation_id", 2),
 		},
 	},
-	"MsgFailInvocationResponse":     emptyMessage("MsgFailInvocationResponse"),
+	"MsgFailInvocationResponse": emptyMessage("MsgFailInvocationResponse"),
 	"MsgClaimInvocation": {
 		Name: proto.String("MsgClaimInvocation"),
 		Field: []*descriptorpb.FieldDescriptorProto{
@@ -88,7 +89,7 @@ var challengeMessages = map[string]*descriptorpb.DescriptorProto{
 			stringField("invocation_id", 2),
 		},
 	},
-	"MsgClaimInvocationResponse":    emptyMessage("MsgClaimInvocationResponse"),
+	"MsgClaimInvocationResponse": emptyMessage("MsgClaimInvocationResponse"),
 	"MsgDisputeInvocation": {
 		Name: proto.String("MsgDisputeInvocation"),
 		Field: []*descriptorpb.FieldDescriptorProto{
@@ -97,7 +98,7 @@ var challengeMessages = map[string]*descriptorpb.DescriptorProto{
 			stringField("reason", 3),
 		},
 	},
-	"MsgDisputeInvocationResponse":  emptyMessage("MsgDisputeInvocationResponse"),
+	"MsgDisputeInvocationResponse": emptyMessage("MsgDisputeInvocationResponse"),
 	// Datarights: MsgUpdateServiceUrl (hand-written, Descriptor() returns nil)
 	"MsgUpdateServiceUrl": {
 		Name: proto.String("MsgUpdateServiceUrl"),
@@ -144,6 +145,43 @@ var challengeMessages = map[string]*descriptorpb.DescriptorProto{
 			},
 		},
 	},
+}
+
+func addPulseMessages(fd *descriptorpb.FileDescriptorProto, pkg string) {
+	fd.MessageType = append(fd.MessageType,
+		&descriptorpb.DescriptorProto{
+			Name: proto.String("MsgPulse"),
+			Field: []*descriptorpb.FieldDescriptorProto{
+				stringField("signer", 1),
+				stringField("sigil_id", 2),
+				{
+					Name:     proto.String("dimensions"),
+					Number:   proto.Int32(3),
+					Label:    descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(),
+					Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+					TypeName: proto.String("." + pkg + ".MsgPulse.DimensionsEntry"),
+					JsonName: proto.String("dimensions"),
+				},
+			},
+			NestedType: []*descriptorpb.DescriptorProto{
+				{
+					Name: proto.String("DimensionsEntry"),
+					Field: []*descriptorpb.FieldDescriptorProto{
+						stringField("key", 1),
+						{
+							Name:     proto.String("value"),
+							Number:   proto.Int32(2),
+							Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+							Type:     descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum(),
+							JsonName: proto.String("value"),
+						},
+					},
+					Options: &descriptorpb.MessageOptions{MapEntry: proto.Bool(true)},
+				},
+			},
+		},
+		emptyMessage("MsgPulseResponse"),
+	)
 }
 
 func stringField(name string, num int32) *descriptorpb.FieldDescriptorProto {
@@ -264,6 +302,12 @@ func patchModule(root string, m moduleInfo) error {
 		if !existingMsgs[reqName] {
 			if def, ok := challengeMessages[reqName]; ok {
 				fd.MessageType = append(fd.MessageType, def)
+			} else if method == "Pulse" {
+				addPulseMessages(&fd, pkg)
+				existingMsgs[reqName] = true
+				existingMsgs[respName] = true
+				changed = true
+				fmt.Printf("  Added messages: %s, %s\n", reqName, respName)
 			} else if method == "UpdateParams" {
 				addUpdateParamsMessages(&fd, pkg)
 			} else {

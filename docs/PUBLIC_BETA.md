@@ -323,38 +323,30 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 
 ---
 
-## After Onboarding: Optional Product-Side Bridges
+## After Onboarding: Optional SDK Front Door
 
-Chain onboarding gets you onto `oasyce-chain`. Nothing else is required. If you want richer local workflows on top of the same account, add one of these optional bridges:
+Chain onboarding gets you onto `oasyce-chain`. Nothing else is required. If you want a local AI runtime on top of the same account later, add `oasyce-sdk`:
 
-- `oas` for account, discovery, capabilities, portfolio, and Dashboard
-- `oasyce-agent` for directory-scale data scanning, privacy checks, and safe registration
-- `oasyce-sdk` for Python-native queries and transaction builders
+- `oasyce start` for the first device
+- `oasyce join` for a receiving device with a handoff file
+- `oasyce-agent` as the lower-level data-agent surface for scans and background data registration
 
-The shortest product-side path after chain onboarding is:
-
-```bash
-pip install oasyce              # AI-first CLI + Dashboard + bundled oasyce-agent
-oas bootstrap                   # self-update + local binding/device readiness + agent readiness
-export OASYCE_NETWORK_MODE=testnet
-export OASYCE_STRICT_CHAIN=1
-oas doctor --public-beta --json
-oas start                       # Dashboard at http://localhost:8420
-```
-
-If this device is already using Oasyce and you only want the latest CLI / Dashboard / autonomy updates, do not repeat onboarding. Upgrade in place instead:
+The shortest first-device path after chain onboarding is:
 
 ```bash
-export OASYCE_NETWORK_MODE=testnet
-export OASYCE_STRICT_CHAIN=1
-oas update --check --json
-oas doctor --public-beta --json
-oas start
+pip install -U "oasyce-sdk>=0.12.0"
+oasyce start
 ```
 
-If you want the full product-side guide, continue with:
+If this is a receiving device, do not create a fresh signer first. Join the existing owner path instead:
 
-- [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
+```bash
+pip install -U "oasyce-sdk>=0.12.0"
+oasyce join ~/Desktop/oasyce-connection.json
+```
+
+SDK guide:
+
 - [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)
 
 ## Python Toolchain
@@ -364,14 +356,14 @@ Beyond direct HTTP calls, you can use the Python toolchain for more efficient op
 ### Install
 
 ```bash
-pip install oasyce              # AI-first CLI + oasyce-agent
-oas bootstrap                   # self-update + local binding + agent readiness
-pip install -U "oasyce-sdk>=0.5.0"   # Python SDK (chain queries + TX builders)
+pip install -U "oasyce-sdk>=0.12.0"
+oasyce start                       # first device
+# or: oasyce join ~/Desktop/oasyce-connection.json
 ```
 
 ### oasyce-agent: Scan Local Data
 
-Treat `oasyce-agent` as the default data ingress, not an optional add-on. Use it when you are working with a directory, repeated scans, or AI-managed data assets. Keep `oas register` for explicit single-file registration and debugging.
+Treat `oasyce-agent` as the default local data ingress, not an optional add-on. Use it when you are working with a directory, repeated scans, or AI-managed data assets.
 
 Before registering data assets, scan your local files:
 
@@ -388,44 +380,36 @@ Once confirmed safe:
 oasyce-agent scan ~/Documents --register --confirm --json   # register only safe files
 ```
 
-### Oasyce CLI (oas)
+### Oasyce Front Door (`oasyce`)
 
-Before using `oas` or `oasyce-agent` against the public beta, force testnet + strict chain mode:
-
-```bash
-export OASYCE_NETWORK_MODE=testnet
-export OASYCE_STRICT_CHAIN=1
-oas doctor --public-beta --json
-```
-
-Proceed only when `oas doctor --public-beta --json` reports `status: ok`.
-
-For normal day-to-day usage after onboarding:
+Once the chain-side onboarding is done, the normal local runtime path is:
 
 ```bash
-oas agent status                  # inspect autonomy / agent status
-oasyce-agent scan ~/Documents --json  # review safe vs risky files
-oas start                         # open Dashboard
+oasyce start
+oasyce status
+oasyce-agent scan ~/Documents --json
 ```
+
+On a receiving device with a handoff artifact:
+
+```bash
+oasyce join ~/Desktop/oasyce-connection.json
+oasyce status
+```
+
+Direct native chain access remains available when you want raw control:
 
 ```bash
 oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json
 oasyced tx onboarding register <nonce> --from mykey --chain-id oasyce-testnet-1 --output json --yes
 curl "http://47.93.32.88:8080/faucet?address=$(oasyced keys show mykey -a --keyring-backend test)"
-oas register data.csv --owner me --tags research,nlp   # register asset
-oas capability register --name "My API" --endpoint https://... --price 0.5 --tags nlp
-oas capability invoke CAP_ID --input '{"text":"hello"}'
-oas discover "translation service" --buyer me --max-price 50
-oas task post "Translation task" --budget 50 --deadline 3600
-oas start                         # Dashboard at http://localhost:8420
 ```
-
-All commands support `--json` output for AI agent parsing. Full command list: `oas --help`
 
 ### Python SDK (Programmatic)
 
 ```python
 from oasyce_sdk import OasyceClient
+from oasyce_sdk.crypto import Wallet, NativeSigner
 
 client = OasyceClient("http://47.93.32.88:1317")
 
@@ -433,18 +417,6 @@ client = OasyceClient("http://47.93.32.88:1317")
 caps = client.list_capabilities(tag="nlp")
 bal = client.get_balance("oasyce1...")
 rep = client.get_reputation("oasyce1...")
-
-# Build transactions (sign and broadcast)
-tx = client.build_register_capability("oasyce1...", "My API", "https://...", 500)
-
-# PoW self-registration
-result = OasyceClient.solve_pow("oasyce1...", difficulty=16)
-tx = client.build_self_register("oasyce1...", result.nonce)
-```
-
-Native signing (`oasyce-sdk>=0.5.0`, recommended — zero Go binary dependency):
-```python
-from oasyce_sdk.crypto import Wallet, NativeSigner
 
 wallet = Wallet.auto()  # reuse env override or the existing local binding on this device
 # use Wallet.create() only when you intend to mint a brand-new signer
@@ -465,8 +437,8 @@ SDK docs: [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk)
 | Method | Use Case | Install |
 |--------|----------|---------|
 | **Direct HTTP** | Any language/environment, minimal deps | Nothing needed |
-| **oas CLI** | Interactive local workflows, Dashboard, agent scanning | `pip install oasyce` |
-| **Python SDK** | Programmatic integration, automated agents | `pip install oasyce-sdk` |
+| **oasyce front door** | First-device binding, join flow, local stack status | `pip install -U "oasyce-sdk>=0.12.0"` |
+| **Python SDK** | Programmatic integration, automated agents | `pip install -U "oasyce-sdk>=0.12.0"` |
 
 ---
 
@@ -769,6 +741,6 @@ Faucet:         http://47.93.32.88:8080/faucet?address=oasyce1...
 Playbook:       http://47.93.32.88:1317/llms.txt
 Chain source:   https://github.com/Shangri-la-0428/oasyce-chain
 Python SDK:     https://github.com/Shangri-la-0428/oasyce-sdk
-Oasyce CLI:     https://github.com/Shangri-la-0428/oasyce-net
+AI front door:  https://github.com/Shangri-la-0428/oasyce-sdk
 Discord:        https://discord.gg/tfrCn54yZW
 ```

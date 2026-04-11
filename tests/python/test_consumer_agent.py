@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -22,6 +23,7 @@ class ConsumerAgentTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
         consumer_agent.STATE_FILE = str(Path(self.tempdir.name) / "consumer_state.json")
+        consumer_agent._RUNTIME = None
 
     def tearDown(self):
         self.tempdir.cleanup()
@@ -41,16 +43,16 @@ class ConsumerAgentTests(unittest.TestCase):
             cap = consumer_agent.discover_capability("CAP_PROVIDER")
         self.assertEqual(cap["id"], "CAP_PROVIDER")
 
-    def test_main_records_heartbeat_when_balance_is_too_low(self):
+    def test_main_records_insufficient_funds_without_legacy_keyring_flow(self):
         cap = {
             "id": "CAP_PROVIDER",
             "name": "Claude AI",
             "is_active": True,
             "price_per_call": "500000",
         }
+        runtime = SimpleNamespace(actor_address="oasyce1consumer")
         fetch_health = mock.Mock(return_value=({"status": "ok", "capability_id": "CAP_PROVIDER"}, ""))
-        with mock.patch.object(consumer_agent, "get_address", return_value="oasyce1consumer"), \
-             mock.patch.object(consumer_agent, "ensure_consumer_key", side_effect=lambda addr: addr), \
+        with mock.patch.object(consumer_agent, "get_runtime", return_value=runtime), \
              mock.patch.object(consumer_agent, "check_balance", side_effect=[0, 0]), \
              mock.patch.object(consumer_agent, "request_faucet", return_value=(False, 0, "HTTP 429")), \
              mock.patch.object(consumer_agent, "fetch_provider_health", fetch_health), \
@@ -64,6 +66,18 @@ class ConsumerAgentTests(unittest.TestCase):
         self.assertTrue(state["last_run"])
         self.assertEqual(state["last_success"], "")
         fetch_health.assert_called_once_with(probe=True)
+
+    def test_buy_data_shares_uses_runtime_signer(self):
+        signer = SimpleNamespace(buy_shares=mock.Mock(return_value="buy-result"))
+        runtime = SimpleNamespace(signer=signer)
+        with mock.patch.object(consumer_agent, "get_runtime", return_value=runtime), \
+             mock.patch.object(consumer_agent, "tx_status", return_value=(True, "TXHASH")), \
+             mock.patch.object(consumer_agent.time, "sleep") as mock_sleep:
+            txhash = consumer_agent.buy_data_shares("DATA_TEST", "0.1 OAS")
+
+        self.assertEqual(txhash, "TXHASH")
+        signer.buy_shares.assert_called_once_with("DATA_TEST", 100000)
+        mock_sleep.assert_called_once_with(7)
 
 
 if __name__ == "__main__":

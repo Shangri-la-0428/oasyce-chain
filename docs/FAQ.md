@@ -8,6 +8,42 @@
 
 It is the chain-level service invocation surface. Providers register callable capabilities on-chain with a fixed price. Consumers invoke them, funds move into escrow, delivery enters a challenge window, and settlement or dispute becomes public fact on-chain.
 
+### Do the chain-repo agent wrappers still use `oasyced tx`?
+
+No for the normal write path.
+
+The chain repo keeps `scripts/provider_agent.py`, `scripts/consumer_agent.py`, and `scripts/data_agent.py` only as thin compatibility wrappers. Their default chain writes now resolve local identity through `oasyce-sdk` and sign through the SDK-native signer path.
+
+That means:
+
+- `oasyce start`
+- `oasyce join`
+- `OASYCE_MNEMONIC`
+
+are the supported identity sources for wrapper-based autonomous operation.
+
+For chain-side acceptance, the tested baseline is the adjacent `oasyce-sdk` main checkout in `source` mode. Installed-package mode remains diagnostic, with `oasyce-sdk>=0.12.0` as the minimum supported installed floor.
+
+The preferred chain-side gate is now:
+
+```bash
+python3 scripts/live_gate_local.py
+```
+
+That live gate treats SDK public seam, `pulse_sigil`, and `MsgPulse.dimensions` encoding as hard requirements. Installed-distribution metadata drift is still allowed as a preflight warning, but it is not part of the live gate pass/fail rule.
+
+`oasyced tx` remains valid for operator workflows, validator workflows, manual debugging, and `scripts/e2e_test.sh`, but it is no longer the default execution path for the wrapper agents.
+
+### Who owns Pulse?
+
+`MsgPulse` belongs to the chain as a public fact surface, not as a runtime brain.
+
+- `oasyce-chain` records sparse public pulse facts and eventually prunes on-chain lifecycle state
+- `Thronglets` aggregates shared-environment signals and emits pulse dimensions
+- `oasyce-sdk` is allowed to consume that surface for local runtime awareness and native signing, but it is not the authoritative pulse broadcaster today
+
+On the chain side, dormancy and dissolve now key off the Sigil's effective activity height, computed from `dimension_pulses` via `MaxPulseHeight()`. `LastActiveHeight` still exists for compatibility and inspection, but pruning no longer treats it as the final source of truth.
+
 ### How is this different from Stripe / x402 / Tempo?
 
 Those solve **how to pay**. Oasyce solves **why the payment is fair**:

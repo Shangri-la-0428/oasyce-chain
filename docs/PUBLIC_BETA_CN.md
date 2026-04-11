@@ -323,38 +323,30 @@ curl http://47.93.32.88:1317/oasyce/onboarding/v1/debt/oasyce1youraddress
 
 ---
 
-## 链上接入完成后：可选的产品侧桥接
+## 链上接入完成后：可选的 SDK 前门
 
-链侧接入只是把你带进 `oasyce-chain`。除此之外不需要任何前置层。如果你想在同一个账户之上获得更丰富的本地工作流，再按需接这些可选桥接：
+链侧接入只是把你带进 `oasyce-chain`。除此之外不需要任何前置层。如果你之后想在同一个账户之上接上本地 AI runtime，再按需加上 `oasyce-sdk`：
 
-- `oas`：账户、发现、能力、持仓、Dashboard
-- `oasyce-agent`：目录级扫描、隐私检查、安全注册
-- `oasyce-sdk`：Python 原生查询和交易构建
+- `oasyce start`：首设备前门
+- `oasyce join`：接收设备 + handoff 文件
+- `oasyce-agent`：更低层的数据 agent 表面，用于扫描和后台注册
 
-链上接入完成后，最短的产品侧路径是：
-
-```bash
-pip install oasyce                   # AI-first CLI + Dashboard + 内置 oasyce-agent
-oas bootstrap                        # 自更新 + 本地 binding/设备就绪 + agent 就绪
-export OASYCE_NETWORK_MODE=testnet
-export OASYCE_STRICT_CHAIN=1
-oas doctor --public-beta --json
-oas start                            # Dashboard at http://localhost:8420
-```
-
-如果这台设备已经在使用 Oasyce，只是想拿到最新 CLI / Dashboard / 自治能力，就不要重新走 onboarding，直接原地升级：
+链上接入完成后，首设备最短路径是：
 
 ```bash
-export OASYCE_NETWORK_MODE=testnet
-export OASYCE_STRICT_CHAIN=1
-oas update --check --json
-oas doctor --public-beta --json
-oas start
+pip install -U "oasyce-sdk>=0.12.0"
+oasyce start
 ```
 
-如果你要看完整产品侧说明，继续读：
+如果这是接收设备，不要先新建 signer，而是直接加入已有 owner 路径：
 
-- [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)
+```bash
+pip install -U "oasyce-sdk>=0.12.0"
+oasyce join ~/Desktop/oasyce-connection.json
+```
+
+SDK 说明：
+
 - [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)
 
 ## Python 工具链
@@ -364,14 +356,14 @@ oas start
 ### 安装
 
 ```bash
-pip install oasyce                   # AI-first CLI + oasyce-agent
-oas bootstrap                        # 自更新 + 本地 binding + agent 就绪
-pip install -U "oasyce-sdk>=0.5.0"   # Python SDK（链查询 + 交易构建）
+pip install -U "oasyce-sdk>=0.12.0"
+oasyce start                        # 首设备
+# 或：oasyce join ~/Desktop/oasyce-connection.json
 ```
 
 ### oasyce-agent：扫描本地数据
 
-把 `oasyce-agent` 当成默认数据入口，而不是可有可无的附属工具。面对目录、批量文件或 AI 持续扫描时，优先走 `oasyce-agent`；只有显式单文件注册和调试时，才优先用 `oas register`。
+把 `oasyce-agent` 当成默认的本地数据入口，而不是可有可无的附属工具。面对目录、批量文件或 AI 持续扫描时，优先走 `oasyce-agent`。
 
 在注册数据资产之前，先扫描本地文件：
 
@@ -388,44 +380,36 @@ oasyce-agent scan ~/Documents --json  # 查看结果
 oasyce-agent scan ~/Documents --register --confirm --json   # 仅注册 safe 文件
 ```
 
-### Oasyce CLI（oas）
+### Oasyce 前门（`oasyce`）
 
-在公开测试里用 `oas` 或 `oasyce-agent` 前，先强制切到**测试网 + 严格链模式**：
-
-```bash
-export OASYCE_NETWORK_MODE=testnet
-export OASYCE_STRICT_CHAIN=1
-oas doctor --public-beta --json
-```
-
-只有当 `oas doctor --public-beta --json` 返回 `status: ok`，才说明这台机器已经满足公开测试的最小门槛。
-
-完成接入后，日常使用最常见的三条是：
+链侧接入完成后，正常的本地 runtime 路径是：
 
 ```bash
-oas agent status                  # 查看自治 agent 状态
-oasyce-agent scan ~/Documents --json  # 查看 safe 和 risky 文件
-oas start                         # 打开 Dashboard
+oasyce start
+oasyce status
+oasyce-agent scan ~/Documents --json
 ```
+
+如果这是接收设备，并且你已经拿到了 handoff 文件：
+
+```bash
+oasyce join ~/Desktop/oasyce-connection.json
+oasyce status
+```
+
+如果你想保留原始链控制面，也可以直接走：
 
 ```bash
 oasyced util solve-pow oasyce1youraddress --difficulty 16 --output json
 oasyced tx onboarding register <nonce> --from mykey --chain-id oasyce-testnet-1 --output json --yes
 curl "http://47.93.32.88:8080/faucet?address=$(oasyced keys show mykey -a --keyring-backend test)"
-oas register data.csv --owner me --tags research,nlp   # 注册资产
-oas capability register --name "My API" --endpoint https://... --price 0.5 --tags nlp
-oas capability invoke CAP_ID --input '{"text":"hello"}'
-oas discover "translation service" --buyer me --max-price 50
-oas task post "翻译任务" --budget 50 --deadline 3600
-oas start                         # Dashboard http://localhost:8420
 ```
-
-所有命令支持 `--json` 输出，方便 AI Agent 解析。完整命令列表: `oas --help`
 
 ### Python SDK（编程方式）
 
 ```python
 from oasyce_sdk import OasyceClient
+from oasyce_sdk.crypto import Wallet, NativeSigner
 
 client = OasyceClient("http://47.93.32.88:1317")
 
@@ -433,18 +417,6 @@ client = OasyceClient("http://47.93.32.88:1317")
 caps = client.list_capabilities(tag="nlp")
 bal = client.get_balance("oasyce1...")
 rep = client.get_reputation("oasyce1...")
-
-# 构建交易（签名后广播）
-tx = client.build_register_capability("oasyce1...", "My API", "https://...", 500)
-
-# PoW 自注册
-result = OasyceClient.solve_pow("oasyce1...", difficulty=16)
-tx = client.build_self_register("oasyce1...", result.nonce)
-```
-
-原生签名（`oasyce-sdk>=0.5.0`，推荐 — 零 Go 二进制依赖）：
-```python
-from oasyce_sdk.crypto import Wallet, NativeSigner
 
 wallet = Wallet.auto()  # 复用环境变量覆盖或这台设备上已有的本地 binding
 # 只有在你明确要生成一个全新 signer 时才使用 Wallet.create()
@@ -465,8 +437,8 @@ SDK 文档: [oasyce-sdk](https://github.com/Shangri-la-0428/oasyce-sdk)
 | 方式 | 适用场景 | 安装 |
 |------|---------|------|
 | **HTTP 直接调用** | 任何语言/环境，最小依赖 | 无需安装 |
-| **oas CLI** | 交互式本地工作流、Dashboard、agent 扫描 | `pip install oasyce` |
-| **Python SDK** | 编程集成，自动化 Agent | `pip install oasyce-sdk` |
+| **oasyce 前门** | 首设备 binding、join 流程、本机 stack 状态 | `pip install -U "oasyce-sdk>=0.12.0"` |
+| **Python SDK** | 编程集成，自动化 Agent | `pip install -U "oasyce-sdk>=0.12.0"` |
 
 ---
 
@@ -769,6 +741,6 @@ Faucet:         http://47.93.32.88:8080/faucet?address=oasyce1...
 Playbook:       http://47.93.32.88:1317/llms.txt
 Chain source:   https://github.com/Shangri-la-0428/oasyce-chain
 Python SDK:     https://github.com/Shangri-la-0428/oasyce-sdk
-Oasyce CLI:     https://github.com/Shangri-la-0428/oasyce-net
+AI 前门:        https://github.com/Shangri-la-0428/oasyce-sdk
 Discord:        https://discord.gg/tfrCn54yZW
 ```

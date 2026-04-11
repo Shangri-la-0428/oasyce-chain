@@ -1,0 +1,10 @@
+{
+  "title": "__TITLE__",
+  "authors": [
+    "Oasyce core team"
+  ],
+  "summary": "__SUMMARY__",
+  "details": "Upgrade x/sigil from v1 to v2. Rebuild the active liveness index from raw LastActiveHeight semantics to effective activity height via MaxPulseHeight(). This is a state migration only and introduces no new module stores or public API changes.",
+  "proposal_forum_url": "__PROPOSAL_FORUM_URL__",
+  "vote_option_context": "YES = approve the v0.8.0 x/sigil migration. NO = reject and keep current chain state. ABSTAIN = count toward quorum without preference. NO_WITH_VETO = reject as harmful."
+}

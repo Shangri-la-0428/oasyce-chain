@@ -20,7 +20,7 @@
       "intro_lines": [
         "Oasyce Testnet-1 现已上线。",
         "",
-        "公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA_CN.md)。先完成链上接入；只有在你需要 Dashboard、本地扫描或 Python 自动化时，再按需接上 `oas`、`oasyce-agent` 或 `oasyce-sdk`。"
+        "公开测试的**唯一链侧接入文档**是 [docs/PUBLIC_BETA_CN.md](docs/PUBLIC_BETA_CN.md)。先完成链上接入；只有在你需要 AI 本地 binding、NativeSigner 或 data-agent 时，再按需接上 `oasyce-sdk`。Chain 不是默认前门。"
       ],
       "table_rows": [
         ["Chain ID", "`oasyce-testnet-1`"],
@@ -35,21 +35,21 @@
         ["Windows 账户", "`Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1`"],
         ["准备节点", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`"],
         ["启动节点", "`bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`"],
-        ["产品侧指南", "[oasyce-net 公测指南](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)"],
-        ["Dashboard", "`pip install oasyce && oas bootstrap && oas start`"],
-        ["oasyce-agent", "[oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)"],
+        ["可选首设备前门", "`pip install -U \"oasyce-sdk>=0.12.0\" && oasyce start`"],
+        ["可选接收设备接入", "`pip install -U \"oasyce-sdk>=0.12.0\" && oasyce join`"],
+        ["SDK 说明", "[oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)"],
         ["API Reference", "[chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)"],
         ["Validator Guide", "[docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)"],
         ["Releases", "[latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"],
-        ["Python SDK", "`pip install -U \"oasyce-sdk>=0.5.0\"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk))"]
+        ["Python SDK", "`pip install -U \"oasyce-sdk>=0.12.0\"` ([GitHub](https://github.com/Shangri-la-0428/oasyce-sdk))"]
       ]
     },
     "en": {
       "title": "## Public Beta",
       "intro_lines": [
-        "The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](/Users/wutongcheng/Desktop/Net/oasyce-chain/docs/PUBLIC_BETA.md).",
+        "The **single chain-side onboarding guide** for the public beta is [docs/PUBLIC_BETA.md](docs/PUBLIC_BETA.md).",
         "",
-        "Complete the chain-side onboarding first. Add `oas`, `oasyce-agent`, or `oasyce-sdk` later only when you want richer local workflows, scanning, or Python automation."
+        "Complete the chain-side onboarding first. Add `oasyce-sdk` later only when you want local binding, NativeSigner, or the data agent. Chain is not the default front door."
       ],
       "bullet_lines": [
         "- Public beta guide: [docs/PUBLIC_BETA.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md)",
@@ -59,10 +59,10 @@
         "- Windows PowerShell account setup: `Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1` then `powershell -ExecutionPolicy Bypass -File ./bootstrap_public_beta_account.ps1`",
         "- Prepare local node: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)`",
         "- Prepare and start node now: `bash <(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)`",
-        "- Product-side guide: [oasyce-net/docs/public-testnet-guide.md](https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md)",
-        "- Dashboard: `pip install oasyce && oas bootstrap && oas start`",
-        "- Data ingress: [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)",
-        "- Python SDK (NativeSigner): `pip install -U \"oasyce-sdk>=0.5.0\"`",
+        "- Optional first-device front door: `pip install -U \"oasyce-sdk>=0.12.0\" && oasyce start`",
+        "- Optional receiving-device join: `pip install -U \"oasyce-sdk>=0.12.0\" && oasyce join`",
+        "- SDK guide: [oasyce-sdk README](https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md)",
+        "- Python SDK (NativeSigner): `pip install -U \"oasyce-sdk>=0.12.0\"`",
         "- API reference: [chain.oasyce.com/docs.html](https://chain.oasyce.com/docs.html)",
         "- Validator guide: [docs/VALIDATOR_SETUP.md](https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md)",
         "- Latest release: [releases/latest](https://github.com/Shangri-la-0428/oasyce-chain/releases/latest)"
@@ -71,7 +71,7 @@
   },
   "website": {
     "testnet_section": {
-      "description": "Testnet-1 is live. Start with the Public Beta Guide for direct chain access. Add Dashboard, data scanning, or Python tooling later only if you need them.",
+      "description": "Testnet-1 is live. Start with the Public Beta Guide for direct chain access. Add oasyce-sdk later only when you need local binding, NativeSigner, or a local data agent.",
       "rows": [
         ["Chain ID", "<code>oasyce-testnet-1</code>"],
         ["Seed Node", "<code style=\"font-size:0.75rem\">3e5a91...85b0cb@47.93.32.88:26656</code>"],
@@ -85,9 +85,9 @@
         ["Windows Account", "<code>Invoke-WebRequest .../bootstrap_public_beta_account.ps1 -OutFile bootstrap_public_beta_account.ps1</code>"],
         ["Prepare Node", "<code>bash &lt;(curl -fsSL .../bootstrap_public_beta_node.sh)</code>"],
         ["Run Node", "<code>bash &lt;(curl -fsSL .../run_public_beta_node.sh)</code>"],
-        ["Optional Product Guide", "<a href=\"https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md\">oasyce-net public guide</a>"],
-        ["Optional Dashboard", "<code>pip install oasyce &amp;&amp; oas bootstrap &amp;&amp; oas start</code>"],
-        ["Data Ingress", "<a href=\"https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md\">oasyce-agent</a>"],
+        ["Optional First Device", "<code>pip install -U \"oasyce-sdk&gt;=0.12.0\" &amp;&amp; oasyce start</code>"],
+        ["Optional Join Device", "<code>pip install -U \"oasyce-sdk&gt;=0.12.0\" &amp;&amp; oasyce join</code>"],
+        ["SDK Guide", "<a href=\"https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md\">oasyce-sdk README</a>"],
         ["Chain API", "<a href=\"docs.html\">docs.html</a>"],
         ["Validator", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/VALIDATOR_SETUP.md\">Validator Setup</a>"],
         ["Releases", "<a href=\"https://github.com/Shangri-la-0428/oasyce-chain/releases/latest\">Latest Release</a>"]
@@ -104,13 +104,12 @@
     "docs_start_here": {
       "paragraphs": [
         "This page is the chain API reference. Public beta onboarding lives in the Public Beta Guide. Start there first if you want direct chain access, then come back here once your account or local signer is ready.",
-        "Chain onboarding is enough on its own. If you want richer local workflows later, add the optional bridges: <code>oas bootstrap</code> prepares local binding/runtime, <code>oas start</code> opens the Dashboard, and oasyce-agent is the default data ingress for directory-scale assets.",
+        "Chain onboarding is enough on its own. If you want local AI runtime workflows later, add <code>oasyce-sdk</code>: use <code>oasyce start</code> on the first device, <code>oasyce join</code> on a receiving device, and keep <code>oasyce-agent</code> as the lower-level data-agent surface.",
         "If you need the native chain CLI, install it first with <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/install_oasyced.sh)</code>. Windows PowerShell users should use the companion <code>install_oasyced.ps1</code> script instead.",
         "If you only need an account and test tokens, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.sh)</code>. Windows PowerShell users should use <code>bootstrap_public_beta_account.ps1</code>.",
         "If you want a local node, the shortest native setup is <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh)</code>.",
         "If you want to run the node immediately in the current shell, use <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh)</code>.",
-        "If you want NativeSigner from Python, install <code>oasyce-sdk&gt;=0.5.0</code> before following the SDK examples. Reuse an existing local signer when possible; create a new one only on first setup.",
-        "Before using the public beta from `oas` or `oasyce-agent`, run <code>oas doctor --public-beta --json</code> and proceed only when it returns <code>status: ok</code>."
+        "If you want NativeSigner from Python, install <code>oasyce-sdk&gt;=0.12.0</code> before following the SDK examples. For chain-side acceptance, prefer the adjacent <code>oasyce-sdk</code> main checkout in source mode. Prefer <code>oasyce start</code> for first-device setup and <code>oasyce join</code> for a receiving device. Reuse an existing local signer when possible; create a new one only on first setup."
       ],
       "links": [
         "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-chain/blob/main/docs/PUBLIC_BETA.md\">Public Beta Guide (EN)</a>",
@@ -121,7 +120,7 @@
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_account.ps1\">Create Account Script (PowerShell)</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/bootstrap_public_beta_node.sh\">Prepare Node Script</a>",
         "<a class=\"notice-link\" href=\"https://raw.githubusercontent.com/Shangri-la-0428/oasyce-chain/main/scripts/run_public_beta_node.sh\">Run Node Script</a>",
-        "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-net/blob/main/docs/public-testnet-guide.md\">Product-side guide (Dashboard / oasyce-agent)</a>",
+        "<a class=\"notice-link\" href=\"https://github.com/Shangri-la-0428/oasyce-sdk/blob/main/README.md\">oasyce-sdk Guide</a>",
         "<a class=\"notice-link\" href=\"index.html#testnet\">Network Overview</a>"
       ]
     }
