@@ -143,8 +143,12 @@ func (m msgServer) Bond(goCtx context.Context, msg *types.MsgBond) (*types.MsgBo
 	}
 
 	// Touch both sigils (update liveness).
-	m.touchSigil(ctx, msg.SigilA)
-	m.touchSigil(ctx, msg.SigilB)
+	if err := m.touchSigil(ctx, msg.SigilA); err != nil {
+		return nil, err
+	}
+	if err := m.touchSigil(ctx, msg.SigilB); err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"sigil_bond",
@@ -225,7 +229,9 @@ func (m msgServer) Fork(goCtx context.Context, msg *types.MsgFork) (*types.MsgFo
 
 	m.Keeper.SetLineage(ctx, msg.ParentSigilId, childID)
 	m.Keeper.IncrementActiveCount(ctx)
-	m.touchSigil(ctx, msg.ParentSigilId)
+	if err := m.touchSigil(ctx, msg.ParentSigilId); err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"sigil_fork",
@@ -267,16 +273,22 @@ func (m msgServer) Merge(goCtx context.Context, msg *types.MsgMerge) (*types.Msg
 	if types.MergeMode(msg.MergeMode) == types.MergeModeAbsorption {
 		// A absorbs B.
 		survivorID = msg.SigilA
-		m.dissolveSigil(ctx, &sigB)
+		if err := m.dissolveSigil(ctx, &sigB); err != nil {
+			return nil, err
+		}
 	} else {
 		// Symmetric: both dissolve, new sigil emerges.
 		// For now, A is the survivor (simplification).
 		survivorID = msg.SigilA
-		m.dissolveSigil(ctx, &sigB)
+		if err := m.dissolveSigil(ctx, &sigB); err != nil {
+			return nil, err
+		}
 	}
 
 	// Touch survivor.
-	m.touchSigil(ctx, survivorID)
+	if err := m.touchSigil(ctx, survivorID); err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"sigil_merge",
@@ -336,8 +348,14 @@ func (m msgServer) Pulse(goCtx context.Context, msg *types.MsgPulse) (*types.Msg
 	if !found {
 		return nil, types.ErrSigilNotFound.Wrapf("sigil %s", msg.SigilId)
 	}
-	if types.SigilStatus(sigil.Status) != types.SigilStatusActive {
-		return nil, types.ErrSigilDissolved.Wrapf("sigil %s is not active", msg.SigilId)
+	switch types.SigilStatus(sigil.Status) {
+	case types.SigilStatusActive:
+	case types.SigilStatusDissolved:
+		return nil, types.ErrSigilDissolved.Wrapf("sigil %s is dissolved", msg.SigilId)
+	case types.SigilStatusDormant:
+		return nil, types.ErrSigilNotActive.Wrapf("sigil %s is dormant, pulse rejected", msg.SigilId)
+	default:
+		return nil, types.ErrSigilNotActive.Wrapf("sigil %s is not active", msg.SigilId)
 	}
 	if sigil.Creator != msg.Signer {
 		return nil, types.ErrNotSigilOwner.Wrapf("expected %s, got %s", sigil.Creator, msg.Signer)
@@ -355,7 +373,9 @@ func (m msgServer) Pulse(goCtx context.Context, msg *types.MsgPulse) (*types.Msg
 	// LastActiveHeight remains as a compatibility/inspection field, but the
 	// liveness index now tracks MaxPulseHeight via SetSigil().
 	sigil.LastActiveHeight = height
-	_ = m.Keeper.SetSigil(ctx, sigil)
+	if err := m.Keeper.SetSigil(ctx, sigil); err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		"sigil_pulse",
@@ -373,25 +393,25 @@ func (m msgServer) Pulse(goCtx context.Context, msg *types.MsgPulse) (*types.Msg
 // ---------------------------------------------------------------------------
 
 // touchSigil updates a sigil's LastActiveHeight compatibility field.
-func (m msgServer) touchSigil(ctx sdk.Context, sigilID string) {
+func (m msgServer) touchSigil(ctx sdk.Context, sigilID string) error {
 	s, found := m.Keeper.GetSigil(ctx, sigilID)
 	if !found {
-		return
+		return nil
 	}
 	if types.SigilStatus(s.Status) != types.SigilStatusActive {
-		return
+		return nil
 	}
 
 	s.LastActiveHeight = ctx.BlockHeight()
-	_ = m.Keeper.SetSigil(ctx, s)
+	return m.Keeper.SetSigil(ctx, s)
 }
 
 // dissolveSigil marks a sigil as dissolved and updates indexes.
-func (m msgServer) dissolveSigil(ctx sdk.Context, s *types.Sigil) {
+func (m msgServer) dissolveSigil(ctx sdk.Context, s *types.Sigil) error {
 	oldStatus := types.SigilStatus(s.Status)
 	if oldStatus == types.SigilStatusActive {
 		m.Keeper.DecrementActiveCount(ctx)
 	}
 	s.Status = types.SigilStatusDissolved
-	_ = m.Keeper.SetSigil(ctx, *s)
+	return m.Keeper.SetSigil(ctx, *s)
 }

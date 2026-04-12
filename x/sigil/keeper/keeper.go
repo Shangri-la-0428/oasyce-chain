@@ -30,8 +30,14 @@ func (k Keeper) TouchPulse(ctx sdk.Context, sigilID, dim string) error {
 	if !found {
 		return types.ErrSigilNotFound.Wrapf("sigil %s", sigilID)
 	}
-	if types.SigilStatus(s.Status) != types.SigilStatusActive {
-		return types.ErrSigilDissolved.Wrapf("sigil %s is not active", sigilID)
+	switch types.SigilStatus(s.Status) {
+	case types.SigilStatusActive:
+	case types.SigilStatusDissolved:
+		return types.ErrSigilDissolved.Wrapf("sigil %s is dissolved", sigilID)
+	case types.SigilStatusDormant:
+		return types.ErrSigilNotActive.Wrapf("sigil %s is dormant, pulse rejected", sigilID)
+	default:
+		return types.ErrSigilNotActive.Wrapf("sigil %s is not active", sigilID)
 	}
 	if s.DimensionPulses == nil {
 		s.DimensionPulses = make(map[string]int64)

@@ -79,7 +79,7 @@ func ValidateGenesis(gs GenesisState) error {
 	seenSigils := make(map[string]bool)
 	for _, s := range gs.Sigils {
 		if seenSigils[s.SigilId] {
-			return ErrDuplicateSigil.Wrapf("duplicate sigil_id in genesis: %s", s.SigilId)
+			return ErrSigilExists.Wrapf("duplicate sigil_id in genesis: %s", s.SigilId)
 		}
 		seenSigils[s.SigilId] = true
 		if s.SigilId == "" {

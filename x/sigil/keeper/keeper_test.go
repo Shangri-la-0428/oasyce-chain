@@ -582,7 +582,8 @@ func TestMsgPulse_RejectsDormantAndDissolved(t *testing.T) {
 		Dimensions: map[string]int64{"chain": 1},
 	})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "not active")
+	require.Contains(t, err.Error(), types.ErrSigilNotActive.Error())
+	require.Contains(t, err.Error(), "dormant")
 
 	sigil.Status = types.SigilStatusDissolved
 	require.NoError(t, k.SetSigil(ctx, sigil))
@@ -592,7 +593,8 @@ func TestMsgPulse_RejectsDormantAndDissolved(t *testing.T) {
 		Dimensions: map[string]int64{"chain": 1},
 	})
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "not active")
+	require.Contains(t, err.Error(), types.ErrSigilDissolved.Error())
+	require.Contains(t, err.Error(), "dissolved")
 }
 
 func TestBeginBlocker_PulseKeepsSigilAlive(t *testing.T) {

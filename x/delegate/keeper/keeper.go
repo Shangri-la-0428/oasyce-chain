@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"crypto/sha256"
-	"fmt"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -196,7 +195,7 @@ func (k Keeper) SetSpendWindow(ctx sdk.Context, w types.SpendWindow) error {
 }
 
 // GetOrResetWindow returns the current spend window, resetting if expired.
-func (k Keeper) GetOrResetWindow(ctx sdk.Context, principal string, windowSeconds uint64) types.SpendWindow {
+func (k Keeper) GetOrResetWindow(ctx sdk.Context, principal string, windowSeconds uint64, denom string) types.SpendWindow {
 	w, found := k.GetSpendWindow(ctx, principal)
 	now := ctx.BlockTime().Unix()
 
@@ -205,7 +204,7 @@ func (k Keeper) GetOrResetWindow(ctx sdk.Context, principal string, windowSecond
 		return types.SpendWindow{
 			Principal:   principal,
 			WindowStart: now,
-			Spent:       sdk.NewCoin("uoas", math.ZeroInt()),
+			Spent:       sdk.NewCoin(denom, math.ZeroInt()),
 		}
 	}
 	return w
@@ -233,123 +232,4 @@ func VerifyToken(token string, storedHash []byte) bool {
 func HashToken(token string) []byte {
 	h := sha256.Sum256([]byte(token))
 	return h[:]
-}
-
-// ---------------------------------------------------------------------------
-// Exec: the core delegation execution
-// ---------------------------------------------------------------------------
-
-// ExecDelegate executes inner messages on behalf of the principal.
-// Tracks gross outflow (sum of per-message balance decreases) to prevent
-// buy+sell masking from bypassing spend limits.
-func (k Keeper) ExecDelegate(ctx sdk.Context, delegateAddr string, innerMsgs []sdk.Msg) ([][]byte, error) {
-	// Look up delegate -> principal.
-	rec, found := k.GetDelegate(ctx, delegateAddr)
-	if !found {
-		return nil, types.ErrDelegateNotFound.Wrapf("delegate %s is not enrolled", delegateAddr)
-	}
-
-	// Look up principal's policy.
-	policy, found := k.GetPolicy(ctx, rec.Principal)
-	if !found {
-		return nil, types.ErrPolicyNotFound.Wrapf("no policy for principal %s", rec.Principal)
-	}
-
-	// Check policy not expired.
-	if k.IsPolicyExpired(ctx, policy) {
-		return nil, types.ErrPolicyExpired.Wrapf("policy for %s has expired", rec.Principal)
-	}
-
-	principalAddr, _ := sdk.AccAddressFromBech32(rec.Principal)
-
-	// Build allowed message type set.
-	allowedMsgs := make(map[string]bool, len(policy.AllowedMsgs))
-	for _, m := range policy.AllowedMsgs {
-		allowedMsgs[m] = true
-	}
-
-	// Validate inner messages: correct signer + allowed type.
-	// Uses codec.GetMsgV1Signers (same approach as x/authz).
-	for i, msg := range innerMsgs {
-		msgTypeURL := sdk.MsgTypeURL(msg)
-		if !allowedMsgs[msgTypeURL] {
-			return nil, types.ErrMsgNotAllowed.Wrapf("msg[%d] type %s not in policy allowed_msgs", i, msgTypeURL)
-		}
-
-		signers, _, err := k.cdc.GetMsgV1Signers(msg)
-		if err != nil {
-			return nil, types.ErrSignerMismatch.Wrapf("msg[%d]: cannot extract signer: %v", i, err)
-		}
-		if len(signers) != 1 {
-			return nil, types.ErrSignerMismatch.Wrapf("msg[%d]: expected 1 signer, got %d", i, len(signers))
-		}
-		if sdk.AccAddress(signers[0]).String() != rec.Principal {
-			return nil, types.ErrSignerMismatch.Wrapf("msg[%d] signer %s must be principal %s", i, sdk.AccAddress(signers[0]), rec.Principal)
-		}
-	}
-
-	// Execute in cache context (atomic rollback on failure).
-	// Track gross outflow: sum of per-message balance decreases.
-	// This prevents buy+sell in one Exec from masking actual spend.
-	denom := policy.PerTxLimit.Denom
-	cacheCtx, write := ctx.CacheContext()
-	grossOutflow := math.ZeroInt()
-	var results [][]byte
-
-	for i, msg := range innerMsgs {
-		preBal := k.bankKeeper.GetBalance(cacheCtx, principalAddr, denom)
-
-		handler := k.router.Handler(msg)
-		if handler == nil {
-			return nil, fmt.Errorf("no handler for msg[%d] type %s", i, sdk.MsgTypeURL(msg))
-		}
-		resp, err := handler(cacheCtx, msg)
-		if err != nil {
-			return nil, fmt.Errorf("msg[%d] execution failed: %w", i, err)
-		}
-		results = append(results, resp.Data)
-
-		postBal := k.bankKeeper.GetBalance(cacheCtx, principalAddr, denom)
-		delta := preBal.Amount.Sub(postBal.Amount)
-		if delta.IsPositive() {
-			grossOutflow = grossOutflow.Add(delta)
-		}
-	}
-
-	// Check per-tx limit against gross outflow.
-	if grossOutflow.GT(policy.PerTxLimit.Amount) {
-		return nil, types.ErrExceedsPerTxLimit.Wrapf(
-			"tx gross outflow %s exceeds per_tx_limit %s",
-			grossOutflow.String(), policy.PerTxLimit.Amount.String(),
-		)
-	}
-
-	// Check window limit.
-	window := k.GetOrResetWindow(cacheCtx, rec.Principal, policy.WindowSeconds)
-	newTotal := window.Spent.Amount.Add(grossOutflow)
-	if newTotal.GT(policy.WindowLimit.Amount) {
-		return nil, types.ErrExceedsWindowLimit.Wrapf(
-			"window spend would be %s, exceeds window_limit %s",
-			newTotal.String(), policy.WindowLimit.Amount.String(),
-		)
-	}
-
-	// All checks passed — commit cache and update spend window.
-	window.Spent = sdk.NewCoin(denom, newTotal)
-	if err := k.SetSpendWindow(cacheCtx, window); err != nil {
-		return nil, err
-	}
-	write() // commit to parent context
-
-	// Emit event.
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		"delegate_exec",
-		sdk.NewAttribute("delegate", delegateAddr),
-		sdk.NewAttribute("principal", rec.Principal),
-		sdk.NewAttribute("msg_count", fmt.Sprintf("%d", len(innerMsgs))),
-		sdk.NewAttribute("gross_outflow", grossOutflow.String()),
-		sdk.NewAttribute("window_total", newTotal.String()),
-	))
-
-	return results, nil
 }

@@ -24,21 +24,27 @@ func NewMsgServer(keeper Keeper) types.MsgServer {
 func (m msgServer) SetPolicy(goCtx context.Context, msg *types.MsgSetPolicy) (*types.MsgSetPolicyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	signers, err := m.Keeper.extractSigners(msg)
+	if err != nil || len(signers) != 1 || signers[0].String() != msg.Principal {
+		return nil, types.ErrSignerMismatch.Wrap("tx signer must be principal")
+	}
+
 	windowSeconds := msg.WindowSeconds
 	if windowSeconds == 0 {
 		windowSeconds = 86400 // default: 1 day
 	}
 
 	policy := types.DelegatePolicy{
-		Principal:          msg.Principal,
-		PerTxLimit:         msg.PerTxLimit,
-		WindowLimit:        msg.WindowLimit,
-		WindowSeconds:      windowSeconds,
-		AllowedMsgs:        msg.AllowedMsgs,
-		EnrollmentMode:     types.ENROLLMENT_MODE_TOKEN,
+		Principal:           msg.Principal,
+		PerTxLimit:          msg.PerTxLimit,
+		WindowLimit:         msg.WindowLimit,
+		WindowSeconds:       windowSeconds,
+		AllowedMsgs:         msg.AllowedMsgs,
+		EnrollmentMode:      types.ENROLLMENT_MODE_TOKEN,
 		EnrollmentTokenHash: HashToken(msg.EnrollmentToken),
-		ExpirationSeconds:  msg.ExpirationSeconds,
-		CreatedAtSeconds:   ctx.BlockTime().Unix(),
+		ExpirationSeconds:   msg.ExpirationSeconds,
+		CreatedAtSeconds:    ctx.BlockTime().Unix(),
+		MaxMsgsPerExec:      msg.MaxMsgsPerExec,
 	}
 
 	if err := m.Keeper.SetPolicy(ctx, policy); err != nil {
@@ -107,6 +113,11 @@ func (m msgServer) Enroll(goCtx context.Context, msg *types.MsgEnroll) (*types.M
 // Revoke removes a delegate. Principal only.
 func (m msgServer) Revoke(goCtx context.Context, msg *types.MsgRevoke) (*types.MsgRevokeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	signers, err := m.Keeper.extractSigners(msg)
+	if err != nil || len(signers) != 1 || signers[0].String() != msg.Principal {
+		return nil, types.ErrSignerMismatch.Wrap("tx signer must be principal")
+	}
 
 	rec, found := m.Keeper.GetDelegate(ctx, msg.Delegate)
 	if !found {

@@ -51,6 +51,10 @@ message DelegatePolicy {
 
   // created_at_seconds is the block time when policy was created (unix).
   int64 created_at_seconds = 9;
+
+  // max_msgs_per_exec is the maximum number of inner messages allowed in one execution.
+  // 0 = use server default (16).
+  int32 max_msgs_per_exec = 10;
 }
 
 // DelegateRecord is a single enrolled delegate.

@@ -28,7 +28,7 @@ func (msg *MsgGenesis) ValidateBasic() error {
 	}
 	for _, parent := range msg.Lineage {
 		if parent == "" {
-			return ErrInvalidLineage.Wrap("lineage contains empty sigil_id")
+			return ErrInvalidSigilID.Wrap("lineage contains empty sigil_id")
 		}
 	}
 	return nil
@@ -52,7 +52,7 @@ func (msg *MsgBond) ValidateBasic() error {
 		return ErrInvalidSigilID.Wrap("sigil_a and sigil_b cannot be empty")
 	}
 	if msg.SigilA == msg.SigilB {
-		return ErrSelfBond.Wrap("cannot bond a sigil with itself")
+		return ErrInvalidSigilID.Wrap("cannot bond a sigil with itself")
 	}
 	return nil
 }

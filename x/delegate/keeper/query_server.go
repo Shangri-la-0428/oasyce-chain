@@ -44,7 +44,7 @@ func (q queryServer) Spend(ctx context.Context, req *types.QuerySpendRequest) (*
 		return nil, types.ErrPolicyNotFound.Wrapf("no policy for principal %s", req.Principal)
 	}
 
-	window := q.Keeper.GetOrResetWindow(sdkCtx, req.Principal, policy.WindowSeconds)
+	window := q.Keeper.GetOrResetWindow(sdkCtx, req.Principal, policy.WindowSeconds, policy.PerTxLimit.Denom)
 	return &types.QuerySpendResponse{Window: window}, nil
 }
 

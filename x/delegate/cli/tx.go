@@ -62,6 +62,7 @@ Example:
 			allowStr, _ := cmd.Flags().GetString("allow")
 			windowSecs, _ := cmd.Flags().GetUint64("window")
 			expireSecs, _ := cmd.Flags().GetUint64("expire")
+			maxMsgsPerExec, _ := cmd.Flags().GetInt32("max-msgs-per-exec")
 
 			perTx, err := sdk.ParseCoinNormalized(perTxStr)
 			if err != nil {
@@ -82,13 +83,14 @@ Example:
 			}
 
 			msg := &types.MsgSetPolicy{
-				Principal:       clientCtx.GetFromAddress().String(),
-				PerTxLimit:      perTx,
-				WindowLimit:     daily,
-				WindowSeconds:   windowSecs,
-				AllowedMsgs:     allowedMsgs,
-				EnrollmentToken: token,
+				Principal:         clientCtx.GetFromAddress().String(),
+				PerTxLimit:        perTx,
+				WindowLimit:       daily,
+				WindowSeconds:     windowSecs,
+				AllowedMsgs:       allowedMsgs,
+				EnrollmentToken:   token,
 				ExpirationSeconds: expireSecs,
+				MaxMsgsPerExec:    maxMsgsPerExec,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -101,6 +103,7 @@ Example:
 	cmd.Flags().String("allow", "", "Comma-separated list of allowed msg type URLs (required)")
 	cmd.Flags().Uint64("window", 86400, "Budget window in seconds (default 86400 = 1 day)")
 	cmd.Flags().Uint64("expire", 0, "Policy expiration in seconds (0 = no expiry)")
+	cmd.Flags().Int32("max-msgs-per-exec", 0, "Max inner messages per execution (0 = server default 16)")
 	_ = cmd.MarkFlagRequired("token")
 	_ = cmd.MarkFlagRequired("allow")
 	flags.AddTxFlagsToCmd(cmd)

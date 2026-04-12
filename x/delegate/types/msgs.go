@@ -4,6 +4,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (msg *MsgSetPolicy) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Principal)
+	return []sdk.AccAddress{addr}
+}
+
 // ValidateBasic for MsgSetPolicy.
 func (msg MsgSetPolicy) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Principal); err != nil {
@@ -24,7 +29,15 @@ func (msg MsgSetPolicy) ValidateBasic() error {
 	if len(msg.EnrollmentToken) == 0 {
 		return ErrInvalidPolicy.Wrap("enrollment_token required (used as shared secret for agent enrollment)")
 	}
+	if msg.MaxMsgsPerExec < 0 {
+		return ErrInvalidPolicy.Wrap("max_msgs_per_exec must be >= 0")
+	}
 	return nil
+}
+
+func (msg *MsgEnroll) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Delegate)
+	return []sdk.AccAddress{addr}
 }
 
 // ValidateBasic for MsgEnroll.
@@ -41,6 +54,11 @@ func (msg MsgEnroll) ValidateBasic() error {
 	return nil
 }
 
+func (msg *MsgRevoke) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Principal)
+	return []sdk.AccAddress{addr}
+}
+
 // ValidateBasic for MsgRevoke.
 func (msg MsgRevoke) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Principal); err != nil {
@@ -50,6 +68,11 @@ func (msg MsgRevoke) ValidateBasic() error {
 		return ErrInvalidAddress.Wrapf("invalid delegate: %s", err)
 	}
 	return nil
+}
+
+func (msg *MsgExec) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(msg.Delegate)
+	return []sdk.AccAddress{addr}
 }
 
 // ValidateBasic for MsgExec.

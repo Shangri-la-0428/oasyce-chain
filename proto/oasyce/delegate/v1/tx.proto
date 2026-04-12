@@ -54,6 +54,10 @@ message MsgSetPolicy {
 
   // expiration_seconds is how long the policy lasts (0 = forever).
   uint64 expiration_seconds = 7;
+
+  // max_msgs_per_exec is the maximum number of inner messages allowed in one execution.
+  // 0 = use server default (16).
+  int32 max_msgs_per_exec = 8;
 }
 
 message MsgSetPolicyResponse {}

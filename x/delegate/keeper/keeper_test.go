@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -10,12 +11,14 @@ import (
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/x/tx/signing"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/oasyce/chain/x/delegate/keeper"
 	"github.com/oasyce/chain/x/delegate/types"
@@ -64,8 +67,22 @@ func (m *mockBankKeeper) SpendableCoins(_ context.Context, addr sdk.AccAddress) 
 
 type mockRouter struct{}
 
-func (mockRouter) Handler(_ sdk.Msg) baseapp.MsgServiceHandler       { return nil }
+func (mockRouter) Handler(_ sdk.Msg) baseapp.MsgServiceHandler         { return nil }
 func (mockRouter) HandlerByTypeURL(_ string) baseapp.MsgServiceHandler { return nil }
+
+type testAddressCodec struct{}
+
+func (testAddressCodec) StringToBytes(text string) ([]byte, error) {
+	return sdk.AccAddressFromBech32(text)
+}
+
+func (testAddressCodec) BytesToString(bz []byte) (string, error) {
+	return sdk.AccAddress(bz).String(), nil
+}
+
+func validAddr(seed byte) string {
+	return sdk.AccAddress(bytes.Repeat([]byte{seed}, 20)).String()
+}
 
 // ---------------------------------------------------------------------------
 // Test setup
@@ -86,7 +103,16 @@ func setupKeeper(t *testing.T) (keeper.Keeper, sdk.Context, *mockBankKeeper) {
 
 	ctx := sdk.NewContext(cms, cmtproto.Header{Time: time.Now()}, false, logger)
 
-	ir := codectypes.NewInterfaceRegistry()
+	ir, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
+		ProtoFiles: protoregistry.GlobalFiles,
+		SigningOptions: signing.Options{
+			AddressCodec:          testAddressCodec{},
+			ValidatorAddressCodec: testAddressCodec{},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	cdc := codec.NewProtoCodec(ir)
 
 	bank := newMockBankKeeper()
@@ -316,20 +342,22 @@ func TestTokenVerification(t *testing.T) {
 func TestMsgSetPolicy(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
 
 	_, err := ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(500000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(5000000)),
 		WindowSeconds:   3600,
 		AllowedMsgs:     []string{"/oasyce.datarights.v1.MsgBuyShares"},
 		EnrollmentToken: "agent-token-123",
+		MaxMsgsPerExec:  4,
 	})
 	if err != nil {
 		t.Fatalf("SetPolicy failed: %v", err)
 	}
 
-	policy, found := k.GetPolicy(ctx, "oasyce1principal")
+	policy, found := k.GetPolicy(ctx, principal)
 	if !found {
 		t.Fatal("policy not stored")
 	}
@@ -340,15 +368,20 @@ func TestMsgSetPolicy(t *testing.T) {
 	if keeper.VerifyToken("agent-token-123", policy.EnrollmentTokenHash) == false {
 		t.Fatal("stored hash should verify against original token")
 	}
+	if policy.MaxMsgsPerExec != 4 {
+		t.Fatalf("expected max_msgs_per_exec=4, got %d", policy.MaxMsgsPerExec)
+	}
 }
 
 func TestMsgEnrollSuccess(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
+	delegate := validAddr(2)
 
 	// Set policy first.
 	_, err := ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(10000000)),
 		AllowedMsgs:     []string{"/oasyce.datarights.v1.MsgBuyShares"},
@@ -360,8 +393,8 @@ func TestMsgEnrollSuccess(t *testing.T) {
 
 	// Enroll with correct token.
 	_, err = ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1principal",
+		Delegate:  delegate,
+		Principal: principal,
 		Token:     "secret",
 		Label:     "macbook-agent",
 	})
@@ -369,7 +402,7 @@ func TestMsgEnrollSuccess(t *testing.T) {
 		t.Fatalf("Enroll failed: %v", err)
 	}
 
-	rec, found := k.GetDelegate(ctx, "oasyce1agent1")
+	rec, found := k.GetDelegate(ctx, delegate)
 	if !found {
 		t.Fatal("delegate not stored")
 	}
@@ -381,9 +414,11 @@ func TestMsgEnrollSuccess(t *testing.T) {
 func TestMsgEnrollWrongToken(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
+	delegate := validAddr(2)
 
 	_, _ = ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(10000000)),
 		AllowedMsgs:     []string{"/oasyce.datarights.v1.MsgBuyShares"},
@@ -391,8 +426,8 @@ func TestMsgEnrollWrongToken(t *testing.T) {
 	})
 
 	_, err := ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1principal",
+		Delegate:  delegate,
+		Principal: principal,
 		Token:     "wrong-token",
 	})
 	if err == nil {
@@ -405,8 +440,8 @@ func TestMsgEnrollNoPolicyFails(t *testing.T) {
 	ms := keeper.NewMsgServer(k)
 
 	_, err := ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1nonexistent",
+		Delegate:  validAddr(2),
+		Principal: validAddr(1),
 		Token:     "anything",
 	})
 	if err == nil {
@@ -417,9 +452,11 @@ func TestMsgEnrollNoPolicyFails(t *testing.T) {
 func TestMsgEnrollDuplicateFails(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
+	delegate := validAddr(2)
 
 	_, _ = ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(10000000)),
 		AllowedMsgs:     []string{"/oasyce.datarights.v1.MsgBuyShares"},
@@ -427,15 +464,15 @@ func TestMsgEnrollDuplicateFails(t *testing.T) {
 	})
 
 	_, _ = ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1principal",
+		Delegate:  delegate,
+		Principal: principal,
 		Token:     "tok",
 	})
 
 	// Second enroll should fail.
 	_, err := ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1principal",
+		Delegate:  delegate,
+		Principal: principal,
 		Token:     "tok",
 	})
 	if err == nil {
@@ -446,9 +483,11 @@ func TestMsgEnrollDuplicateFails(t *testing.T) {
 func TestMsgEnrollExpiredPolicyFails(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
+	delegate := validAddr(2)
 
 	_, _ = ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:         "oasyce1principal",
+		Principal:         principal,
 		PerTxLimit:        sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:       sdk.NewCoin("uoas", math.NewInt(10000000)),
 		AllowedMsgs:       []string{"/oasyce.datarights.v1.MsgBuyShares"},
@@ -459,8 +498,8 @@ func TestMsgEnrollExpiredPolicyFails(t *testing.T) {
 	// Advance time past expiration.
 	futureCtx := ctx.WithBlockTime(ctx.BlockTime().Add(2 * time.Minute))
 	_, err := ms.Enroll(sdk.WrapSDKContext(futureCtx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1principal",
+		Delegate:  delegate,
+		Principal: principal,
 		Token:     "tok",
 	})
 	if err == nil {
@@ -471,9 +510,11 @@ func TestMsgEnrollExpiredPolicyFails(t *testing.T) {
 func TestMsgRevoke(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
+	delegate := validAddr(2)
 
 	_, _ = ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(10000000)),
 		AllowedMsgs:     []string{"/oasyce.datarights.v1.MsgBuyShares"},
@@ -481,21 +522,21 @@ func TestMsgRevoke(t *testing.T) {
 	})
 
 	_, _ = ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1principal",
+		Delegate:  delegate,
+		Principal: principal,
 		Token:     "tok",
 	})
 
 	// Revoke.
 	_, err := ms.Revoke(sdk.WrapSDKContext(ctx), &types.MsgRevoke{
-		Principal: "oasyce1principal",
-		Delegate:  "oasyce1agent1",
+		Principal: principal,
+		Delegate:  delegate,
 	})
 	if err != nil {
 		t.Fatalf("revoke failed: %v", err)
 	}
 
-	_, found := k.GetDelegate(ctx, "oasyce1agent1")
+	_, found := k.GetDelegate(ctx, delegate)
 	if found {
 		t.Fatal("delegate should be removed after revoke")
 	}
@@ -504,9 +545,12 @@ func TestMsgRevoke(t *testing.T) {
 func TestMsgRevokeWrongPrincipalFails(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
+	delegate := validAddr(2)
+	attacker := validAddr(3)
 
 	_, _ = ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(10000000)),
 		AllowedMsgs:     []string{"/oasyce.datarights.v1.MsgBuyShares"},
@@ -514,15 +558,15 @@ func TestMsgRevokeWrongPrincipalFails(t *testing.T) {
 	})
 
 	_, _ = ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
-		Delegate:  "oasyce1agent1",
-		Principal: "oasyce1principal",
+		Delegate:  delegate,
+		Principal: principal,
 		Token:     "tok",
 	})
 
 	// Different principal tries to revoke — should fail.
 	_, err := ms.Revoke(sdk.WrapSDKContext(ctx), &types.MsgRevoke{
-		Principal: "oasyce1attacker",
-		Delegate:  "oasyce1agent1",
+		Principal: attacker,
+		Delegate:  delegate,
 	})
 	if err == nil {
 		t.Fatal("revoke by wrong principal should fail")
@@ -538,7 +582,7 @@ func TestSpendWindowResets(t *testing.T) {
 	principal := "oasyce1principal"
 
 	// First access — creates fresh window.
-	w := k.GetOrResetWindow(ctx, principal, 86400)
+	w := k.GetOrResetWindow(ctx, principal, 86400, "uoas")
 	if !w.Spent.Amount.IsZero() {
 		t.Fatal("fresh window should have zero spend")
 	}
@@ -550,14 +594,14 @@ func TestSpendWindowResets(t *testing.T) {
 	}
 
 	// Within window — should keep spend.
-	w2 := k.GetOrResetWindow(ctx, principal, 86400)
+	w2 := k.GetOrResetWindow(ctx, principal, 86400, "uoas")
 	if !w2.Spent.Amount.Equal(math.NewInt(500000)) {
 		t.Fatalf("expected 500000 spent, got %s", w2.Spent.Amount)
 	}
 
 	// Advance past window — should reset.
 	futureCtx := ctx.WithBlockTime(ctx.BlockTime().Add(25 * time.Hour))
-	w3 := k.GetOrResetWindow(futureCtx, principal, 86400)
+	w3 := k.GetOrResetWindow(futureCtx, principal, 86400, "uoas")
 	if !w3.Spent.Amount.IsZero() {
 		t.Fatal("expired window should reset to zero spend")
 	}
@@ -611,9 +655,10 @@ func TestIterateAllPolicies(t *testing.T) {
 func TestMsgSetPolicyDefaultWindow(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
 
 	_, err := ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(10000000)),
 		WindowSeconds:   0, // should default to 86400
@@ -624,7 +669,7 @@ func TestMsgSetPolicyDefaultWindow(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	policy, _ := k.GetPolicy(ctx, "oasyce1principal")
+	policy, _ := k.GetPolicy(ctx, principal)
 	if policy.WindowSeconds != 86400 {
 		t.Fatalf("expected default 86400 window, got %d", policy.WindowSeconds)
 	}
@@ -637,9 +682,11 @@ func TestMsgSetPolicyDefaultWindow(t *testing.T) {
 func TestMultipleDelegatesSamePrincipal(t *testing.T) {
 	k, ctx, _ := setupKeeper(t)
 	ms := keeper.NewMsgServer(k)
+	principal := validAddr(1)
+	delegates := []string{validAddr(2), validAddr(3), validAddr(4)}
 
 	_, _ = ms.SetPolicy(sdk.WrapSDKContext(ctx), &types.MsgSetPolicy{
-		Principal:       "oasyce1principal",
+		Principal:       principal,
 		PerTxLimit:      sdk.NewCoin("uoas", math.NewInt(1000000)),
 		WindowLimit:     sdk.NewCoin("uoas", math.NewInt(10000000)),
 		AllowedMsgs:     []string{"/oasyce.datarights.v1.MsgBuyShares"},
@@ -647,10 +694,10 @@ func TestMultipleDelegatesSamePrincipal(t *testing.T) {
 	})
 
 	// Enroll 3 agents with the same token.
-	for _, agent := range []string{"oasyce1agent1", "oasyce1agent2", "oasyce1agent3"} {
+	for _, agent := range delegates {
 		_, err := ms.Enroll(sdk.WrapSDKContext(ctx), &types.MsgEnroll{
 			Delegate:  agent,
-			Principal: "oasyce1principal",
+			Principal: principal,
 			Token:     "shared-secret",
 		})
 		if err != nil {
@@ -659,13 +706,13 @@ func TestMultipleDelegatesSamePrincipal(t *testing.T) {
 	}
 
 	// All 3 should be listed.
-	records := k.ListDelegates(ctx, "oasyce1principal")
+	records := k.ListDelegates(ctx, principal)
 	if len(records) != 3 {
 		t.Fatalf("expected 3 delegates, got %d", len(records))
 	}
 
 	// All 3 should share the same spend window.
-	w := k.GetOrResetWindow(ctx, "oasyce1principal", 86400)
+	w := k.GetOrResetWindow(ctx, principal, 86400, "uoas")
 	if !w.Spent.Amount.IsZero() {
 		t.Fatal("initial window should be zero")
 	}

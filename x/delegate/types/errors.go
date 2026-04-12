@@ -15,4 +15,5 @@ var (
 	ErrInvalidPolicy      = errors.Register(ModuleName, 11, "invalid policy parameters")
 	ErrSelfDelegate       = errors.Register(ModuleName, 12, "cannot delegate to self")
 	ErrSignerMismatch     = errors.Register(ModuleName, 13, "inner message signer must be the principal")
+	ErrTooManyMessages    = errors.Register(ModuleName, 14, "too many messages in delegate execution")
 )
