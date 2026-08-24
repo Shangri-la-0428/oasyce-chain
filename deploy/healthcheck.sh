@@ -1,8 +1,10 @@
 #!/bin/bash
 # Oasyce chain healthcheck — runs via crontab every 5 min
-# Self-heals first, then alerts via email (msmtp)
+# Self-heals first and records alerts locally. Email delivery is opt-in.
 
-ALERT_EMAIL="${OASYCE_ALERT_EMAIL:-ptc0428@qq.com}"
+ALERT_EMAIL="${OASYCE_ALERT_EMAIL:-}"
+ALERT_FROM_EMAIL="${OASYCE_ALERT_FROM_EMAIL:-$ALERT_EMAIL}"
+EMAIL_ALERTS_ENABLED="${OASYCE_EMAIL_ALERTS_ENABLED:-0}"
 STATE_DIR="${OASYCE_HEALTH_STATE_DIR:-/var/lib/oasyce-healthcheck}"
 STATE_FILE="${OASYCE_HEALTH_STATE_FILE:-${STATE_DIR}/health_state}"
 ALERT_LOG="${OASYCE_ALERT_LOG:-/var/log/oasyce-alert.log}"
@@ -26,8 +28,12 @@ send_alert() {
     local ts
     ts=$(date "+%Y-%m-%d %H:%M:%S")
     echo "$ts: ALERT: $msg" >> "$ALERT_LOG"
-    printf "Subject: [Oasyce Alert] %s\nFrom: Oasyce Monitor <ptc0428@qq.com>\nTo: %s\nContent-Type: text/plain; charset=utf-8\n\n%s\n\nTime: %s\nNode: 47.93.32.88\n" \
-        "$msg" "$ALERT_EMAIL" "$msg" "$ts" | msmtp "$ALERT_EMAIL" 2>> "$ALERT_LOG"
+    if [ "$EMAIL_ALERTS_ENABLED" != "1" ] || [ -z "$ALERT_EMAIL" ]; then
+        echo "$ts: EMAIL_SKIPPED: email alerts disabled" >> "$ALERT_LOG"
+        return 0
+    fi
+    printf "Subject: [Oasyce Alert] %s\nFrom: Oasyce Monitor <%s>\nTo: %s\nContent-Type: text/plain; charset=utf-8\n\n%s\n\nTime: %s\nNode: 47.93.32.88\n" \
+        "$msg" "$ALERT_FROM_EMAIL" "$ALERT_EMAIL" "$msg" "$ts" | msmtp "$ALERT_EMAIL" 2>> "$ALERT_LOG"
 }
 
 log_alert_event() {

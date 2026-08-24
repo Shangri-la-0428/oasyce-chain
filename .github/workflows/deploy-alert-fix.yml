@@ -1,15 +1,13 @@
-name: Deploy Alert Fix
+name: Stop Oasyce Chain
 
 on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  stop:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
-
       - name: Install SSH key
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -18,43 +16,70 @@ jobs:
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      - name: Deploy runtime files
+      - name: Stop and disable chain runtime
         env:
           VPS_HOST: 47.93.32.88
           VPS_PORT: 29222
           VPS_USER: root
         run: |
-          SCP_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -P ${VPS_PORT}"
           SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -p ${VPS_PORT}"
-
-          scp ${SCP_OPTS} deploy/healthcheck.sh "${VPS_USER}@${VPS_HOST}:/tmp/oasyce-healthcheck.sh"
-          scp ${SCP_OPTS} scripts/consumer_agent.py "${VPS_USER}@${VPS_HOST}:/tmp/oasyce-consumer_agent.py"
 
           ssh ${SSH_OPTS} "${VPS_USER}@${VPS_HOST}" 'bash -s' <<'EOF'
           set -euo pipefail
 
-          install -d -m 755 /var/lib/oasyce-healthcheck
-          install -d -m 755 /var/lib/oasyce-consumer
-          chown oasyce:oasyce /var/lib/oasyce-consumer
+          BACKUP_DIR="/var/backups/oasyce-chain-stop-$(date +%Y%m%d-%H%M%S)"
+          install -d -m 700 "${BACKUP_DIR}"
 
-          install -m 755 /tmp/oasyce-healthcheck.sh /opt/oasyce/src/deploy/healthcheck.sh
-          install -m 644 /tmp/oasyce-consumer_agent.py /opt/oasyce/src/scripts/consumer_agent.py
+          echo "=== pre-stop oasyce units ==="
+          systemctl list-units --all --no-legend | awk '$1 ~ /^oasyce/ {print}' || true
+          echo "=== pre-stop chain ports ==="
+          ss -ltnp | grep -E ':(11317|1317|8430|26656|26657)([^0-9]|$)' || true
 
-          if [ -f /tmp/consumer_agent_state.json ] && [ ! -f /var/lib/oasyce-consumer/state.json ]; then
-            cp /tmp/consumer_agent_state.json /var/lib/oasyce-consumer/state.json
-            chown oasyce:oasyce /var/lib/oasyce-consumer/state.json
+          for CRON_USER in root oasyce; do
+            if crontab -u "${CRON_USER}" -l > "${BACKUP_DIR}/${CRON_USER}.crontab" 2>/dev/null; then
+              awk '!/healthcheck\.sh|consumer_agent\.py|data_agent\.py|provider_agent\.py|\/opt\/oasyce|\/srv\/oasyce/' \
+                "${BACKUP_DIR}/${CRON_USER}.crontab" > "${BACKUP_DIR}/${CRON_USER}.filtered"
+              if [ -s "${BACKUP_DIR}/${CRON_USER}.filtered" ]; then
+                crontab -u "${CRON_USER}" "${BACKUP_DIR}/${CRON_USER}.filtered"
+              else
+                crontab -u "${CRON_USER}" -r
+              fi
+            fi
+          done
+
+          mapfile -t OASYCE_UNITS < <(
+            systemctl list-unit-files --type=service --type=timer --no-legend \
+              | awk '$1 ~ /^oasyce/ {print $1}'
+          )
+          if [ "${#OASYCE_UNITS[@]}" -gt 0 ]; then
+            systemctl disable --now "${OASYCE_UNITS[@]}"
           fi
 
-          rm -f /tmp/oasyce_health_state /tmp/oasyce_health_state.sent
-          rm -rf /tmp/oasyce_health_state_alerts
+          sleep 3
 
-          /opt/oasyce/src/scripts/healthcheck.sh
+          echo "=== post-stop oasyce units ==="
+          FAILED=0
+          for UNIT in "${OASYCE_UNITS[@]}"; do
+            ACTIVE="$(systemctl is-active "${UNIT}" 2>/dev/null || true)"
+            ENABLED="$(systemctl is-enabled "${UNIT}" 2>/dev/null || true)"
+            printf '%s active=%s enabled=%s\n' "${UNIT}" "${ACTIVE}" "${ENABLED}"
+            if [ "${ACTIVE}" = "active" ] || [ "${ENABLED}" = "enabled" ]; then
+              FAILED=1
+            fi
+          done
 
-          echo "=== healthcheck state ==="
-          find /var/lib/oasyce-healthcheck -maxdepth 2 -type f -print -exec sh -c "echo '---'; cat \"\$1\" || true" _ {} \;
-          echo "=== consumer state ==="
-          ls -la /var/lib/oasyce-consumer || true
-          cat /var/lib/oasyce-consumer/state.json || true
-          echo "=== current health ==="
-          curl -fsS http://127.0.0.1:11317/health || curl -fsS http://127.0.0.1:1317/health
+          echo "=== remaining chain cron entries ==="
+          for CRON_USER in root oasyce; do
+            crontab -u "${CRON_USER}" -l 2>/dev/null \
+              | grep -E 'healthcheck\.sh|consumer_agent\.py|data_agent\.py|provider_agent\.py|/opt/oasyce|/srv/oasyce' \
+              && FAILED=1 || true
+          done
+
+          echo "=== remaining chain ports ==="
+          if ss -ltnp | grep -E ':(11317|1317|8430|26656|26657)([^0-9]|$)'; then
+            FAILED=1
+          fi
+
+          echo "backup=${BACKUP_DIR}"
+          exit "${FAILED}"
           EOF
