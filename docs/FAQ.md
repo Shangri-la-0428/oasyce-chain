@@ -179,7 +179,8 @@ The current healthcheck is hardened to reduce live churn:
 
 - alert dedupe state is persisted under `/var/lib/oasyce-healthcheck`
 - one healthcheck instance runs at a time via a lock file
-- each alert key mails once per active incident and resets after recovery
+- each alert key records once per active incident and resets after recovery
+- email delivery is disabled by default and only activates when both `OASYCE_EMAIL_ALERTS_ENABLED=1` and `OASYCE_ALERT_EMAIL` are configured
 - consumer stale monitoring is only enabled when the consumer is actually deployed
 - provider HTTP monitoring and economy stale monitoring remain opt-in by default
 

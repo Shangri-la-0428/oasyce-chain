@@ -82,7 +82,8 @@ curl -s http://47.93.32.88:1317/cosmos/bank/v1beta1/balances/oasyce1msmqqjw64k8m
 - `/tmp` 清理不会再重置告警去重状态
 - healthcheck 会自动探测 consumer 是否真的部署，未部署时不再误报 `Consumer agent STALE`
 - healthcheck 有执行锁，同一时间只允许一份实例运行
-- 每个告警 key 都有冷却窗口，避免重复邮件风暴
+- 每个告警 key 都会落日志并保留去重状态
+- 邮件发送默认关闭；只有同时设置 `OASYCE_EMAIL_ALERTS_ENABLED=1` 和 `OASYCE_ALERT_EMAIL` 才会通过 `msmtp` 发信
 
 ## 本地自治验收
 

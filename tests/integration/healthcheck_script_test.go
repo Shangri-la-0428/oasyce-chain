@@ -76,6 +76,39 @@ func TestDeployHealthcheckLockFileDefaultsToStateFileRoot(t *testing.T) {
 	}
 }
 
+func TestDeployHealthcheckEmailDeliveryIsOptIn(t *testing.T) {
+	tmpDir := t.TempDir()
+	alertLog := filepath.Join(tmpDir, "alert.log")
+	mailFile := filepath.Join(tmpDir, "mail.txt")
+
+	writeExecutable(t, tmpDir, "msmtp", `#!/bin/bash
+cat >> "$TEST_MAIL_FILE"
+`)
+
+	runHealthcheckCommand(
+		t,
+		[]string{
+			"PATH=" + tmpDir + ":" + os.Getenv("PATH"),
+			"TEST_MAIL_FILE=" + mailFile,
+			"OASYCE_ALERT_EMAIL=alerts@example.com",
+			"OASYCE_ALERT_LOG=" + alertLog,
+		},
+		"-lc",
+		"source "+deployHealthcheckScriptPath(t)+"; send_alert 'test alert'",
+	)
+
+	if _, err := os.Stat(mailFile); err == nil {
+		t.Fatal("email delivery should be disabled unless explicitly enabled")
+	}
+	logBody, err := os.ReadFile(alertLog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(logBody), "EMAIL_SKIPPED: email alerts disabled") {
+		t.Fatalf("expected disabled email delivery to be logged, got:\n%s", logBody)
+	}
+}
+
 func TestDeployHealthcheckEconomyStaleIsOptInAndDoesNotSpam(t *testing.T) {
 	tmpDir := t.TempDir()
 	stateFile := filepath.Join(tmpDir, "health_state")
@@ -127,6 +160,8 @@ esac
 		"TEST_HEIGHT_FILE=" + heightFile,
 		"OASYCE_HEALTH_STATE_FILE=" + stateFile,
 		"OASYCE_ALERT_LOG=" + alertLog,
+		"OASYCE_ALERT_EMAIL=alerts@example.com",
+		"OASYCE_EMAIL_ALERTS_ENABLED=1",
 		"OASYCE_ECON_LOG=" + econLog,
 		"OASYCE_ECON_STALE_WINDOW_HOURS=1",
 		"OASYCE_HEALTHCHECK_INTERVAL_MIN=5",
@@ -232,6 +267,8 @@ esac
 		"TEST_MODE_FILE=" + modeFile,
 		"OASYCE_HEALTH_STATE_FILE=" + stateFile,
 		"OASYCE_ALERT_LOG=" + alertLog,
+		"OASYCE_ALERT_EMAIL=alerts@example.com",
+		"OASYCE_EMAIL_ALERTS_ENABLED=1",
 		"OASYCE_ECON_LOG=" + econLog,
 	}
 
@@ -332,6 +369,8 @@ esac
 		"TEST_HEIGHT_FILE=" + heightFile,
 		"OASYCE_HEALTH_STATE_FILE=" + stateFile,
 		"OASYCE_ALERT_LOG=" + alertLog,
+		"OASYCE_ALERT_EMAIL=alerts@example.com",
+		"OASYCE_EMAIL_ALERTS_ENABLED=1",
 		"OASYCE_ECON_LOG=" + econLog,
 	}
 

@@ -80,7 +80,9 @@ UPSTREAM_API_KEY = os.environ.get("UPSTREAM_API_KEY", "")
 CAPABILITY_ID = os.environ.get("OASYCE_CAPABILITY_ID", "")
 PROVIDER_PORT = int(os.environ.get("PROVIDER_PORT", "8430"))
 CHAIN_ID = os.environ.get("OASYCE_CHAIN_ID") or os.environ.get("OASYCED_CHAIN_ID", "oasyce-testnet-1")
-ALERT_EMAIL = os.environ.get("OASYCE_ALERT_EMAIL", "ptc0428@qq.com")
+ALERT_EMAIL = os.environ.get("OASYCE_ALERT_EMAIL", "").strip()
+ALERT_FROM_EMAIL = os.environ.get("OASYCE_ALERT_FROM_EMAIL", ALERT_EMAIL).strip()
+EMAIL_ALERTS_ENABLED = os.environ.get("OASYCE_EMAIL_ALERTS_ENABLED", "0") == "1"
 ALERT_LOG = os.environ.get("OASYCE_ALERT_LOG", "/tmp/oasyce-provider-alert.log")
 ALERT_STATE_DIR = os.environ.get("OASYCE_ALERT_STATE_DIR", "/tmp/oasyce_provider_alerts")
 AUTO_DEACTIVATE_ON_BUY_FAILURE = os.environ.get("OASYCE_AUTO_DEACTIVATE_ON_BUY_FAILURE", "1") == "1"
@@ -228,25 +230,34 @@ def alert_state_path(key):
 
 
 def send_alert_email(msg):
+    if not EMAIL_ALERTS_ENABLED or not ALERT_EMAIL:
+        log.info("Alert email skipped because email delivery is disabled")
+        return False
+
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
     subject = f"[Oasyce Alert] {msg}"
     mail = (
         f"Subject: {subject}\n"
-        f"From: Oasyce Monitor <ptc0428@qq.com>\n"
+        f"From: Oasyce Monitor <{ALERT_FROM_EMAIL}>\n"
         f"To: {ALERT_EMAIL}\n"
         "Content-Type: text/plain; charset=utf-8\n\n"
         f"{msg}\n\nTime: {ts}\n"
     )
     try:
-        subprocess.run(
+        result = subprocess.run(
             ["msmtp", ALERT_EMAIL],
             input=mail,
             text=True,
             capture_output=True,
             check=False,
         )
+        if result.returncode != 0:
+            log.warning("msmtp failed with exit code %s", result.returncode)
+            return False
+        return True
     except FileNotFoundError:
         log.warning("msmtp not found; alert email skipped")
+        return False
 
 
 def activate_alert_once(key, msg):

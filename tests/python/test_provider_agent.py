@@ -24,6 +24,9 @@ class ProviderAgentTests(unittest.TestCase):
         provider_agent.CAPABILITY_ID = "CAP_TEST"
         provider_agent.ALERT_LOG = str(Path(self.tempdir.name) / "alert.log")
         provider_agent.ALERT_STATE_DIR = str(Path(self.tempdir.name) / "alerts")
+        provider_agent.ALERT_EMAIL = ""
+        provider_agent.ALERT_FROM_EMAIL = ""
+        provider_agent.EMAIL_ALERTS_ENABLED = False
         provider_agent._RUNTIME = None
         provider_agent._upstream_ok = True
         provider_agent._upstream_known = False
@@ -48,6 +51,25 @@ class ProviderAgentTests(unittest.TestCase):
         self.assertEqual(payload["status"], "ok")
         self.assertIsNone(payload["upstream_ok"])
         mock_probe.assert_not_called()
+
+    def test_alert_email_is_disabled_by_default(self):
+        with mock.patch.object(provider_agent.subprocess, "run") as mock_run:
+            sent = provider_agent.send_alert_email("test alert")
+
+        self.assertFalse(sent)
+        mock_run.assert_not_called()
+
+    def test_alert_email_requires_explicit_opt_in(self):
+        provider_agent.ALERT_EMAIL = "alerts@example.com"
+        provider_agent.ALERT_FROM_EMAIL = "alerts@example.com"
+        provider_agent.EMAIL_ALERTS_ENABLED = True
+        completed = SimpleNamespace(returncode=0)
+        with mock.patch.object(provider_agent.subprocess, "run", return_value=completed) as mock_run:
+            sent = provider_agent.send_alert_email("test alert")
+
+        self.assertTrue(sent)
+        mock_run.assert_called_once()
+        self.assertEqual(mock_run.call_args.args[0], ["msmtp", "alerts@example.com"])
 
     def test_health_probe_failure_reports_degraded_without_disabling_capability(self):
         with mock.patch.object(provider_agent, "_check_capability_cached", return_value=(True, "")), \
